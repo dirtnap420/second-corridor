@@ -24,6 +24,7 @@ import {
   buildTalentNumbers,
 } from './sankey.js';
 import { responsiveMount } from './responsive.js';
+import { initLive } from './live.js';
 
 /* ---------------- motion preference (live) ---------------- */
 const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -342,6 +343,10 @@ function showNodePlate(node) {
 
 /* ---------------- boot ---------------- */
 async function boot() {
+  // live sections register their data sources into the numbered list,
+  // so they load before the sources list and citation marks are built
+  const live = await initLive();
+
   bindCiteMarks();
   buildSources();
   buildInstalledBase();
@@ -372,9 +377,13 @@ async function boot() {
   );
   buildTalentNumbers(document.getElementById('talent-numbers'));
 
-  // colophon vintage: latest provenance vintage available (geo for now)
+  // colophon vintage: latest retrievedAt across all provenance objects
   const vintageEl = document.getElementById('colophon-vintage');
-  if (geo.provenance) vintageEl.textContent = geo.provenance.retrievedAt;
+  const dates = [geo, live.qcew, live.oews, live.ipeds]
+    .filter((d) => d && d.provenance)
+    .map((d) => d.provenance.retrievedAt)
+    .sort();
+  if (dates.length) vintageEl.textContent = dates[dates.length - 1];
 
   // initial year: deep link or 2022
   const initial = readHash();

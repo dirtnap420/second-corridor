@@ -1,0 +1,87 @@
+{
+ "provenance": {
+  "source": "U.S. Bureau of Labor Statistics, Occupational Employment and Wage Statistics (OEWS)",
+  "url": "https://www.bls.gov/oes/tables.htm",
+  "files": [
+   "https://www.bls.gov/oes/special-requests/oesm25ma.zip",
+   "https://www.bls.gov/oes/special-requests/oesm25nat.zip"
+  ],
+  "retrievedAt": "2026-06-10",
+  "vintage": "OEWS May 2025",
+  "notes": "Annual median wage (A_MEDIAN) and employment (TOT_EMP) from oesm25ma/MSA_M2025_dl.xlsx and oesm25nat/national_M2025_dl.xlsx. MSA AREA codes matched by AREA_TITLE: Syracuse, NY = 45060; Rochester, NY = 40380. {suppressed:true} = BLS-nondisclosed estimate ('*' wage / '**' employment); {topcoded:true} = wage at or above the OEWS publication top-code ('#'); {absent:true} = occupation not published for that MSA at all."
+ },
+ "areas": {
+  "syracuse": {
+   "code": "45060",
+   "title": "Syracuse, NY"
+  },
+  "rochester": {
+   "code": "40380",
+   "title": "Rochester, NY"
+  }
+ },
+ "occupations": [
+  {
+   "soc": "51-9141",
+   "title": "Semiconductor Processing Technicians",
+   "national": {
+    "median": 51430,
+    "emp": 31460
+   },
+   "syracuse": {
+    "absent": true
+   },
+   "rochester": {
+    "absent": true
+   }
+  },
+  {
+   "soc": "17-3023",
+   "title": "Electrical and Electronic Engineering Technologists and Technicians",
+   "national": {
+    "median": 78190,
+    "emp": 95130
+   },
+   "syracuse": {
+    "median": 82830,
+    "emp": 360
+   },
+   "rochester": {
+    "median": 77280,
+    "emp": 390
+   }
+  },
+  {
+   "soc": "17-2071",
+   "title": "Electrical Engineers",
+   "national": {
+    "median": 120630,
+    "emp": 198750
+   },
+   "syracuse": {
+    "median": 111070,
+    "emp": 700
+   },
+   "rochester": {
+    "median": 108160,
+    "emp": 1000
+   }
+  },
+  {
+   "soc": "17-2112",
+   "title": "Industrial Engineers",
+   "national": {
+    "median": 102440,
+    "emp": 365740
+   },
+   "syracuse": {
+    "median": 104360,
+    "emp": 830
+   },
+   "rochester": {
+    "median": 100150,
+    "emp": 1920
+   }
+  }
+ ]
+}
