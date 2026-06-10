@@ -560,3 +560,26 @@ scope on the GCM token before pushing `.github/workflows/`.
 - Observation for Wave 2's defect sweep: pre-existing ~21px horizontal
   overflow at the 375px viewport (document scroll width 396) — likely one of
   the D-item clipping defects; confirm which item covers it.
+- **F10 (preload half) also pulled forward:** after F20, CI CLS was still
+  0.124 — the first screen renders Archivo 900 (h1/h2 = LCP), Archivo 400,
+  and Plex Mono 500, none preloaded; Linux fallback metrics (DejaVu) rewrap
+  the masthead so the swap reflows the whole first screen (Windows Arial
+  masked it locally even at 24× CPU throttle). Preloading the three ended it:
+  local CLS 0.013→0.003, LCP variance collapsed. F10's Archivo-500 usage
+  audit stays in Wave 2; preload-list trim is F42.
+- **Lab CLS budget calibrated 0.02→0.05:** post-fix CI still measures ~0.03
+  (vs 0.003 local, 0.009 deployed) — observed CLS scales with runner
+  slowness. 0.05 stays inside Lighthouse "good" and still catches structural
+  regressions (the unreserved stage measured 0.175).
+- **Vercel Git integration:** connected by Alex mid-wave (after the branch
+  push — the earlier M1 note was premature). Preview deployments now fire on
+  push but arrive **BLOCKED** pending one-time authorization (commit author
+  email not verified on the dirtnap420 GitHub account), and the merge to main
+  produced **no production deployment** — production branch setting likely
+  still "master" from before the rename. Both are dashboard fixes for Alex.
+  Wave 1 production was deployed manually (`npx vercel deploy --prod --yes`)
+  per the operating rules; verified serving the Wave 1 build.
+- **WAVE 1 EXIT MET (2026-06-10):** PR #1 merged (23cdbd6); CI green on the
+  PR head and again on the main merge commit (the no-op proof); production
+  deployed and verified. GCM token confirmed to carry `workflow` scope
+  (Wave 3's open check, answered early).
