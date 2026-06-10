@@ -1,0 +1,22 @@
+{
+  "comment": "F1 — the performance budget. Numbers chosen to be passable today; the point is catching drift. Bytes are raw (uncompressed); KiB = 1024 bytes. Enforced by scripts/lint-size.mjs (build), qa/perf.mjs (runtime), and qa/lighthouse.mjs (lab metrics).",
+  "bundle": {
+    "mainJsBytes": 184320,
+    "cssBytes": 16384,
+    "fontTotalBytes": 92160
+  },
+  "runtime": {
+    "maxFrameMsDuringPlay": 50,
+    "maxLongTaskMs": 200
+  },
+  "runtimeThrottled": {
+    "comment": "F5 — 6× CPU throttle, 375px, DPR 2 (the corridor's mobile floor). Measured 2026-06-10: playback p95 16.7ms, max 33.3ms.",
+    "maxFrameMsDuringPlay": 60,
+    "maxLongTaskMs": 400
+  },
+  "lab": {
+    "comment": "LCP: masthead h1; F10 preloads landed (Wave 1) — measured 1.81s local / 1.83s CI; 2400 leaves CI headroom, revisit after F19 parallel boot (Wave 2). CLS: 0.003 local, 0.009 deployed, ~0.03 on CI's slow shared runner (observed CLS scales with machine slowness). 0.05 stays inside Lighthouse's 'good' (0.1) and still catches structural regressions like the unreserved map stage (0.175).",
+    "lcpMs": 2400,
+    "cls": 0.05
+  }
+}

@@ -6,13 +6,16 @@
   "description": "The Second Corridor — tracking New York's semiconductor buildout, 2022–2045, from public data.",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && npm run lint:design",
+    "build": "vite build && npm run lint:design && npm run lint:size",
     "preview": "vite preview",
     "lint:design": "node scripts/lint-design.mjs",
+    "lint:size": "node scripts/lint-size.mjs",
     "geo": "node scripts/build-geo.mjs",
     "og": "node scripts/build-og.mjs",
     "data": "node scripts/fetch-qcew.mjs && node scripts/fetch-ipeds.mjs && node scripts/fetch-oews.mjs && node scripts/fetch-lodes.mjs && node scripts/fetch-usaspending.mjs && node scripts/fetch-bps.mjs && node scripts/fetch-acs.mjs && node scripts/fetch-nyiso.mjs",
-    "qa": "node qa/screenshot.mjs"
+    "qa": "node qa/screenshot.mjs",
+    "test": "node --test",
+    "lighthouse": "node qa/lighthouse.mjs"
   },
   "dependencies": {
     "d3": "^7.9.0",
@@ -22,8 +25,12 @@
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "adm-zip": "^0.5.17",
+    "axe-core": "^4.12.1",
     "fflate": "^0.8.3",
+    "lighthouse": "^13.4.0",
+    "pixelmatch": "^7.2.0",
     "playwright": "^1.50.0",
+    "pngjs": "^7.0.0",
     "sharp": "^0.34.0",
     "topojson-server": "^3.0.1",
     "topojson-simplify": "^3.0.3",

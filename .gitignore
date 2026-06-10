@@ -6,5 +6,4 @@ raw/
 .env
 .vercel
 *.log
-
-.vercel
+desktop.ini
