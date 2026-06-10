@@ -1,0 +1,16 @@
+{
+  "comment": "F1 — the performance budget. Numbers chosen to be passable today; the point is catching drift. Bytes are raw (uncompressed); KiB = 1024 bytes. Enforced by scripts/lint-size.mjs (build), qa/perf.mjs (runtime), and lighthouserc.json (lab metrics).",
+  "bundle": {
+    "mainJsBytes": 184320,
+    "cssBytes": 16384,
+    "fontTotalBytes": 92160
+  },
+  "runtime": {
+    "maxFrameMsDuringPlay": 50,
+    "maxLongTaskMs": 200
+  },
+  "lab": {
+    "lcpMs": 1800,
+    "cls": 0.02
+  }
+}

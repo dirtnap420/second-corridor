@@ -6,9 +6,10 @@
   "description": "The Second Corridor — tracking New York's semiconductor buildout, 2022–2045, from public data.",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && npm run lint:design",
+    "build": "vite build && npm run lint:design && npm run lint:size",
     "preview": "vite preview",
     "lint:design": "node scripts/lint-design.mjs",
+    "lint:size": "node scripts/lint-size.mjs",
     "geo": "node scripts/build-geo.mjs",
     "og": "node scripts/build-og.mjs",
     "data": "node scripts/fetch-qcew.mjs && node scripts/fetch-ipeds.mjs && node scripts/fetch-oews.mjs && node scripts/fetch-lodes.mjs && node scripts/fetch-usaspending.mjs && node scripts/fetch-bps.mjs && node scripts/fetch-acs.mjs && node scripts/fetch-nyiso.mjs",
