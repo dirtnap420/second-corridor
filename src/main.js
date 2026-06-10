@@ -41,7 +41,7 @@ export function onMotionChange(fn) {
 }
 
 /* ---------------- master year state ---------------- */
-const state = { year: YEAR_MIN, playing: false };
+const state = { year: YEAR_MIN, playing: false, gliding: false };
 const surfaces = []; // fn(year) — called on every change
 export function onYear(fn) {
   surfaces.push(fn);
@@ -69,9 +69,49 @@ function setYear(y, { updateHash = true } = {}) {
   notify();
 }
 
+/* ---------------- year glide ----------------
+   Discrete jumps (track clicks, ledger clicks, deep links) ease across the
+   intervening years so every surface scrubs through them coherently.
+   Keyboard steps and drag increments stay 1:1. */
+const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+let glideRaf = null;
+function cancelGlide() {
+  if (glideRaf) cancelAnimationFrame(glideRaf);
+  glideRaf = null;
+  state.gliding = false;
+}
+function glideTo(target) {
+  cancelGlide();
+  if (motion.reduced || Math.abs(target - state.year) <= 1.01) {
+    setYear(target);
+    return;
+  }
+  const from = state.year;
+  const dur = Math.min(950, 320 + Math.abs(target - from) * 26);
+  const t0 = performance.now();
+  state.gliding = true;
+  const step = (now) => {
+    const k = Math.min(1, (now - t0) / dur);
+    setYear(from + (target - from) * easeOutCubic(k), { updateHash: k === 1 });
+    if (k < 1) {
+      glideRaf = requestAnimationFrame(step);
+    } else {
+      glideRaf = null;
+      state.gliding = false;
+    }
+  };
+  glideRaf = requestAnimationFrame(step);
+}
+
 slider.addEventListener('input', () => {
   stopPlay();
-  setYear(Number(slider.value));
+  const v = Number(slider.value);
+  // a drag/arrow step moves by 1 → instant; a track click jumps → glide
+  if (Math.abs(v - state.year) > 1.01) glideTo(v);
+  else {
+    cancelGlide();
+    setYear(v);
+  }
 });
 
 /* hash sync: #y=2030 deep links */
@@ -88,7 +128,7 @@ window.addEventListener('hashchange', () => {
   const y = readHash();
   if (y !== null && y !== Math.floor(state.year)) {
     stopPlay();
-    setYear(y, { updateHash: false });
+    glideTo(y);
   }
 });
 
@@ -127,6 +167,7 @@ function stepDiscrete() {
 }
 
 function startPlay() {
+  cancelGlide();
   if (state.year >= YEAR_MAX) setYear(YEAR_MIN, { updateHash: false });
   state.playing = true;
   playBtn.setAttribute('aria-pressed', 'true');
@@ -179,7 +220,7 @@ function buildLedger() {
     li.innerHTML = `<span class="yr">${m.year}</span><span>${m.label}${marks}</span>`;
     li.addEventListener('click', () => {
       stopPlay();
-      setYear(m.year);
+      glideTo(m.year);
     });
     ol.appendChild(li);
   }
@@ -203,7 +244,10 @@ function buildLedger() {
     if (current && !state.playing) {
       // keep the highlighted row in view inside the ledger scroll area
       const top = current.offsetTop - ol.clientHeight / 2;
-      ol.scrollTo({ top, behavior: motion.reduced ? 'auto' : 'smooth' });
+      ol.scrollTo({
+        top,
+        behavior: motion.reduced || state.gliding ? 'auto' : 'smooth',
+      });
     }
   });
 }
@@ -318,21 +362,29 @@ function makeWaferDial({ label, srcKeys }) {
     <div class="dial-value" id="dial-perm" style="font-size:13px">—</div>`;
   const dieEls = div.querySelectorAll('.wdie');
   const valueEl = div.querySelector('.dial-value');
+  let lastFilled = -1;
   return {
     el: div,
     set(v) {
       const filled = Math.min(dieEls.length, Math.floor(v / DIE_VALUE));
-      dieEls.forEach((d, i) => {
-        if (i < filled) {
-          d.setAttribute('fill', 'var(--copper)');
-          d.setAttribute('stroke', 'var(--ink)');
-          d.setAttribute('stroke-width', '0.4');
-        } else {
-          d.setAttribute('fill', 'none');
-          d.setAttribute('stroke', 'var(--hairline)');
-          d.setAttribute('stroke-width', '0.5');
+      if (filled !== lastFilled) {
+        // touch only the dice whose state changed — cheap at 60fps
+        const lo = lastFilled === -1 ? 0 : Math.min(filled, lastFilled);
+        const hi = lastFilled === -1 ? dieEls.length : Math.max(filled, lastFilled);
+        for (let i = lo; i < hi; i++) {
+          const d = dieEls[i];
+          if (i < filled) {
+            d.setAttribute('fill', 'var(--copper)');
+            d.setAttribute('stroke', 'var(--ink)');
+            d.setAttribute('stroke-width', '0.4');
+          } else {
+            d.setAttribute('fill', 'none');
+            d.setAttribute('stroke', 'var(--hairline)');
+            d.setAttribute('stroke-width', '0.5');
+          }
         }
-      });
+        lastFilled = filled;
+      }
       valueEl.textContent = `YIELD: ${fmtJobs(v)} / 9,000 · 1 DIE = ${DIE_VALUE} JOBS`;
     },
   };

@@ -3,13 +3,16 @@
 //   SECTION — a stationing diagram: nodes projected onto a datum line, x by
 //             great-circle distance from STAMP, with data risers per node
 // Two particle modes: AMBIENT (atmosphere) and FLOWS (LODES-driven arcs; map
-// view only — flows are geography-bound). All surfaces driven by update(year).
+// view only — flows are geography-bound). Particles render as plotter streaks
+// with age-based fade-in/out so density changes never pop. All surfaces are
+// driven by update(year); a copper carriage square rides the trace tip.
 import { geoConicConformal, geoPath, geoDistance, line as d3line, curveCatmullRom } from 'd3';
 import { feature, mesh, merge } from 'topojson-client';
 import { NODES, YEAR_MIN, YEAR_MAX, investAt } from './data.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const EARTH_MI = 3958.8;
+const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 export function renderMap(container, topo, opts, width) {
   const { onNodeSelect, motion, onMotionChange, lodes, qcew, ipeds, uiState, onFlowInfo } = opts;
@@ -45,10 +48,10 @@ export function renderMap(container, topo, opts, width) {
   const interior = mesh(topo, topo.objects.counties, (a, b) => a !== b);
 
   const gGeo = document.createElementNS(SVG_NS, 'g');
-  gGeo.style.transition = motion.reduced ? 'none' : 'opacity 600ms linear';
+  gGeo.style.transition = motion.reduced ? 'none' : 'opacity 650ms cubic-bezier(0.65, 0, 0.35, 1)';
   gGeo.innerHTML = `
     <path class="county" d="${path(stateShape)}"></path>
-    <path d="${path(interior)}" fill="none" stroke="var(--hairline)" stroke-width="0.6"></path>
+    <path class="county-mesh" d="${path(interior)}" fill="none" stroke="var(--hairline)" stroke-width="0.6"></path>
     <path class="state-outline" d="${path(stateShape)}"></path>`;
   svg.appendChild(gGeo);
 
@@ -58,13 +61,10 @@ export function renderMap(container, topo, opts, width) {
   const totalMi = distMi[distMi.length - 1];
   const SM = { l: 56, r: 30 };
   const datumY = Math.round(H * 0.62);
-  const sectionPts = distMi.map((d) => [
-    SM.l + (d / totalMi) * (W - SM.l - SM.r),
-    datumY,
-  ]);
+  const sectionPts = distMi.map((d) => [SM.l + (d / totalMi) * (W - SM.l - SM.r), datumY]);
 
   /* ---------- corridor trace (morphable) ---------- */
-  const K = 64; // morph samples
+  const K = 64;
   function samplePath(d) {
     const tmp = document.createElementNS(SVG_NS, 'path');
     tmp.setAttribute('d', d);
@@ -91,17 +91,24 @@ export function renderMap(container, topo, opts, width) {
   const gTrace = document.createElementNS(SVG_NS, 'g');
   gTrace.innerHTML = `
     <path class="trace-base" d="${mapTraceD}"></path>
-    <path class="trace-fill" d="${mapTraceD}"></path>`;
+    <path class="trace-fill" d="${mapTraceD}"></path>
+    <rect class="trace-tip" x="-3" y="-3" width="6" height="6"></rect>`;
   svg.appendChild(gTrace);
   const traceBase = gTrace.querySelector('.trace-base');
   const traceFill = gTrace.querySelector('.trace-fill');
+  const traceTip = gTrace.querySelector('.trace-tip');
   let traceLen = traceFill.getTotalLength();
   traceFill.style.strokeDasharray = `${traceLen}`;
   traceFill.style.strokeDashoffset = `${traceLen}`;
 
+  function placeTip(progress) {
+    const p = traceFill.getPointAtLength(progress * traceLen);
+    traceTip.setAttribute('transform', `translate(${p.x.toFixed(1)},${p.y.toFixed(1)})`);
+  }
+
   /* ---------- section chrome (datum, mileage ticks, risers) ---------- */
   const gSection = document.createElementNS(SVG_NS, 'g');
-  gSection.style.transition = motion.reduced ? 'none' : 'opacity 600ms linear';
+  gSection.style.transition = motion.reduced ? 'none' : 'opacity 650ms cubic-bezier(0.65, 0, 0.35, 1)';
   gSection.style.opacity = '0';
   gSection.style.pointerEvents = 'none';
   {
@@ -112,7 +119,7 @@ export function renderMap(container, topo, opts, width) {
       html += `<line x1="${x}" y1="${datumY}" x2="${x}" y2="${datumY + 6}" stroke="var(--muted)" stroke-width="1"></line>
         <text x="${x}" y="${datumY + 18}" text-anchor="middle" class="chart-label">STA ${mi} MI</text>`;
     }
-    html += `<text x="${W - SM.r}" y="${datumY - 8}" text-anchor="end" class="chart-label" style="fill:var(--copper)">GREAT-CIRCLE ${Math.round(totalMi)} MI</text>`;
+    html += `<text x="${SM.l}" y="${datumY - 10}" text-anchor="start" class="chart-label" style="fill:var(--copper)">STAMP → ALBANY · GREAT-CIRCLE ${Math.round(totalMi)} MI</text>`;
     html += `<g class="risers"></g>`;
     html += `<text x="${SM.l}" y="${H - 8}" class="chart-label">RISERS — COPPER: CUMULATIVE CAPITAL $B · INK: COUNTY NAICS-3344 EMP (QCEW) · VIOLET: COMPLETIONS (IPEDS)</text>`;
     gSection.innerHTML = html;
@@ -120,7 +127,7 @@ export function renderMap(container, topo, opts, width) {
   svg.appendChild(gSection);
   const gRisers = gSection.querySelector('.risers');
 
-  /* ---------- riser data ---------- */
+  /* ---------- risers: persistent elements, attribute updates only ---------- */
   function latestSemi(fips) {
     if (!qcew) return null;
     const c = qcew.corridor.find((x) => x.fips === fips);
@@ -133,53 +140,97 @@ export function renderMap(container, topo, opts, width) {
     const years = [...new Set(ipeds.series.map((s) => s.year))].sort();
     const last = years[years.length - 1];
     const rows = ipeds.series.filter((s) => s.year === last && s.inst === 'RIT');
-    const total = rows.reduce((a, r) => a + (r.cert || 0) + (r.assoc || 0) + (r.bach || 0) + (r.grad || 0), 0);
+    const total = rows.reduce(
+      (a, r) => a + (r.cert || 0) + (r.assoc || 0) + (r.bach || 0) + (r.grad || 0),
+      0
+    );
     return { year: last, value: total };
   }
   const RISER_MAX_H = Math.min(120, datumY - 60);
-
-  function buildRisers(year) {
+  const dynamicRisers = [];
+  const riserBars = [];
+  {
     const empMax = 800;
     const capMax = 100;
     const compMax = 400;
-    let html = '';
     NODES.forEach((n, i) => {
       const x = sectionPts[i][0];
       const defs = [];
-      if (n.id === 'clay') {
-        defs.push({ v: investAt(year), max: capMax, color: 'var(--copper)', label: `$${investAt(year).toFixed(1)}B` });
-      }
-      if (n.id === 'albany' && year >= 2024) {
-        defs.push({ v: 0.825, max: capMax, color: 'var(--copper)', label: '$0.8B' });
-      }
+      if (n.id === 'clay')
+        defs.push({ dynamic: true, value: (yr) => investAt(yr), max: capMax, color: 'var(--copper)', fmt: (v) => `$${v.toFixed(1)}B` });
+      if (n.id === 'albany')
+        defs.push({ dynamic: true, value: (yr) => (yr >= 2024 ? 0.825 : 0), max: capMax, color: 'var(--copper)', fmt: () => '$0.8B' });
       const semi = latestSemi(n.county);
       if (semi) {
-        if (semi.value && typeof semi.value === 'object') {
-          defs.push({ suppressed: true });
-        } else {
-          defs.push({ v: semi.value, max: empMax, color: 'var(--ink)', label: String(semi.value) });
-        }
+        if (semi.value && typeof semi.value === 'object') defs.push({ suppressed: true });
+        else defs.push({ static: true, v: semi.value, max: empMax, color: 'var(--ink)', text: String(semi.value) });
       }
       if (n.id === 'rit') {
         const c = ritCompletions();
-        if (c) defs.push({ v: c.value, max: compMax, color: 'var(--violet)', label: String(c.value) });
+        if (c) defs.push({ static: true, v: c.value, max: compMax, color: 'var(--violet)', text: String(c.value) });
       }
       const bw = 8;
       const gap = 4;
-      const totalW = defs.length * bw + (defs.length - 1) * gap;
-      let bx = x - totalW / 2;
+      let bx = x - (defs.length * bw + (defs.length - 1) * gap) / 2;
       for (const d of defs) {
         if (d.suppressed) {
-          html += `<text transform="rotate(-90 ${bx + 4} ${datumY - 8})" x="${bx + 4}" y="${datumY - 8}" class="chart-label">QCEW SUPPR.</text>`;
+          const t = document.createElementNS(SVG_NS, 'text');
+          t.setAttribute('class', 'chart-label');
+          t.setAttribute('x', bx + 4);
+          t.setAttribute('y', datumY - 8);
+          t.setAttribute('transform', `rotate(-90 ${bx + 4} ${datumY - 8})`);
+          t.textContent = 'QCEW SUPPR.';
+          gRisers.appendChild(t);
         } else {
-          const h = Math.max(1.5, (d.v / d.max) * RISER_MAX_H);
-          html += `<rect x="${bx}" y="${datumY - h}" width="${bw}" height="${h}" fill="${d.color}"></rect>
-            <text transform="rotate(-90 ${bx + 7} ${datumY - h - 6})" x="${bx + 7}" y="${datumY - h - 6}" class="chart-label">${d.label}</text>`;
+          const rect = document.createElementNS(SVG_NS, 'rect');
+          rect.setAttribute('x', bx);
+          rect.setAttribute('width', bw);
+          rect.setAttribute('fill', d.color);
+          rect.style.transformBox = 'fill-box';
+          rect.style.transformOrigin = 'bottom';
+          const label = document.createElementNS(SVG_NS, 'text');
+          label.setAttribute('class', 'chart-label');
+          gRisers.appendChild(rect);
+          gRisers.appendChild(label);
+          riserBars.push(rect);
+          const lx = bx + 7;
+          const place = (v, text) => {
+            const h = Math.max(1.5, (v / d.max) * RISER_MAX_H);
+            const hidden = v <= 0;
+            rect.style.display = hidden ? 'none' : '';
+            label.style.display = hidden ? 'none' : '';
+            rect.setAttribute('y', datumY - h);
+            rect.setAttribute('height', h);
+            label.setAttribute('x', lx);
+            label.setAttribute('y', datumY - h - 6);
+            label.setAttribute('transform', `rotate(-90 ${lx} ${datumY - h - 6})`);
+            label.textContent = text;
+          };
+          if (d.dynamic) dynamicRisers.push({ place, value: d.value, fmt: d.fmt });
+          else place(d.v, d.text);
         }
         bx += bw + gap;
       }
     });
-    gRisers.innerHTML = html;
+  }
+  function updateRisers(year) {
+    for (const r of dynamicRisers) {
+      const v = r.value(year);
+      r.place(v, r.fmt(v));
+    }
+  }
+  function growRisers() {
+    if (motion.reduced) return;
+    riserBars.forEach((rect, i) => {
+      rect.style.transition = 'none';
+      rect.style.transform = 'scaleY(0)';
+    });
+    // force a style flush so the grow transition runs from zero
+    void gRisers.getBoundingClientRect();
+    riserBars.forEach((rect, i) => {
+      rect.style.transition = `transform 420ms cubic-bezier(0.22, 1, 0.36, 1) ${i * 45}ms`;
+      rect.style.transform = 'scaleY(1)';
+    });
   }
 
   /* ---------- nodes (transform-positioned so the view can morph) ---------- */
@@ -209,8 +260,22 @@ export function renderMap(container, topo, opts, width) {
     gNodes.appendChild(g);
     return g;
   });
-  // in SECTION view labels sit below the datum to clear the risers
   const sectionLabelY = 34;
+
+  // one-shot stamp echo when a node activates
+  function ping(i) {
+    if (motion.reduced) return;
+    const n = NODES[i];
+    const size = n.hero ? 13 : 10;
+    const r = document.createElementNS(SVG_NS, 'rect');
+    r.setAttribute('class', 'node-ping');
+    r.setAttribute('x', -size / 2);
+    r.setAttribute('y', -size / 2);
+    r.setAttribute('width', size);
+    r.setAttribute('height', size);
+    r.addEventListener('animationend', () => r.remove());
+    nodeEls[i].appendChild(r);
+  }
 
   /* ---------- particle layer ---------- */
   const canvas = document.createElement('canvas');
@@ -284,11 +349,26 @@ export function renderMap(container, topo, opts, width) {
   let onscreen = true;
   let lastFrame = null;
   let currentYear = YEAR_MIN;
+  let prevYear = null;
   let destroyed = false;
   let morphing = false;
 
   const effectiveMode = () => (view === 'section' ? 'ambient' : mode);
+  const FADE_IN = 0.45; // seconds
+  const EDGE = 0.06; // path-fraction fade zone at the ends
 
+  function spawnAmbient(initial) {
+    const progress = traceProgress(currentYear);
+    particles.push({
+      t: Math.random() * progress,
+      speed: 0.014 + Math.random() * 0.024,
+      jitter: (Math.random() - 0.5) * 8,
+      size: 1.3 + Math.random() * 1.5,
+      base: 0.32 + Math.random() * 0.42,
+      age: initial ? FADE_IN : 0,
+      dying: 0,
+    });
+  }
   function buildFlowPool() {
     particles = [];
     for (const a of flowArcs) {
@@ -296,21 +376,26 @@ export function renderMap(container, topo, opts, width) {
         particles.push({
           arc: a,
           t: Math.random(),
-          speed: 0.08 + Math.random() * 0.1,
-          size: 1.5 + Math.random() * 1.2,
-          alpha: 0.3 + Math.random() * 0.35,
+          speed: 0.07 + Math.random() * 0.11,
+          size: 1.4 + Math.random() * 1.3,
+          base: 0.28 + Math.random() * 0.36,
+          age: FADE_IN,
+          dying: 0,
         });
       }
     }
   }
-  function spawnAmbient() {
-    particles.push({
-      t: Math.random(),
-      speed: 0.012 + Math.random() * 0.02,
-      jitter: (Math.random() - 0.5) * 8,
-      size: 1.4 + Math.random() * 1.4,
-      alpha: 0.35 + Math.random() * 0.4,
-    });
+
+  function drawStreak(x0, y0, x1, y1, size, alpha) {
+    ctx.globalAlpha = alpha * 0.45;
+    ctx.lineWidth = size * dpr;
+    ctx.beginPath();
+    ctx.moveTo(x0 * dpr, y0 * dpr);
+    ctx.lineTo(x1 * dpr, y1 * dpr);
+    ctx.stroke();
+    ctx.globalAlpha = alpha;
+    const s = size * 1.6 * dpr;
+    ctx.fillRect(x1 * dpr - s / 2, y1 * dpr - s / 2, s, s);
   }
 
   function drawStaticFlows() {
@@ -334,33 +419,71 @@ export function renderMap(container, topo, opts, width) {
     lastFrame = t;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#b5562a';
     ctx.fillStyle = '#b5562a';
     const m = effectiveMode();
 
     if (m === 'ambient') {
-      if (!morphing) {
-        while (particles.length < targetCount && particles.length < 60) spawnAmbient();
-        if (particles.length > targetCount) particles.length = targetCount;
-        const progress = traceProgress(currentYear);
+      // pool management: spawn with fade-in, retire with fade-out
+      if (particles.length < targetCount) {
+        for (let i = particles.length; i < targetCount; i++) spawnAmbient(false);
+      } else if (particles.length > targetCount) {
+        let excess = particles.length - targetCount;
         for (const p of particles) {
-          if (p.arc) continue; // leftover flow particles after a mode switch
+          if (excess <= 0) break;
+          if (!p.dying) {
+            p.dying = 0.0001;
+            excess--;
+          }
+        }
+      }
+      const progress = traceProgress(currentYear);
+      if (!morphing) {
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          if (p.arc) {
+            particles.splice(i, 1);
+            continue;
+          }
+          p.age += dt;
+          if (p.dying) {
+            p.dying += dt * 2.2;
+            if (p.dying >= 1) {
+              particles.splice(i, 1);
+              continue;
+            }
+          }
           p.t += p.speed * dt;
-          if (p.t > progress) p.t = 0;
-          const [px, py] = pointAt(p.t);
-          ctx.globalAlpha = p.alpha;
-          const s = p.size * dpr;
-          ctx.fillRect(px * dpr - s / 2, (py + (p.jitter || 0)) * dpr - s / 2, s, s);
+          if (p.t > progress) {
+            p.t = 0;
+            p.age = 0;
+          }
+          const edge = Math.min(1, p.t / EDGE, Math.max(0.001, (progress - p.t) / EDGE));
+          const alpha =
+            p.base * Math.min(1, p.age / FADE_IN) * Math.max(0, Math.min(1, edge)) * (1 - (p.dying || 0));
+          if (alpha <= 0.01) continue;
+          const tail = Math.min(p.t, p.speed * 0.55);
+          const [x0, y0] = pointAt(p.t - tail);
+          const [x1, y1] = pointAt(p.t);
+          drawStreak(x0, y0 + p.jitter, x1, y1 + p.jitter, p.size, alpha);
         }
       }
     } else {
       for (const p of particles) {
         if (!p.arc) continue;
+        p.age += dt;
         p.t += p.speed * dt;
-        if (p.t > 1) p.t = 0;
-        const [px, py] = arcPoint(p.arc, p.t);
-        ctx.globalAlpha = p.alpha;
-        const s = p.size * dpr;
-        ctx.fillRect(px * dpr - s / 2, py * dpr - s / 2, s, s);
+        if (p.t > 1) {
+          p.t = 0;
+          p.age = 0;
+        }
+        const edge = Math.min(1, p.t / EDGE, (1 - p.t) / EDGE);
+        const alpha = p.base * Math.min(1, p.age / FADE_IN) * Math.max(0, Math.min(1, edge));
+        if (alpha <= 0.01) continue;
+        const tail = Math.min(p.t, p.speed * 0.4);
+        const [x0, y0] = arcPoint(p.arc, p.t - tail);
+        const [x1, y1] = arcPoint(p.arc, p.t);
+        drawStreak(x0, y0, x1, y1, p.size, alpha);
       }
     }
     ctx.globalAlpha = 1;
@@ -401,15 +524,16 @@ export function renderMap(container, topo, opts, width) {
   );
   io.observe(container);
   onMotionChange(() => {
-    gGeo.style.transition = motion.reduced ? 'none' : 'opacity 600ms linear';
-    gSection.style.transition = motion.reduced ? 'none' : 'opacity 600ms linear';
+    const ease = motion.reduced ? 'none' : 'opacity 650ms cubic-bezier(0.65, 0, 0.35, 1)';
+    gGeo.style.transition = ease;
+    gSection.style.transition = ease;
     evalEngine();
   });
 
   function setParticleMode(m) {
     mode = m;
     if (effectiveMode() === 'flows') buildFlowPool();
-    else particles = [];
+    else particles = particles.filter((p) => !p.arc);
     evalEngine();
   }
   if (effectiveMode() === 'flows') buildFlowPool();
@@ -420,25 +544,19 @@ export function renderMap(container, topo, opts, width) {
   function applyView(v, animate) {
     view = v;
     const toSection = v === 'section';
-    const dur = animate && !motion.reduced ? 600 : 0;
+    const dur = animate && !motion.reduced ? 650 : 0;
 
-    // node transforms via CSS transition
     nodeEls.forEach((g, i) => {
-      g.style.transition = dur ? `transform ${dur}ms linear` : 'none';
+      g.style.transition = dur ? `transform ${dur}ms cubic-bezier(0.65, 0, 0.35, 1)` : 'none';
       const p = toSection ? sectionPts[i] : mapPts[i];
       g.setAttribute('transform', `translate(${p[0]},${p[1]})`);
       const text = g.querySelector('text');
-      if (toSection) {
-        text.setAttribute('y', sectionLabelY);
-      } else {
-        text.setAttribute('y', i % 2 === 0 ? -12 : 22);
-      }
+      text.setAttribute('y', toSection ? sectionLabelY : i % 2 === 0 ? -12 : 22);
     });
 
     gGeo.style.opacity = toSection ? '0.13' : '1';
     gSection.style.opacity = toSection ? '1' : '0';
 
-    // trace morph
     if (morphRaf) cancelAnimationFrame(morphRaf);
     const from = samplePathCurrent();
     const to = toSection ? sectionSamples : mapSamples;
@@ -451,18 +569,16 @@ export function renderMap(container, topo, opts, width) {
       morphing = true;
       const t0 = performance.now();
       const step = (now) => {
-        const k = Math.min(1, (now - t0) / dur);
-        const pts2 = from.map((p, i) => [
-          p[0] + (to[i][0] - p[0]) * k,
-          p[1] + (to[i][1] - p[1]) * k,
-        ]);
+        const k = easeInOut(Math.min(1, (now - t0) / dur));
+        const pts2 = from.map((p, i) => [p[0] + (to[i][0] - p[0]) * k, p[1] + (to[i][1] - p[1]) * k]);
         const d = toD(pts2);
         traceBase.setAttribute('d', d);
         traceFill.setAttribute('d', d);
         traceLen = traceFill.getTotalLength();
         traceFill.style.strokeDasharray = `${traceLen}`;
         traceFill.style.strokeDashoffset = `${traceLen * (1 - traceProgress(currentYear))}`;
-        if (k < 1) morphRaf = requestAnimationFrame(step);
+        placeTip(traceProgress(currentYear));
+        if ((now - t0) / dur < 1) morphRaf = requestAnimationFrame(step);
         else finishMorph();
       };
       morphRaf = requestAnimationFrame(step);
@@ -473,9 +589,12 @@ export function renderMap(container, topo, opts, width) {
       traceLen = traceFill.getTotalLength();
       traceFill.style.strokeDasharray = `${traceLen}`;
       traceFill.style.strokeDashoffset = `${traceLen * (1 - traceProgress(currentYear))}`;
+      placeTip(traceProgress(currentYear));
       sampleTrace();
-      if (toSection) buildRisers(currentYear);
-      // flows are geography-bound; section view falls back to ambient
+      if (toSection) {
+        updateRisers(currentYear);
+        growRisers();
+      }
       particles = particles.filter((p) => (effectiveMode() === 'flows' ? p.arc : !p.arc));
       if (effectiveMode() === 'flows' && particles.length === 0) buildFlowPool();
       evalEngine();
@@ -501,14 +620,19 @@ export function renderMap(container, topo, opts, width) {
   }
 
   function update(year) {
-    currentYear = year;
     NODES.forEach((n, i) => {
-      nodeEls[i].classList.toggle('active', year >= n.activeFrom);
+      const active = year >= n.activeFrom;
+      nodeEls[i].classList.toggle('active', active);
+      if (prevYear !== null && prevYear < n.activeFrom && active) ping(i);
     });
+    prevYear = year;
+    currentYear = year;
     if (!morphing) {
-      traceFill.style.strokeDashoffset = `${traceLen * (1 - traceProgress(year))}`;
+      const progress = traceProgress(year);
+      traceFill.style.strokeDashoffset = `${traceLen * (1 - progress)}`;
+      placeTip(progress);
     }
-    if (view === 'section') buildRisers(year);
+    if (view === 'section') updateRisers(year);
     const mobile = W < 700;
     const base = mobile ? 4 : 8;
     const span = mobile ? 18 : 38;

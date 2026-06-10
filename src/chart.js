@@ -126,13 +126,16 @@ export function renderChart(container, width) {
     </g>
   `);
 
-  /* cursor */
+  /* cursor: hairline + year tag + a carriage square riding the invest line
+     with its live value */
   const cursor = put(`
     <line x1="${x(YEAR_MIN)}" x2="${x(YEAR_MIN)}" y1="${INVEST.top - 6}" y2="${JOBS.top + JOBS.h}" stroke="var(--copper)" stroke-width="1.5"></line>
     <rect x="${x(YEAR_MIN) - 17}" y="${JOBS.top + JOBS.h + 22}" width="34" height="15" fill="var(--copper)"></rect>
     <text x="${x(YEAR_MIN)}" y="${JOBS.top + JOBS.h + 33}" text-anchor="middle" style="font-family:var(--font-mono);font-size:10px;fill:var(--paper)">2022</text>
+    <rect x="${x(YEAR_MIN) - 3}" y="${yI(0) - 3}" width="6" height="6" fill="var(--copper)" stroke="var(--ink)" stroke-width="1"></rect>
+    <text x="${x(YEAR_MIN) + 9}" y="${yI(0) - 6}" class="chart-label" style="fill:var(--copper);font-weight:500">$0.0B</text>
   `);
-  const [cLine, cRect, cText] = cursor.children;
+  const [cLine, cRect, cText, cDot, cVal] = cursor.children;
 
   function update(year) {
     const px = x(year);
@@ -141,6 +144,14 @@ export function renderChart(container, width) {
     cRect.setAttribute('x', px - 17);
     cText.setAttribute('x', px);
     cText.textContent = String(Math.floor(year + 1e-6));
+    const iy = yI(investAt(year));
+    cDot.setAttribute('x', px - 3);
+    cDot.setAttribute('y', iy - 3);
+    const flip = px > W - 90;
+    cVal.setAttribute('x', flip ? px - 9 : px + 9);
+    cVal.setAttribute('text-anchor', flip ? 'end' : 'start');
+    cVal.setAttribute('y', iy - 6);
+    cVal.textContent = `$${investAt(year).toFixed(1)}B`;
   }
 
   return { update };

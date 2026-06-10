@@ -115,6 +115,38 @@ a:hover {
   display: none !important;
 }
 
+/* reduced motion: kill every tween and animation globally */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* one-shot stamp echo when a node activates during play */
+@keyframes node-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+.node-ping {
+  fill: none;
+  stroke: var(--copper);
+  stroke-width: 1.5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: node-ping 700ms linear forwards;
+  pointer-events: none;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -418,6 +450,17 @@ input[type='range'].scrub:focus-visible::-webkit-slider-thumb {
   stroke: var(--copper);
   stroke-width: 2.5;
 }
+.node-marker rect.mark {
+  transition: fill 240ms linear;
+}
+.wdie {
+  transition: fill 140ms linear;
+}
+.trace-tip {
+  fill: var(--copper);
+  stroke: var(--ink);
+  stroke-width: 1;
+}
 
 /* node data plate */
 .node-plate {
@@ -499,6 +542,10 @@ input[type='range'].scrub:focus-visible::-webkit-slider-thumb {
   padding: 7px 14px;
   border-top: 1px dotted var(--hairline);
   color: var(--muted);
+  transition:
+    background-color 220ms linear,
+    color 220ms linear,
+    border-color 220ms linear;
 }
 .ledger li:first-child {
   border-top: 0;
