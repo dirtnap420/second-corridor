@@ -6,3 +6,5 @@ raw/
 .env
 .vercel
 *.log
+
+.vercel
