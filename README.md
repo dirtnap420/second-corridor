@@ -228,5 +228,4 @@ objects inside `public/data/*.json` and in the on-page Sources list.
 
 ## Colophon
 
-Built by [NAME] · [CONTACT/URL]. Bracketed fields are intentional placeholders
-for the author.
+Built by Alex · Alex@ozarkintelligence.com.
