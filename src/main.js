@@ -25,6 +25,7 @@ import {
 } from './sankey.js';
 import { responsiveMount } from './responsive.js';
 import { initLive } from './live.js';
+import { renderSite } from './site.js';
 
 /* ---------------- motion preference (live) ---------------- */
 const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -411,6 +412,12 @@ async function boot() {
   }
   tabMap.addEventListener('click', () => setView('map'));
   tabSection.addEventListener('click', () => setView('section'));
+
+  // the site-assembly panel — the seventh synchronized surface
+  const site = responsiveMount(document.getElementById('site-panel'), (w) =>
+    renderSite(document.getElementById('site-panel'), w)
+  );
+  onYear((y) => site.update(y));
 
   const chart = responsiveMount(document.getElementById('buildout-chart'), (w) =>
     renderChart(document.getElementById('buildout-chart'), w)
