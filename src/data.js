@@ -227,7 +227,7 @@ export const TALENT_SANKEY = {
     { id: 'cleanroom', label: 'Micron Cleanroom Simulation Lab ($15M, OCC)', layer: 1, src: 'occ-micron' },
     { id: 'apprent', label: 'Apprenticeships / retraining', layer: 1, src: 'emerge-micro-2024' },
     { id: 'micron-clay', label: 'Micron Clay', layer: 2, src: 'node-clay' },
-    { id: 'gf', label: 'GlobalFoundries', layer: 2, src: 'ny-88-companies' },
+    { id: 'gf', label: 'GlobalFoundries', layer: 2, src: 'ny-156-companies' },
     { id: 'albany-nano', label: 'Albany NanoTech', layer: 2, src: 'node-albany' },
     { id: 'suppliers', label: 'NY supplier base (156+ companies)', layer: 2, src: 'ny-156-companies' },
   ],
