@@ -456,6 +456,18 @@ deferred).
       Lighthouse re-run lands with Wave 1's LHCI
 - [x] R38 — audience map: priority order TBD (Q17), candidates listed in
       `reach-improvements.md` #38
-- [ ] P1 — GitHub repo (blocked: account walk-through with Alex; private per Q3)
-- Plan library + Wave 0 changes committed locally; verification of the colophon
-  render rides Wave 2's battery (text-only change)
+- [x] P1 — GitHub repo created via stored GCM credentials:
+      **github.com/dirtnap420/second-corridor** (private per Q3), branch renamed
+      master→main, pushed + tracking. No `gh` CLI on this machine — API calls go
+      through the GCM token; pushes authenticate automatically.
+- Vercel verified via connected MCP: project `second-corridor`
+  (prj_joA8QUb1DKa93C3DeaPSIdVy288C, team_FtWfFaCKTmOfgnk3nkeJM1fT), production
+  READY at second-corridor.vercel.app; direct deploys available in-session.
+- **Wave 3 deploy decision now easier:** recommend connecting the GitHub repo to
+  the Vercel project (dashboard action, ~1 min, works with private repos) —
+  pushes to main auto-deploy and refresh PRs get preview deployments, which fits
+  PR-review mode exactly; the VERCEL_TOKEN secret then becomes unnecessary.
+  Check at Wave 3: whether the GCM token carries `workflow` scope (needed to
+  push `.github/workflows/`); if not, one-time PAT walk-through with Alex.
+- Plan library + Wave 0 changes committed; verification of the colophon render
+  rides Wave 2's battery (text-only change)
