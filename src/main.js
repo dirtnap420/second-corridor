@@ -363,6 +363,8 @@ async function boot() {
     motion,
     onMotionChange,
     lodes: live.lodes,
+    qcew: live.qcew,
+    ipeds: live.ipeds,
     uiState,
     onFlowInfo: (info) => {
       flowInfo = info;
@@ -375,7 +377,7 @@ async function boot() {
   onYear((y) => map.update(y));
 
   function updateFlowsLegend() {
-    if (uiState.particles === 'flows' && flowInfo) {
+    if (uiState.particles === 'flows' && uiState.view === 'map' && flowInfo) {
       flowsLegend.textContent = `1 PARTICLE = ${flowInfo.jobsPerParticle.toLocaleString('en-US')} JOBS · LODES ${flowInfo.vintage.match(/\d{4}/)[0]} · ALL-INDUSTRY COMMUTING`;
       flowsLegend.hidden = false;
     } else {
@@ -395,6 +397,20 @@ async function boot() {
   tabAmbient.addEventListener('click', () => setParticles('ambient'));
   tabFlows.addEventListener('click', () => setParticles('flows'));
   if (!live.lodes) document.getElementById('tab-flows').disabled = true;
+
+  const tabMap = document.getElementById('tab-map');
+  const tabSection = document.getElementById('tab-section');
+  function setView(v) {
+    uiState.view = v;
+    tabMap.setAttribute('aria-pressed', String(v === 'map'));
+    tabSection.setAttribute('aria-pressed', String(v === 'section'));
+    if (map.instance && map.instance.setView) map.instance.setView(v);
+    // flows are geography-bound: unavailable in the section view
+    tabFlows.disabled = v === 'section' || !live.lodes;
+    updateFlowsLegend();
+  }
+  tabMap.addEventListener('click', () => setView('map'));
+  tabSection.addEventListener('click', () => setView('section'));
 
   const chart = responsiveMount(document.getElementById('buildout-chart'), (w) =>
     renderChart(document.getElementById('buildout-chart'), w)
