@@ -208,6 +208,14 @@ registerSources([
     date: '2026-04',
     retrieved: R,
   },
+  {
+    keys: ['occ-micron'],
+    title: 'Governor Hochul Unveils Plans for $15 Million Micron Cleanroom Simulation Lab at Onondaga Community College',
+    publisher: 'Office of Governor Kathy Hochul',
+    url: 'https://www.governor.ny.gov/news/governor-hochul-unveils-plans-15-million-micron-cleanroom-simulation-lab-onondaga-community',
+    date: '2023-10-19',
+    retrieved: R,
+  },
 ]);
 
 // Comparator-fab announcement dates (section 09) — verified in the Phase 0 pass.

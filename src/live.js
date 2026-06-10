@@ -167,20 +167,23 @@ function renderIpeds(data) {
   const INSTS = [
     { key: 'Rochester Institute of Technology', short: 'RIT', color: 'var(--copper)' },
     { key: 'Monroe Community College', short: 'MCC', color: 'var(--violet)' },
+    { key: 'Onondaga Community College', short: 'OCC', color: 'var(--ink)' },
     { key: 'Finger Lakes Community College', short: 'FLCC', color: 'var(--green)' },
   ];
   const instOf = (name) =>
     INSTS.find((i) => name.toLowerCase().includes(i.short.toLowerCase()) || name === i.key) ||
     INSTS.find((i) => name.toLowerCase().startsWith(i.key.toLowerCase().slice(0, 9)));
 
-  // totals per year × inst
+  // totals per year × inst (suppressed band cells count as unknown, not zero —
+  // none occur in current data; the numbers table carries the distinction)
+  const num = (v) => (typeof v === 'number' ? v : 0);
   const years = [...new Set(data.series.map((s) => s.year))].sort();
   const byYear = {};
-  for (const y of years) byYear[y] = { RIT: 0, MCC: 0, FLCC: 0 };
+  for (const y of years) byYear[y] = Object.fromEntries(INSTS.map((i) => [i.short, 0]));
   for (const s of data.series) {
     const inst = instOf(s.inst);
     if (!inst) continue;
-    byYear[s.year][inst.short] += (s.cert || 0) + (s.assoc || 0) + (s.bach || 0) + (s.grad || 0);
+    byYear[s.year][inst.short] += num(s.cert) + num(s.assoc) + num(s.bach) + num(s.grad);
   }
 
   const mount = document.getElementById('ipeds-panel');
@@ -188,7 +191,9 @@ function renderIpeds(data) {
     const W = Math.max(330, w);
     const H = 300;
     const M = { l: 44, r: 8, t: 20, b: 36 };
-    const maxTotal = Math.max(...years.map((y) => byYear[y].RIT + byYear[y].MCC + byYear[y].FLCC));
+    const maxTotal = Math.max(
+      ...years.map((y) => INSTS.reduce((a, i) => a + byYear[y][i.short], 0))
+    );
     const yMax = Math.ceil(maxTotal / 50) * 50;
     const bw = Math.min(64, ((W - M.l - M.r) / years.length) * 0.62);
 
@@ -210,7 +215,7 @@ function renderIpeds(data) {
         const v = byYear[yr][inst.short];
         const h = ((H - M.t - M.b) * v) / yMax;
         if (v > 0)
-          html += `<rect x="${cx - bw / 2}" y="${y0 - h}" width="${bw}" height="${h}" fill="${inst.color}" opacity="${inst.short === 'MCC' ? 0.65 : 0.9}"></rect>`;
+          html += `<rect x="${cx - bw / 2}" y="${y0 - h}" width="${bw}" height="${h}" fill="${inst.color}" opacity="${inst.short === 'MCC' ? 0.65 : inst.short === 'OCC' ? 0.78 : 0.9}"></rect>`;
         y0 -= h;
       }
       html += `<text x="${cx}" y="${H - M.b + 14}" text-anchor="middle" class="chart-label">${yr}</text>`;
@@ -218,7 +223,7 @@ function renderIpeds(data) {
     // key
     let kx = M.l;
     for (const inst of INSTS) {
-      html += `<rect x="${kx}" y="4" width="9" height="9" fill="${inst.color}" opacity="${inst.short === 'MCC' ? 0.65 : 0.9}"></rect>
+      html += `<rect x="${kx}" y="4" width="9" height="9" fill="${inst.color}" opacity="${inst.short === 'MCC' ? 0.65 : inst.short === 'OCC' ? 0.78 : 0.9}"></rect>
         <text x="${kx + 13}" y="12" class="chart-label">${inst.short}</text>`;
       kx += 62;
     }

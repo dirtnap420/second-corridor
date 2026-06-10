@@ -125,6 +125,7 @@ adversarially re-verified against the live document (retrieved 2026-06-10).
 | node-albany | Albany NanoTech Complex, NSTC EUV Accelerator | [Governor's office](https://www.governor.ny.gov/news/governor-hochul-announces-grand-opening-nstc-euv-accelerator-ny-creates-albany-nanotech) | 2025-07-14 |
 | node-clay | White Pine Commerce Park, Town of Clay, Onondaga County | [Governor's office](https://www.governor.ny.gov/news/hochul-schumer-mcmahon-announce-micron-coming-onondaga-county-micron-will-invest-unprecedented) | 2022-10-04 |
 | node-rit | RIT microelectronic engineering programs | [RIT News](https://www.rit.edu/news/rit-expands-its-workforce-initiatives-semiconductor-industry) | 2024-07-26 |
+| occ-micron | $15M Micron Cleanroom Simulation Lab at Onondaga Community College (funded $5M each by Micron, Onondaga County, NYS/SUNY); Micron-aligned Electromechanical Technology AAS + certificate | [Governor's office](https://www.governor.ny.gov/news/governor-hochul-unveils-plans-15-million-micron-cleanroom-simulation-lab-onondaga-community) | 2023-10-19 |
 | ann-tsmc-az | TSMC Arizona announced May 15, 2020 | [TSMC](https://pr.tsmc.com/english/news/2033) | 2020-05-15 |
 | ann-intel-oh | Intel Ohio announced January 21, 2022 | [Intel](https://www.intc.com/news-events/press-releases/detail/1521/intel-announces-next-us-site-with-landmark-investment-in) | 2022-01-21 |
 | ann-micron-id | Micron Boise announced September 1, 2022 | [Micron](https://www.globenewswire.com/news-release/2022/09/01/2508617/0/en/Micron-to-Invest-15-Billion-in-New-Idaho-Fab-Bringing-Leading-Edge-Memory-Manufacturing-to-the-US.html) | 2022-09-01 |
@@ -214,6 +215,16 @@ objects inside `public/data/*.json` and in the on-page Sources list.
     sources landed simultaneously, so the per-section independence the spec
     wanted (a blocked source stalls one panel, not the phase) was satisfied
     by the pipeline structure instead.
+22. **Onondaga Community College added at the author's request** (it was not
+    in the spec's institution list). Citation located and verified first:
+    the $15M Micron Cleanroom Simulation Lab at OCC's Whitney Applied
+    Technology Center (Governor's office, 2023-10-19). OCC joins the talent
+    lattice (with the cleanroom lab as a cited mechanism feeding Micron
+    Clay) and the IPEDS completions panel (unitid 194222, name-asserted at
+    runtime; CIP 15.0403 Electromechanical Technology added to the kept
+    set). OCC's Micron-aligned programs launched fall 2023, after the
+    latest available completions year (AY 2021-22) — its bars show the
+    pre-Micron baseline, which is the point of the panel.
 
 ## Colophon
 

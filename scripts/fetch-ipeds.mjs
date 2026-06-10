@@ -55,6 +55,10 @@ const INSTITUTIONS = [
   { unitid: 195003, name: 'Rochester Institute of Technology', short: 'RIT' },
   { unitid: 193326, name: 'Monroe Community College', short: 'MCC' },
   { unitid: 191199, name: 'Finger Lakes Community College', short: 'FLCC' },
+  // OCC hosts the $15M Micron Cleanroom Simulation Lab and Micron-aligned
+  // Electromechanical Technology AAS/certificate programs (Governor's office,
+  // 2023-10-19). unitid verified against the IPEDS directory (Syracuse, NY).
+  { unitid: 194222, name: 'Onondaga Community College', short: 'OCC' },
 ];
 
 // Semiconductor-relevant 6-digit CIPs these institutions actually report
@@ -66,6 +70,7 @@ const KEEP_CIPS = [
   144701, // 14.4701 Electrical and Computer Engineering (RIT recode target; incl. microelectronic engineering BS)
   150303, // 15.0303 Electrical, Electronic, and Communications Engineering Technology/Technician
   150306, // 15.0306 Integrated Circuit Design Technology/Technician (RIT; ~0 completions but reported)
+  150403, // 15.0403 Electromechanical Technology — OCC's Micron-aligned AAS/certificate program
   150613, // 15.0613 Manufacturing Engineering Technology/Technician
 ];
 // 15.0616 (Semiconductor Manufacturing Technology/Technician) exists in CIP
