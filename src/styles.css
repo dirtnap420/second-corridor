@@ -291,6 +291,11 @@ h2 {
   display: inline-flex;
   border: 1px solid var(--ink);
 }
+/* D19: Play → Pause → Replay relabeling must not resize the grid column —
+   sized to the widest label ("Replay" measures 84.4px in the btn font) */
+#play {
+  min-width: 88px;
+}
 .micro-tabs .btn {
   border: 0;
   border-left: 1px solid var(--ink);

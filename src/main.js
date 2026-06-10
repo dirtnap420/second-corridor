@@ -140,7 +140,9 @@ let lastT = null;
 function stepPlay(t) {
   if (!state.playing) return;
   if (lastT === null) lastT = t;
-  const dt = (t - lastT) / 1000;
+  // F27: clamp the frame delta (matches the particle engine's clamp) — rAF
+  // pauses in background tabs, and an unclamped delta teleports the year
+  const dt = Math.min(0.1, (t - lastT) / 1000);
   lastT = t;
   const next = state.year + dt * PLAY_YEARS_PER_SEC;
   if (next >= YEAR_MAX) {
@@ -498,20 +500,49 @@ async function boot() {
   stageEl.style.height = `${Math.round(
     Math.min(560, Math.max(260, stageEl.clientWidth * 0.55))
   )}px`;
-  // live sections register their data sources into the numbered list,
-  // so they load before the sources list and citation marks are built
-  const live = await initLive();
-  markStage('boot:live-loaded');
+  // F19: kick both fetches immediately and build every static surface while
+  // they're in flight. The ordering constraint is citation numbering only:
+  // live sections register their sources into the numbered list, so
+  // bindCiteMarks/buildSources must wait for initLive — nothing else does.
+  // (The static surfaces below cite only keys registered synchronously by
+  // sources.js at import.)
+  const livePromise = initLive();
+  const geoPromise = fetch('/data/ny-geo.json').then((r) => r.json());
 
-  bindCiteMarks();
-  buildSources();
   buildInstalledBase();
   buildTicks();
   buildLedger();
   buildDials();
 
-  const geo = await fetch('/data/ny-geo.json').then((r) => r.json());
-  markStage('boot:geo-loaded');
+  const site = responsiveMount(document.getElementById('site-panel'), (w) =>
+    renderSite(document.getElementById('site-panel'), w)
+  );
+  onYear((y) => site.update(y));
+
+  const chart = responsiveMount(document.getElementById('buildout-chart'), (w) =>
+    renderChart(document.getElementById('buildout-chart'), w)
+  );
+  onYear((y) => chart.update(y));
+  buildChartNumbers(document.getElementById('buildout-numbers'));
+
+  responsiveMount(document.getElementById('capital-sankey'), (w) =>
+    renderCapitalSankey(document.getElementById('capital-sankey'), w)
+  );
+  buildCapitalNumbers(document.getElementById('capital-numbers'));
+
+  responsiveMount(document.getElementById('talent-sankey'), (w) =>
+    renderTalentSankey(document.getElementById('talent-sankey'), w)
+  );
+  buildTalentNumbers(document.getElementById('talent-numbers'));
+  markStage('boot:static-mounted');
+
+  const [live, geo] = await Promise.all([livePromise, geoPromise]);
+  markStage('boot:data-loaded');
+
+  // citation steps — only now is the source registry complete
+  bindCiteMarks();
+  buildSources();
+
   const uiState = { particles: 'ambient', view: 'map' };
   let flowInfo = null;
   const flowsLegend = document.getElementById('flows-legend');
@@ -573,29 +604,6 @@ async function boot() {
   }
   tabMap.addEventListener('click', () => setView('map'));
   tabSection.addEventListener('click', () => setView('section'));
-
-  // the site-assembly panel — the seventh synchronized surface
-  const site = responsiveMount(document.getElementById('site-panel'), (w) =>
-    renderSite(document.getElementById('site-panel'), w)
-  );
-  onYear((y) => site.update(y));
-
-  const chart = responsiveMount(document.getElementById('buildout-chart'), (w) =>
-    renderChart(document.getElementById('buildout-chart'), w)
-  );
-  onYear((y) => chart.update(y));
-  buildChartNumbers(document.getElementById('buildout-numbers'));
-
-  responsiveMount(document.getElementById('capital-sankey'), (w) =>
-    renderCapitalSankey(document.getElementById('capital-sankey'), w)
-  );
-  buildCapitalNumbers(document.getElementById('capital-numbers'));
-
-  responsiveMount(document.getElementById('talent-sankey'), (w) =>
-    renderTalentSankey(document.getElementById('talent-sankey'), w)
-  );
-  buildTalentNumbers(document.getElementById('talent-numbers'));
-  markStage('boot:charts-mounted');
 
   // colophon vintage: latest retrievedAt across all provenance objects
   const vintageEl = document.getElementById('colophon-vintage');
