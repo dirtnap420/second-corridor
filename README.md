@@ -1,6 +1,14 @@
 # The Second Corridor
 
-**Live: https://second-corridor.vercel.app**
+![The Second Corridor — corridor instrument at year 2030](docs/hero.png)
+
+**Live: https://second-corridor.vercel.app** · deep link: [`#y=2030`](https://second-corridor.vercel.app/#y=2030) · skip the intro: `?nointro`
+
+Verified on the deployed URL (2026-06-10): Lighthouse **100 / 97 / 100**
+(performance / accessibility / best-practices), CLS 0.009, LCP 1.0s. Main
+bundle **60.8KB gzipped** JS+CSS (poster module lazy-loaded). Committed data
+**~44KB**. Offline proof: zero external requests, zero console errors
+(`node qa/offline.mjs`).
 
 An interactive, single-purpose tracker of New York State's semiconductor buildout
 (2022–2045), assembled entirely from public data. One master scrubber drives a
@@ -50,6 +58,17 @@ a given year. `?nointro` skips the plotter opening.
 
 QA: `npm run qa` screenshots years {2022, 2026, 2030, 2045} × widths
 {375, 768, 1280} into `qa/shots/` (gitignored) for before/after comparison.
+`node qa/offline.mjs` builds the offline/console proof.
+
+**Poster:** the EXPORT POSTER control downloads a self-contained
+A2-proportioned SVG (fonts embedded as data URIs) of the instrument at the
+current scrub year. To print it: open the SVG in any browser → print → save
+as PDF at A2 paper size (or scale-to-fit on A3/letter). The title block
+records the year, draw date, and build revision.
+
+**Print brief:** Cmd/Ctrl+P on the site itself produces a PDF brief — canvas
+and controls hidden, a mono header with the frozen scrub year and every data
+vintage, and clean page breaks between sections 06–11.
 
 ## Data integrity
 
@@ -155,6 +174,46 @@ objects inside `public/data/*.json` and in the on-page Sources list.
     TSMC's May 15, 2020 release names Arizona but not Phoenix; Intel's Jan 21,
     2022 release names Licking County but not New Albany; Samsung's newsroom
     dateline is Nov 24, 2021 (KST) for the Nov 23 US-time announcement.
+12. **The spec's IPEDS unitids were wrong** — 193283 is Mohawk Valley CC and
+    191676 is Houghton University. Corrected via the IPEDS directory to
+    193326 (Monroe Community College) and 191199 (Finger Lakes Community
+    College); the fetch script asserts institution names on every run.
+13. **Urban Institute's completions year labels are internally inconsistent**
+    (fall-year before 2020, survey-year after; their 2019 and 2020 duplicate
+    AY 2019-20). The fetch script re-keys everything to NCES survey years and
+    pins five hand-verified values from raw NCES C-files so relabeling fails
+    loudly.
+14. **Micron's CHIPS funding agreements have no award record on USAspending**
+    (verified across CFDA 11.037, recipient UEI, File C, and Spending
+    Explorer; only the TSMC and SK Hynix loans appear). Section 08 renders
+    the absence as the datapoint; a runtime self-check auto-captures the
+    records if Commerce ever publishes them.
+15. The Census ACS API is no longer keyless; without `CENSUS_API_KEY` the
+    fetch script falls back to the official ACS 5-Year Summary File (same
+    figures, documented in provenance).
+16. The FLOWS legend says **JOBS**, not the spec template's WORKERS — LODES
+    JT00 counts jobs (multiple jobholders count twice), and honest method
+    outranks template wording. One particle = ceil(top-30 flow sum ÷
+    perf cap) jobs.
+17. FLOWS is geography-bound, so it is unavailable in the SECTION view
+    (the tab disables; particles fall back to ambient along the datum).
+18. Site panel: no citable site-plan geometry was located, so the spec's
+    diagrammatic fallback renders — four schematic volumes sequenced by the
+    cited milestones. Fab 1's 2026→2028 rise is cited; the same two-year
+    rise is applied to Fabs 2–4 from their cited start years. Operational
+    fill uses the wafer-violet token.
+19. Licking County OH (Intel) is fully suppressed in QCEW for all months;
+    its comparator strip renders the suppression hatch rather than being
+    dropped (the announcement date is cleanly cited — only the data is
+    confidential).
+20. Copper on silicon (~4.0:1) is below WCAG AA's 4.5:1 for the small mono
+    eyebrows and citation marks. The tokens are locked and Lighthouse
+    accessibility holds at 97 (≥95 gate), so the signature stays; noted for
+    the author.
+21. Sections 07–11 shipped as one commit rather than five — all five data
+    sources landed simultaneously, so the per-section independence the spec
+    wanted (a blocked source stalls one panel, not the phase) was satisfied
+    by the pipeline structure instead.
 
 ## Colophon
 

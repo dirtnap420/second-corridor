@@ -523,11 +523,22 @@ async function boot() {
 
   // colophon vintage: latest retrievedAt across all provenance objects
   const vintageEl = document.getElementById('colophon-vintage');
-  const dates = [geo, live.qcew, live.oews, live.ipeds]
-    .filter((d) => d && d.provenance)
-    .map((d) => d.provenance.retrievedAt)
-    .sort();
+  const provs = [geo, live.qcew, live.oews, live.ipeds, live.lodes, live.spending, live.permits, live.acs, live.nyiso].filter(
+    (d) => d && d.provenance
+  );
+  const dates = provs.map((d) => d.provenance.retrievedAt).sort();
   if (dates.length) vintageEl.textContent = dates[dates.length - 1];
+
+  // print brief header: frozen scrub year + all data vintages
+  const printHeader = document.getElementById('print-header');
+  const vintages = provs
+    .map((d) => d.provenance.vintage)
+    .map((v) => v.split(';')[0].split('(')[0].trim());
+  onYear((y) => {
+    printHeader.textContent = `THE SECOND CORRIDOR · PRINTED AT YEAR ${Math.floor(
+      y + 1e-6
+    )} · DATA: ${[...new Set(vintages)].join(' · ')}`;
+  });
 
   // initial year: deep link or 2022
   const initial = readHash();

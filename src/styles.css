@@ -720,23 +720,54 @@ footer.colophon {
   color: var(--muted);
 }
 
-/* ---------- print ---------- */
+/* ---------- print: a credible PDF brief ---------- */
+#print-header {
+  display: none;
+}
 @media print {
   .scrubber,
   canvas,
   .instrument-toggles,
   .btn,
-  details.numbers {
+  details.numbers,
+  #flows-legend {
     display: none !important;
+  }
+  #print-header {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--ink);
+    padding: 0 0 8px;
+    margin-bottom: 18px;
   }
   section.sheet {
     break-inside: avoid;
     margin-top: 36px;
+  }
+  #s06,
+  #s07,
+  #s08,
+  #s09,
+  #s10,
+  #s11,
+  #sources {
+    break-before: page;
   }
   body {
     background: #fff;
   }
   .plate--main {
     box-shadow: none;
+  }
+  .ledger ol {
+    max-height: none;
+    overflow: visible;
+  }
+  a.cite {
+    color: var(--ink);
   }
 }
