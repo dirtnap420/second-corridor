@@ -478,10 +478,22 @@ function showNodePlate(node) {
 }
 
 /* ---------------- boot ---------------- */
+// boot-stage instrumentation: each stage gets a mark and a measure from the
+// previous stage, so "it feels slower" always has numbers in the Performance
+// panel (and in qa/perf.mjs traces).
+let lastMark = null;
+function markStage(name) {
+  performance.mark(name);
+  if (lastMark) performance.measure(`${lastMark} → ${name}`, lastMark, name);
+  lastMark = name;
+}
+
 async function boot() {
+  markStage('boot:start');
   // live sections register their data sources into the numbered list,
   // so they load before the sources list and citation marks are built
   const live = await initLive();
+  markStage('boot:live-loaded');
 
   bindCiteMarks();
   buildSources();
@@ -491,6 +503,7 @@ async function boot() {
   buildDials();
 
   const geo = await fetch('/data/ny-geo.json').then((r) => r.json());
+  markStage('boot:geo-loaded');
   const uiState = { particles: 'ambient', view: 'map' };
   let flowInfo = null;
   const flowsLegend = document.getElementById('flows-legend');
@@ -511,6 +524,7 @@ async function boot() {
     renderMap(document.getElementById('map-stage'), geo, mapOpts, w)
   );
   onYear((y) => map.update(y));
+  markStage('boot:map-mounted');
 
   function updateFlowsLegend() {
     if (uiState.particles === 'flows' && uiState.view === 'map' && flowInfo) {
@@ -572,6 +586,7 @@ async function boot() {
     renderTalentSankey(document.getElementById('talent-sankey'), w)
   );
   buildTalentNumbers(document.getElementById('talent-numbers'));
+  markStage('boot:charts-mounted');
 
   // colophon vintage: latest retrievedAt across all provenance objects
   const vintageEl = document.getElementById('colophon-vintage');
@@ -604,6 +619,7 @@ async function boot() {
 
   // the plotter opening — draw-over of the rendered DOM; skipped by
   // ?nointro, reduced motion, or any input
+  markStage('boot:intro-start');
   runIntro({ mapInstance: map.instance, motion });
 }
 
