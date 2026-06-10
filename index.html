@@ -29,6 +29,32 @@
     />
     <meta name="twitter:image" content="https://second-corridor.vercel.app/og.png" />
 
+    <!-- F10: preload the fonts the first screen actually renders — h1/h2 are
+         Archivo 900 (the LCP element), body copy is Archivo 400, eyebrows are
+         Plex Mono 500. Late font application reflows the masthead (worst on
+         Linux fallback metrics — caught by the CLS gate in CI). The 700/mono-400
+         preloads predate this; trimming the list is F42 (Wave 7). -->
+    <link
+      rel="preload"
+      href="/fonts/archivo-v25-latin-900.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/archivo-v25-latin-regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/ibm-plex-mono-v20-latin-500.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <link
       rel="preload"
       href="/fonts/archivo-v25-latin-700.woff2"
