@@ -68,14 +68,17 @@ export function renderChart(container, width) {
     return g;
   };
 
-  /* milestone hairlines + rotated mono flags */
+  /* milestone hairlines + rotated mono flags — D4: below 620px the rotated
+     year labels collide (2022–2030 cluster), so narrow widths keep the
+     hairlines and drop the labels */
   const uniqYears = [...new Set(MILESTONES.map((m) => m.year))];
+  const flagLabels = W >= 620;
   let flags = '';
   for (const y of uniqYears) {
     const px = x(y);
     flags += `<g class="milestone-flag">
       <line x1="${px}" y1="${INVEST.top - 6}" x2="${px}" y2="${JOBS.top + JOBS.h}"></line>
-      <text transform="rotate(-90 ${px} ${INVEST.top - 10})" x="${px}" y="${INVEST.top - 10}" text-anchor="start">${y}</text>
+      ${flagLabels ? `<text transform="rotate(-90 ${px} ${INVEST.top - 10})" x="${px}" y="${INVEST.top - 10}" text-anchor="start">${y}</text>` : ''}
     </g>`;
   }
   put(flags);
@@ -112,17 +115,23 @@ export function renderChart(container, width) {
     <path d="${investLine}" fill="none" stroke="var(--copper)" stroke-width="1.75"></path>
   `);
 
-  /* key */
+  /* key — D1: left-aligned at every width; the right-anchored position
+     (W-332) clipped "SUPPLY (STACKED ON PERM)" at column widths. The full
+     strip runs ~344px, so below 420px it wraps to two rows. Direct
+     end-labels (D23, Wave 5) will replace this key entirely. */
   const keyY = JOBS.top - 14;
-  const keyX = narrow ? M.l : W - 332;
+  const keyX = M.l;
+  const keyWrap = W < 420;
+  const row1Y = keyWrap ? keyY - 15 : keyY; // wrap upward into the 44px gap band
+  const supX = keyWrap ? keyX : keyX + 172;
   put(`
     <g class="chart-label">
-      <rect x="${keyX}" y="${keyY - 9}" width="9" height="9" fill="url(#hatch)" stroke="var(--ink)" stroke-width="0.5"></rect>
-      <text x="${keyX + 14}" y="${keyY}">CONSTR BAND</text>
-      <rect x="${keyX + 106}" y="${keyY - 9}" width="9" height="9" fill="var(--copper)"></rect>
-      <text x="${keyX + 120}" y="${keyY}">PERM</text>
-      <rect x="${keyX + 172}" y="${keyY - 9}" width="9" height="9" fill="var(--violet)" opacity="0.5"></rect>
-      <text x="${keyX + 186}" y="${keyY}">SUPPLY (STACKED ON PERM)</text>
+      <rect x="${keyX}" y="${row1Y - 9}" width="9" height="9" fill="url(#hatch)" stroke="var(--ink)" stroke-width="0.5"></rect>
+      <text x="${keyX + 14}" y="${row1Y}">CONSTR BAND</text>
+      <rect x="${keyX + 106}" y="${row1Y - 9}" width="9" height="9" fill="var(--copper)"></rect>
+      <text x="${keyX + 120}" y="${row1Y}">PERM</text>
+      <rect x="${supX}" y="${keyY - 9}" width="9" height="9" fill="var(--violet)" opacity="0.5"></rect>
+      <text x="${supX + 14}" y="${keyY}">SUPPLY (STACKED ON PERM)</text>
     </g>
   `);
 
