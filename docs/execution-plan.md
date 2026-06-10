@@ -79,9 +79,40 @@ Goal: real identity, a remote, and a recorded "before" state.
 **Exit:** repo public-ready (visibility can stay private until R3), baseline
 committed, decision answers recorded under Deviations/Notes.
 
-## Wave 1 — gates before changes (~1 session)
+## Wave 1 — gates before changes (~1–2 sessions)
 
 Goal: every subsequent wave lands on a protected build.
+
+**Branch convention (active from this wave):** each wave is a branch
+(`wave-1-gates`, `wave-2-defects`, …) landing as a PR to `main`. Vercel's Git
+integration (connected 2026-06-10) attaches a preview deployment to every PR —
+that preview link is the review artifact for Alex's checkpoints.
+
+Prelude — execution machinery (added 2026-06-10, do first):
+- [x] M1 — Vercel↔GitHub Git integration connected (Alex) — Wave 3's
+      VERCEL_TOKEN walk-through is now moot; refresh PRs get preview deploys
+- [ ] M2 — repo `CLAUDE.md`: session ritual (read tracker → run battery →
+      confirm green → change things), commit format, battery list, copy
+      guardrail, sign-off list
+- [ ] M3 — visual regression diffing: commit current shots as baselines,
+      pixelmatch step fails the battery on unexpected deltas; waves that intend
+      visual change regenerate baselines in their PR
+- [ ] M4 — axe-core pass inside the contract test (a11y gate)
+- [ ] M5 — `docs/copy-deck.md`: pre-draft ALL sign-off copy (S23/S24/S27/S30/
+      S33 takeaways, s06+s08 headlines, Part Two pivot paragraph, synthesis
+      verdicts) with cites, for one async approval pass by Alex
+- [ ] M6 — spikes (feasibility notes only): (a) S23 scale problem — measured
+      ~670 on a 0–52K axis hugs the floor; decide annotated floor-line vs
+      magnified inset; (b) D3 mobile route-list prototype for Fig 04
+- [ ] M7 — `qa/fixtures/`: synthetic datasets (all-suppressed QCEW, missing
+      file, extreme values) wired into the contract test
+- [x] M8 — repo location: **stays in OneDrive** (Alex's call) — GitHub is the
+      remote of record; recommended: pin folder "Always keep on this device"
+      to reduce sync/lock races with `.git`
+- [ ] M9 — `git tag v0-baseline` + regenerate `og.png` (`npm run og`) and
+      verify no `[NAME]` placeholder baked into the social card
+- [ ] M10 — **Alex:** send a test email to Alex@ozarkintelligence.com; confirm
+      mailto: link choice (rec: plain mailto, accept the spam)
 
 - [ ] F2 — `lint-size.mjs` bundle gate in `npm run build`
 - [ ] F1 — `perf-budget.json` written
@@ -446,6 +477,13 @@ Triage every remaining P3 explicitly — do, defer, or drop with a Deviations no
 
 **Dropped:** D43 (dark theme) · R4 (independence statement) · R6 (custom domain,
 deferred).
+
+**2026-06-10 — execution machinery (10 proposals → Wave 1 prelude M1–M10):**
+M1 done by Alex (Vercel↔GitHub connected); M8 decided (repo stays in OneDrive);
+M10 owned by Alex; M2–M7, M9 fold into Wave 1, to be executed first. Wave-branch
+PR convention adopted from Wave 1 on. Wave 3 note: VERCEL_TOKEN no longer
+needed — deploys ride the Git integration; remaining Wave 3 check is `workflow`
+scope on the GCM token before pushing `.github/workflows/`.
 
 **Wave 0 progress (2026-06-10):**
 - [x] P50≡R1 — colophon (`index.html`) + poster (`poster.js:221`) placeholders
