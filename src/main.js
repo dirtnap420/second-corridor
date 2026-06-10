@@ -15,9 +15,15 @@ import {
   permAt,
 } from './data.js';
 import './sources.js';
-import { initMap } from './map.js';
-import { initChart } from './chart.js';
-import { initCapitalSankey, initTalentSankey } from './sankey.js';
+import { renderMap } from './map.js';
+import { renderChart, buildChartNumbers } from './chart.js';
+import {
+  renderCapitalSankey,
+  renderTalentSankey,
+  buildCapitalNumbers,
+  buildTalentNumbers,
+} from './sankey.js';
+import { responsiveMount } from './responsive.js';
 
 /* ---------------- motion preference (live) ---------------- */
 const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -164,9 +170,8 @@ function buildLedger() {
     if (!m.src.some((s) => cite(s))) continue; // no citation → does not render
     const li = document.createElement('li');
     li.dataset.year = m.year;
-    const marks = m.src
-      .filter((s) => cite(s))
-      .map((s) => `<a class="cite" href="#sources">[${cite(s)}]</a>`)
+    const marks = [...new Set(m.src.map((s) => cite(s)).filter(Boolean))]
+      .map((n) => `<a class="cite" href="#sources">[${n}]</a>`)
       .join('');
     li.innerHTML = `<span class="yr">${m.year}</span><span>${m.label}${marks}</span>`;
     li.addEventListener('click', () => {
@@ -207,9 +212,8 @@ const fmtJobs = (v) => Math.round(v).toLocaleString('en-US');
 function makeDial({ label, srcKeys, max, format, id }) {
   const div = document.createElement('div');
   div.className = 'dial';
-  const marks = srcKeys
-    .filter((s) => cite(s))
-    .map((s) => `<a class="cite" href="#sources">[${cite(s)}]</a>`)
+  const marks = [...new Set(srcKeys.map((s) => cite(s)).filter(Boolean))]
+    .map((n) => `<a class="cite" href="#sources">[${n}]</a>`)
     .join('');
   div.innerHTML = `
     <div class="dial-label">${label}${marks}</div>
@@ -346,24 +350,27 @@ async function boot() {
   buildDials();
 
   const geo = await fetch('/data/ny-geo.json').then((r) => r.json());
-  const map = initMap(document.getElementById('map-stage'), geo, {
-    onNodeSelect: showNodePlate,
-    motion,
-    onMotionChange,
-  });
+  const mapOpts = { onNodeSelect: showNodePlate, motion, onMotionChange };
+  const map = responsiveMount(document.getElementById('map-stage'), (w) =>
+    renderMap(document.getElementById('map-stage'), geo, mapOpts, w)
+  );
   onYear((y) => map.update(y));
 
-  const chart = initChart(document.getElementById('buildout-chart'), {
-    numbersEl: document.getElementById('buildout-numbers'),
-  });
+  const chart = responsiveMount(document.getElementById('buildout-chart'), (w) =>
+    renderChart(document.getElementById('buildout-chart'), w)
+  );
   onYear((y) => chart.update(y));
+  buildChartNumbers(document.getElementById('buildout-numbers'));
 
-  initCapitalSankey(document.getElementById('capital-sankey'), {
-    numbersEl: document.getElementById('capital-numbers'),
-  });
-  initTalentSankey(document.getElementById('talent-sankey'), {
-    numbersEl: document.getElementById('talent-numbers'),
-  });
+  responsiveMount(document.getElementById('capital-sankey'), (w) =>
+    renderCapitalSankey(document.getElementById('capital-sankey'), w)
+  );
+  buildCapitalNumbers(document.getElementById('capital-numbers'));
+
+  responsiveMount(document.getElementById('talent-sankey'), (w) =>
+    renderTalentSankey(document.getElementById('talent-sankey'), w)
+  );
+  buildTalentNumbers(document.getElementById('talent-numbers'));
 
   // colophon vintage: latest provenance vintage available (geo for now)
   const vintageEl = document.getElementById('colophon-vintage');

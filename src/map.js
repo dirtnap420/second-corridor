@@ -1,23 +1,26 @@
 // map.js — the corridor map: NY geography, five nodes, corridor trace,
-// canvas particle layer (ambient mode). All surfaces driven by update(year).
+// canvas particle layer (ambient mode). Rendered at container width so labels
+// keep true size; all surfaces driven by update(year).
 import { geoConicConformal, geoPath, line as d3line, curveCatmullRom } from 'd3';
 import { feature, mesh, merge } from 'topojson-client';
 import { NODES, YEAR_MIN, YEAR_MAX } from './data.js';
 
-const VB_W = 980;
-const VB_H = 540;
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-export function initMap(container, topo, { onNodeSelect, motion, onMotionChange }) {
+export function renderMap(container, topo, { onNodeSelect, motion, onMotionChange }, width) {
+  const W = Math.max(320, width);
+  const H = Math.round(Math.min(560, Math.max(220, W * 0.55)));
+
   /* ---------- projection (noted in README) ---------- */
   const counties = feature(topo, topo.objects.counties);
+  const pad = Math.max(10, W * 0.02);
   const projection = geoConicConformal()
     .parallels([40.5, 44.5])
     .rotate([76.5, 0])
     .fitExtent(
       [
-        [16, 16],
-        [VB_W - 16, VB_H - 44],
+        [pad, pad],
+        [W - pad, H - pad * 2],
       ],
       counties
     );
@@ -25,18 +28,15 @@ export function initMap(container, topo, { onNodeSelect, motion, onMotionChange 
 
   /* ---------- svg ---------- */
   const svg = document.createElementNS(SVG_NS, 'svg');
-  svg.setAttribute('viewBox', `0 0 ${VB_W} ${VB_H}`);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', W);
   svg.setAttribute('role', 'img');
   svg.setAttribute('aria-label', 'Corridor map of New York State with five semiconductor nodes');
   svg.innerHTML = `<title>The corridor map</title>
     <desc>New York State counties with five corridor nodes: STAMP, RIT, Clay, Marcy, and Albany NanoTech, connected by a corridor trace along I-90.</desc>`;
   container.appendChild(svg);
 
-  // state silhouette (silicon fill) + interior county hairlines + ink outline
-  const stateShape = merge(
-    topo,
-    topo.objects.counties.geometries
-  );
+  const stateShape = merge(topo, topo.objects.counties.geometries);
   const interior = mesh(topo, topo.objects.counties, (a, b) => a !== b);
 
   const gGeo = document.createElementNS(SVG_NS, 'g');
@@ -98,18 +98,11 @@ export function initMap(container, topo, { onNodeSelect, motion, onMotionChange 
   container.appendChild(canvas);
   const ctx = canvas.getContext('2d');
 
-  let dpr = 1;
-  function sizeCanvas() {
-    const rect = container.getBoundingClientRect();
-    if (rect.width === 0) return;
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(rect.width * dpr);
-    canvas.height = Math.round(rect.height * dpr);
-  }
-  new ResizeObserver(sizeCanvas).observe(container);
-  sizeCanvas();
+  let dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
 
-  // sample the trace once in viewBox coords
+  // sample the trace once (coords are real px now)
   const SAMPLES = 240;
   const tracePts = [];
   for (let i = 0; i <= SAMPLES; i++) {
@@ -122,8 +115,8 @@ export function initMap(container, topo, { onNodeSelect, motion, onMotionChange 
   function spawn() {
     particles.push({
       t: Math.random(),
-      speed: 0.012 + Math.random() * 0.02, // path fractions per second
-      jitter: (Math.random() - 0.5) * 10,
+      speed: 0.012 + Math.random() * 0.02,
+      jitter: (Math.random() - 0.5) * 8,
       size: 1.4 + Math.random() * 1.4,
       alpha: 0.35 + Math.random() * 0.4,
     });
@@ -131,13 +124,14 @@ export function initMap(container, topo, { onNodeSelect, motion, onMotionChange 
 
   let targetCount = 0;
   let running = false;
-  let visible = true;
+  let visible = document.visibilityState === 'visible';
   let onscreen = true;
   let lastFrame = null;
   let currentYear = YEAR_MIN;
+  let destroyed = false;
 
   function frame(t) {
-    if (!running) return;
+    if (!running || destroyed) return;
     if (lastFrame === null) lastFrame = t;
     const dt = Math.min(0.05, (t - lastFrame) / 1000);
     lastFrame = t;
@@ -145,9 +139,6 @@ export function initMap(container, topo, { onNodeSelect, motion, onMotionChange 
     while (particles.length < targetCount) spawn();
     if (particles.length > targetCount) particles.length = targetCount;
 
-    const rect = container.getBoundingClientRect();
-    const sx = (canvas.width / dpr / VB_W) * dpr;
-    const sy = (canvas.height / dpr / VB_H) * dpr;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const progress = traceProgress(currentYear);
     ctx.fillStyle = '#b5562a';
@@ -157,14 +148,14 @@ export function initMap(container, topo, { onNodeSelect, motion, onMotionChange 
       const [px, py] = pointAt(p.t);
       ctx.globalAlpha = p.alpha;
       const s = p.size * dpr;
-      ctx.fillRect(px * sx - s / 2, py * sy + p.jitter * sy * 0.1 - s / 2, s, s);
+      ctx.fillRect(px * dpr - s / 2, (py + p.jitter) * dpr - s / 2, s, s);
     }
     ctx.globalAlpha = 1;
     requestAnimationFrame(frame);
   }
 
   function startEngine() {
-    if (running || motion.reduced || !visible || !onscreen) return;
+    if (running || motion.reduced || !visible || !onscreen || destroyed) return;
     running = true;
     lastFrame = null;
     requestAnimationFrame(frame);
@@ -178,17 +169,19 @@ export function initMap(container, topo, { onNodeSelect, motion, onMotionChange 
     else startEngine();
   }
 
-  document.addEventListener('visibilitychange', () => {
+  const onVis = () => {
     visible = document.visibilityState === 'visible';
     evalEngine();
-  });
-  new IntersectionObserver(
+  };
+  document.addEventListener('visibilitychange', onVis);
+  const io = new IntersectionObserver(
     (entries) => {
       onscreen = entries[0].isIntersecting;
       evalEngine();
     },
     { threshold: 0.05 }
-  ).observe(container);
+  );
+  io.observe(container);
   onMotionChange(() => evalEngine());
 
   /* ---------- year-driven update ---------- */
@@ -198,19 +191,23 @@ export function initMap(container, topo, { onNodeSelect, motion, onMotionChange 
 
   function update(year) {
     currentYear = year;
-    // node states
     NODES.forEach((n, i) => {
       nodeEls[i].classList.toggle('active', year >= n.activeFrom);
     });
-    // trace fill
     traceFill.style.strokeDashoffset = `${traceLen * (1 - traceProgress(year))}`;
-    // particle density: sparse atmosphere scaling gently with year
-    const mobile = window.innerWidth < 768;
+    const mobile = W < 700;
     const base = mobile ? 4 : 8;
     const span = mobile ? 18 : 38;
     targetCount = Math.round(base + (span * (year - YEAR_MIN)) / (YEAR_MAX - YEAR_MIN));
     evalEngine();
   }
 
-  return { update, projection, svg, nodePoints: pts };
+  function destroy() {
+    destroyed = true;
+    stopEngine();
+    document.removeEventListener('visibilitychange', onVis);
+    io.disconnect();
+  }
+
+  return { update, destroy, projection, svg, nodePoints: pts };
 }

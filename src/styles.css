@@ -389,12 +389,12 @@ input[type='range'].scrub:focus-visible::-webkit-slider-thumb {
 .node-marker {
   cursor: pointer;
 }
-.node-marker rect {
+.node-marker rect.mark {
   fill: var(--paper);
   stroke: var(--ink);
   stroke-width: 1;
 }
-.node-marker.active rect {
+.node-marker.active rect.mark {
   fill: var(--copper);
 }
 .node-marker.hero text {
@@ -410,7 +410,7 @@ input[type='range'].scrub:focus-visible::-webkit-slider-thumb {
 .node-marker:focus-visible {
   outline: none;
 }
-.node-marker:focus-visible rect {
+.node-marker:focus-visible rect.mark {
   stroke: var(--copper);
   stroke-width: 2.5;
 }
@@ -486,6 +486,7 @@ input[type='range'].scrub:focus-visible::-webkit-slider-thumb {
   list-style: none;
   max-height: 280px;
   overflow-y: auto;
+  position: relative;
 }
 .ledger li {
   display: grid;
@@ -538,6 +539,27 @@ input[type='range'].scrub:focus-visible::-webkit-slider-thumb {
   letter-spacing: 0.05em;
   fill: var(--muted);
   text-transform: uppercase;
+}
+
+.sankey-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--ink);
+  paint-order: stroke;
+  stroke: var(--paper);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.sankey-value {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--muted);
+}
+.sankey-note {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  fill: var(--muted);
 }
 
 /* view-the-numbers tables */
