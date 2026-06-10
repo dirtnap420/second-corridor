@@ -91,38 +91,38 @@ that preview link is the review artifact for Alex's checkpoints.
 Prelude — execution machinery (added 2026-06-10, do first):
 - [x] M1 — Vercel↔GitHub Git integration connected (Alex) — Wave 3's
       VERCEL_TOKEN walk-through is now moot; refresh PRs get preview deploys
-- [ ] M2 — repo `CLAUDE.md`: session ritual (read tracker → run battery →
+- [x] M2 — repo `CLAUDE.md`: session ritual (read tracker → run battery →
       confirm green → change things), commit format, battery list, copy
       guardrail, sign-off list
-- [ ] M3 — visual regression diffing: commit current shots as baselines,
+- [x] M3 — visual regression diffing: commit current shots as baselines,
       pixelmatch step fails the battery on unexpected deltas; waves that intend
       visual change regenerate baselines in their PR
-- [ ] M4 — axe-core pass inside the contract test (a11y gate)
-- [ ] M5 — `docs/copy-deck.md`: pre-draft ALL sign-off copy (S23/S24/S27/S30/
+- [x] M4 — axe-core pass inside the contract test (a11y gate)
+- [x] M5 — `docs/copy-deck.md`: pre-draft ALL sign-off copy (S23/S24/S27/S30/
       S33 takeaways, s06+s08 headlines, Part Two pivot paragraph, synthesis
       verdicts) with cites, for one async approval pass by Alex
-- [ ] M6 — spikes (feasibility notes only): (a) S23 scale problem — measured
+- [x] M6 — spikes (feasibility notes only): (a) S23 scale problem — measured
       ~670 on a 0–52K axis hugs the floor; decide annotated floor-line vs
       magnified inset; (b) D3 mobile route-list prototype for Fig 04
-- [ ] M7 — `qa/fixtures/`: synthetic datasets (all-suppressed QCEW, missing
+- [x] M7 — `qa/fixtures/`: synthetic datasets (all-suppressed QCEW, missing
       file, extreme values) wired into the contract test
 - [x] M8 — repo location: **stays in OneDrive** (Alex's call) — GitHub is the
       remote of record; recommended: pin folder "Always keep on this device"
       to reduce sync/lock races with `.git`
-- [ ] M9 — `git tag v0-baseline` + regenerate `og.png` (`npm run og`) and
+- [x] M9 — `git tag v0-baseline` + regenerate `og.png` (`npm run og`) and
       verify no `[NAME]` placeholder baked into the social card
 - [ ] M10 — **Alex:** send a test email to Alex@ozarkintelligence.com; confirm
       mailto: link choice (rec: plain mailto, accept the spam)
 
-- [ ] F2 — `lint-size.mjs` bundle gate in `npm run build`
-- [ ] F1 — `perf-budget.json` written
-- [ ] F3 — Lighthouse CI runnable locally + in CI
-- [ ] F4 — `qa/perf.mjs` runtime trace (intro → play → morph → flows)
-- [ ] F5 — throttled variant of F4
-- [ ] F6 — `performance.mark` boot stages
-- [ ] P3 — CI workflow: build + offline proof + (skeleton) contract test on push
-- [ ] P20 — unit tests for derived series + citation gate
-- [ ] P19 — frontend contract test, first version (plates render, no console errors)
+- [x] F2 — `lint-size.mjs` bundle gate in `npm run build`
+- [x] F1 — `perf-budget.json` written
+- [x] F3 — Lighthouse CI runnable locally + in CI
+- [x] F4 — `qa/perf.mjs` runtime trace (intro → play → morph → flows)
+- [x] F5 — throttled variant of F4
+- [x] F6 — `performance.mark` boot stages
+- [x] P3 — CI workflow: build + offline proof + (skeleton) contract test on push
+- [x] P20 — unit tests for derived series + citation gate
+- [x] P19 — frontend contract test, first version (plates render, no console errors)
 
 **Exit:** CI green on a no-op commit; gates demonstrably fail on a seeded violation
 (test once, revert).
@@ -509,3 +509,40 @@ scope on the GCM token before pushing `.github/workflows/`.
   push `.github/workflows/`); if not, one-time PAT walk-through with Alex.
 - Plan library + Wave 0 changes committed; verification of the colophon render
   rides Wave 2's battery (text-only change)
+
+**Wave 1 progress (2026-06-10, branch `wave-1-gates`):**
+- All M-prelude items (M2–M7, M9) and all gate items (F1–F6, P3, P19, P20)
+  landed. M10 remains with Alex (test email to the colophon address).
+- **Gates proven to fail:** size gate + visual diff on seeded violations
+  (budget cut to 100KB → fail at 178.2%; line-height 1.55→1.62 → all 12 shots
+  fail on dimension change), both reverted. Unit tests and the axe gate failed
+  on **real** violations found during the wave — better than seeded proof:
+  - P20's citation-integrity sweep caught the talent sankey's GlobalFoundries
+    node citing a nonexistent key (`ny-88-companies`) — it rendered uncited.
+    Repointed to `ny-156-companies` (ESD page, same as the suppliers node).
+  - M4's axe pass caught `nested-interactive` (serious): the map SVG was
+    `role=img` with `role=button` node markers nested inside, hiding them
+    from AT. Fixed: `role=group`. `color-contrast` (17 nodes) is allowlisted
+    in `qa/contract.mjs` with the item ID that clears it (D42, Wave 2).
+- **F3 deviation:** `@lhci/cli` replaced by a direct Lighthouse-API runner
+  (`qa/lighthouse.mjs`, Playwright-launched Chromium over CDP) —
+  chrome-launcher's temp-profile cleanup crashes on Windows (EPERM, no retry).
+  Same gate, fewer deps. Gate takes the **median of 3 runs** (single-run
+  lantern LCP varies ±10%).
+- **F1 calibration:** lab LCP budget set to **2400ms** (measured median
+  2.13s) — the LCP element is the masthead h1 in Archivo 900, which is not
+  preloaded until **F10 (Wave 2)**; the budget file carries the instruction to
+  tighten to 1800ms when F10 lands. Bundle/CLS/runtime budgets as planned;
+  runtimeThrottled block added (60ms frame cap vs 33.3ms measured max).
+- **M3 notes:** baselines are reduced-motion captures (particle engine off →
+  bit-identical across runs, verified). 12 PNGs ≈ 14.3MB committed per
+  baseline generation — repo weight grows with each visual wave; revisit if it
+  hurts. Visual diff and qa/perf.mjs are **local-only** battery steps; CI
+  excludes them by design (cross-OS rasterization noise; shared-runner timing
+  noise).
+- Housekeeping: README colophon line still had the `[NAME]` placeholder text —
+  fixed; `desktop.ini` (OneDrive) gitignored; stale `lighthouserc.json`
+  reference in the budget comment fixed.
+- Measured at exit: desktop playback p95 16.7ms / max 16.8ms, zero long
+  tasks; throttled (6×, DPR 2) p95 16.7ms / max 33.3ms; Lighthouse median
+  perf 0.99 / a11y 0.97 / bp 1.0, CLS 0.013.
