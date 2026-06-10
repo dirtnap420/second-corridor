@@ -218,7 +218,7 @@ export async function composePoster({ year }) {
   ${sources}
 
   ${titleBlock}
-  <text x="${W - 56}" y="${H - 110}" text-anchor="end" font-family="IBM Plex Mono" font-size="8.5" letter-spacing="1" fill="${T.muted}">BUILT BY [NAME] · [CONTACT/URL] · ALL FIGURES CITED · ESTIMATES LABELED</text>
+  <text x="${W - 56}" y="${H - 110}" text-anchor="end" font-family="IBM Plex Mono" font-size="8.5" letter-spacing="1" fill="${T.muted}">BUILT BY ALEX · ALEX@OZARKINTELLIGENCE.COM · ALL FIGURES CITED · ESTIMATES LABELED</text>
 </svg>`;
 
   return { svg, year: y };
