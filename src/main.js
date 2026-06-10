@@ -533,6 +533,12 @@ async function boot() {
   const initial = readHash();
   setYear(initial !== null ? initial : YEAR_MIN, { updateHash: false });
 
+  // poster export — dynamically imported on use, never in the main bundle
+  document.getElementById('export-poster').addEventListener('click', async () => {
+    const { exportPoster } = await import('./poster.js');
+    exportPoster({ year: state.year });
+  });
+
   // the plotter opening — draw-over of the rendered DOM; skipped by
   // ?nointro, reduced motion, or any input
   runIntro({ mapInstance: map.instance, motion });
