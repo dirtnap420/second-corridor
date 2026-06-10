@@ -1,0 +1,37 @@
+# P3 — CI gates on every push to main and every PR.
+# Local-only battery steps (not here, by design):
+#   qa/visual-diff.mjs — pixel baselines are Windows-rasterized; cross-OS diffs are noise
+#   qa/perf.mjs        — frame timing on shared runners is not a signal
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Build (design lint + size gate)
+        run: npm run build
+      - name: Unit tests (derived series + citation gate)
+        run: npm test
+      - name: Offline proof (zero external requests)
+        run: node qa/offline.mjs
+      - name: Contract test (plates, fixtures, axe)
+        run: node qa/contract.mjs
+      - name: Lighthouse (budget asserted)
+        run: npm run lighthouse
