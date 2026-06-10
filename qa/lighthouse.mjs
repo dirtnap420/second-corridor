@@ -28,32 +28,46 @@ if (!(await up())) { server.kill(); throw new Error('vite preview did not start'
 
 const browser = await chromium.launch({ args: [`--remote-debugging-port=${CDP_PORT}`] });
 
-const result = await lighthouse(`${BASE}/`, {
-  port: CDP_PORT,
-  output: 'html',
-  logLevel: 'error',
-  formFactor: 'mobile',
-  screenEmulation: { mobile: true, width: 375, height: 812, deviceScaleFactor: 2, disabled: false },
-  onlyCategories: ['performance', 'accessibility', 'best-practices'],
-});
+// median of 3 runs — single-run lantern estimates vary ±10%, which straddles
+// a budget set tight on purpose; the median is the stable signal
+const RUNS = 3;
+const runs = [];
+let lastReport = null;
+for (let i = 0; i < RUNS; i++) {
+  const result = await lighthouse(`${BASE}/`, {
+    port: CDP_PORT,
+    output: 'html',
+    logLevel: 'error',
+    formFactor: 'mobile',
+    screenEmulation: { mobile: true, width: 375, height: 812, deviceScaleFactor: 2, disabled: false },
+    onlyCategories: ['performance', 'accessibility', 'best-practices'],
+  });
+  lastReport = result.report;
+  runs.push({
+    lcp: result.lhr.audits['largest-contentful-paint'].numericValue,
+    cls: result.lhr.audits['cumulative-layout-shift'].numericValue,
+    scores: Object.fromEntries(Object.entries(result.lhr.categories).map(([k, v]) => [k, v.score])),
+  });
+}
 
 await browser.close();
 server.kill();
 
-const lhr = result.lhr;
 mkdirSync(new URL('../.cache/', import.meta.url), { recursive: true });
-writeFileSync(new URL('../.cache/lighthouse-report.html', import.meta.url), result.report);
+writeFileSync(new URL('../.cache/lighthouse-report.html', import.meta.url), lastReport);
 
-const lcp = lhr.audits['largest-contentful-paint'].numericValue;
-const cls = lhr.audits['cumulative-layout-shift'].numericValue;
+const median = (vals) => vals.slice().sort((a, b) => a - b)[Math.floor(vals.length / 2)];
+const lcp = median(runs.map((r) => r.lcp));
+const cls = median(runs.map((r) => r.cls));
 const scores = Object.fromEntries(
-  Object.entries(lhr.categories).map(([k, v]) => [k, v.score])
+  Object.keys(runs[0].scores).map((k) => [k, median(runs.map((r) => r.scores[k]))])
 );
 
 console.log(
-  `lighthouse (mobile emulation): perf ${scores.performance} · a11y ${scores.accessibility} · ` +
+  `lighthouse (mobile emulation, median of ${RUNS}): perf ${scores.performance} · a11y ${scores.accessibility} · ` +
     `best-practices ${scores['best-practices']} · LCP ${(lcp / 1000).toFixed(2)}s · CLS ${cls.toFixed(3)}`
 );
+console.log(`  per-run LCP: ${runs.map((r) => (r.lcp / 1000).toFixed(2) + 's').join(' · ')}`);
 
 let failed = false;
 const check = (label, value, pass) => {
