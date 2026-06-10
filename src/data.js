@@ -253,6 +253,42 @@ export const TALENT_SANKEY = {
 };
 
 /* ------------------------------------------------------------------
+ * Physical-inputs anchors (section 11) — hand-entered cited figures,
+ * located and verified in the Phase 3 research pass. Same discipline
+ * as the milestones: no citation, no render.
+ * ------------------------------------------------------------------ */
+export const PHYS_ANCHORS = {
+  power: [
+    { label: 'Fab 1 ("White Pine Phase 1") · proposed in-service Jun 2026', mw: 480, src: 'nyiso-goldbook' },
+    { label: 'Fab 2 · proposed in-service Sep 2030', mw: 576, src: 'nyiso-goldbook' },
+  ],
+  powerNote:
+    'NYISO 2026 GOLD BOOK, TABLE IV-7 (LOAD INTERCONNECTION REQUESTS), ZONE C. SUMMER MW. NO FULL-BUILDOUT MW FIGURE APPEARS IN ANY NYISO DOCUMENT.',
+  water: {
+    demand: [
+      { year: 2029, mgd: 7.85, label: 'Fab 1' },
+      { year: 2030, mgd: 17.4, label: 'Fabs 1–2' },
+      { year: 2035, mgd: 30.3, label: 'Fabs 1–3' },
+      { year: 2041, mgd: 48, label: 'full buildout' },
+    ],
+    src: 'feis-water',
+    permitted: { from: 62.5, to: 93.5, src: 'feis-water' },
+    note: 'AVERAGE FRESHWATER USAGE PER FEIS TABLE 3.10-3; OCWA PERMITTED LAKE ONTARIO WITHDRAWAL APPLICATION 62.5 → 93.5 MGD PER FEIS P. 3-286.',
+  },
+};
+
+/* ------------------------------------------------------------------
+ * Comparator fabs (section 09) — announcement anchors, cited
+ * ------------------------------------------------------------------ */
+export const COMPARATORS = [
+  { fips: '36067', name: 'Onondaga, NY', project: 'Micron Clay', announced: '2022-10', src: 'micron-100b', hero: true },
+  { fips: '04013', name: 'Maricopa, AZ', project: 'TSMC Phoenix', announced: '2020-05', src: 'ann-tsmc-az' },
+  { fips: '39089', name: 'Licking, OH', project: 'Intel New Albany', announced: '2022-01', src: 'ann-intel-oh' },
+  { fips: '16001', name: 'Ada, ID', project: 'Micron Boise', announced: '2022-09', src: 'ann-micron-id' },
+  { fips: '48491', name: 'Williamson, TX', project: 'Samsung Taylor', announced: '2021-11', src: 'ann-samsung-tx' },
+];
+
+/* ------------------------------------------------------------------
  * Installed base (section 05) — context plate figures
  * ------------------------------------------------------------------ */
 // The spec's "88 NY semiconductor companies" is the state's April 2022 count of

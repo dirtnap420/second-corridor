@@ -105,7 +105,7 @@ registerSources([
     retrieved: R,
   },
   {
-    keys: ['fab1-construction-2026', 'fab1-2028-fab2', 'fab3-2033-fab4-2039', 'constr-ends-2041', 'full-ops-2045'],
+    keys: ['fab1-construction-2026', 'fab1-2028-fab2', 'fab3-2033-fab4-2039', 'constr-ends-2041', 'full-ops-2045', 'feis-water'],
     title: 'Micron Semiconductor Manufacturing Project, Clay, NY — Final Environmental Impact Statement (EISX-006-55-CPO-001)',
     publisher: 'U.S. Department of Commerce CHIPS Program Office & Onondaga County Industrial Development Agency',
     url: 'https://ongoved.com/wp-content/uploads/2025/11/2025_1105_MicronNY_FEIS_Final.pdf',
@@ -200,11 +200,18 @@ registerSources([
     date: '2024-07-26',
     retrieved: R,
   },
+  {
+    keys: ['nyiso-goldbook'],
+    title: '2026 Load & Capacity Data Report (Gold Book), Table IV-7: Load Interconnection Requests, p. 132',
+    publisher: 'New York Independent System Operator',
+    url: 'https://www.nyiso.com/documents/20142/2226333/2026-Gold-Book-Public.pdf',
+    date: '2026-04',
+    retrieved: R,
+  },
 ]);
 
-// Comparator-fab announcement dates (section 09) — verified in the same pass,
-// registered when section 09 ships.
-export const COMPARATOR_SOURCES = [
+// Comparator-fab announcement dates (section 09) — verified in the Phase 0 pass.
+registerSources([
   {
     keys: ['ann-tsmc-az'],
     title: 'TSMC Announces Intention to Build and Operate an Advanced Semiconductor Fab in the United States',
@@ -237,4 +244,4 @@ export const COMPARATOR_SOURCES = [
     date: '2021-11-24',
     retrieved: R,
   },
-];
+]);

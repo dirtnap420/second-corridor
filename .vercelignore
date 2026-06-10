@@ -1,0 +1,6 @@
+node_modules
+raw
+qa/shots
+.cache
+dist
+.git
