@@ -355,11 +355,46 @@ async function boot() {
   buildDials();
 
   const geo = await fetch('/data/ny-geo.json').then((r) => r.json());
-  const mapOpts = { onNodeSelect: showNodePlate, motion, onMotionChange };
+  const uiState = { particles: 'ambient', view: 'map' };
+  let flowInfo = null;
+  const flowsLegend = document.getElementById('flows-legend');
+  const mapOpts = {
+    onNodeSelect: showNodePlate,
+    motion,
+    onMotionChange,
+    lodes: live.lodes,
+    uiState,
+    onFlowInfo: (info) => {
+      flowInfo = info;
+      if (uiState.particles === 'flows') updateFlowsLegend();
+    },
+  };
   const map = responsiveMount(document.getElementById('map-stage'), (w) =>
     renderMap(document.getElementById('map-stage'), geo, mapOpts, w)
   );
   onYear((y) => map.update(y));
+
+  function updateFlowsLegend() {
+    if (uiState.particles === 'flows' && flowInfo) {
+      flowsLegend.textContent = `1 PARTICLE = ${flowInfo.jobsPerParticle.toLocaleString('en-US')} JOBS · LODES ${flowInfo.vintage.match(/\d{4}/)[0]} · ALL-INDUSTRY COMMUTING`;
+      flowsLegend.hidden = false;
+    } else {
+      flowsLegend.hidden = true;
+    }
+  }
+
+  const tabAmbient = document.getElementById('tab-ambient');
+  const tabFlows = document.getElementById('tab-flows');
+  function setParticles(mode) {
+    uiState.particles = mode;
+    tabAmbient.setAttribute('aria-pressed', String(mode === 'ambient'));
+    tabFlows.setAttribute('aria-pressed', String(mode === 'flows'));
+    if (map.instance && map.instance.setParticleMode) map.instance.setParticleMode(mode);
+    updateFlowsLegend();
+  }
+  tabAmbient.addEventListener('click', () => setParticles('ambient'));
+  tabFlows.addEventListener('click', () => setParticles('flows'));
+  if (!live.lodes) document.getElementById('tab-flows').disabled = true;
 
   const chart = responsiveMount(document.getElementById('buildout-chart'), (w) =>
     renderChart(document.getElementById('buildout-chart'), w)

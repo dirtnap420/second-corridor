@@ -111,6 +111,10 @@ a:hover {
   outline-offset: 2px;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

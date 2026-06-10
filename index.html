@@ -80,9 +80,20 @@
             <span>Fig. 01 — corridor map</span>
             <span>Conic conformal · NY counties</span>
           </div>
+          <div class="instrument-toggles">
+            <div class="micro-tabs" role="group" aria-label="Particle layer">
+              <button class="btn" id="tab-ambient" aria-pressed="true">Ambient</button>
+              <button class="btn" id="tab-flows" aria-pressed="false">Flows</button>
+            </div>
+            <div class="micro-tabs" role="group" aria-label="View" id="view-tabs" hidden>
+              <button class="btn" id="tab-map" aria-pressed="true">Map</button>
+              <button class="btn" id="tab-section" aria-pressed="false">Section</button>
+            </div>
+          </div>
           <div class="instrument-views">
             <div class="map-stage" id="map-stage"></div>
           </div>
+          <p class="method-note" id="flows-legend" style="padding: 0 14px 8px" hidden></p>
           <div class="node-plate" id="node-plate">
             <span class="mono" style="color: var(--muted); font-size: 11px; letter-spacing: 0.08em"
               >SELECT A NODE FOR ITS DATA PLATE</span
