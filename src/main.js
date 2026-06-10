@@ -252,6 +252,91 @@ function makeDial({ label, srcKeys, max, format, id }) {
   };
 }
 
+/* the permanent-jobs dial is a wafer die-map: one die = 50 jobs, the full
+   2045 wafer holds 180 dice; edge-clipped dice draw hairline-only and never
+   fill — like real edge dice, they don't yield. */
+const DIE_VALUE = 50;
+
+function makeWaferDial({ label, srcKeys }) {
+  const div = document.createElement('div');
+  div.className = 'dial';
+  const marks = [...new Set(srcKeys.map((s) => cite(s)).filter(Boolean))]
+    .map((n) => `<a class="cite" href="#sources">[${n}]</a>`)
+    .join('');
+  const R = 47;
+  const CX = 55;
+  const CY = 52;
+  // pick a pitch that yields at least 180 fully-interior dice
+  let pitch = 7.2;
+  let interior = [];
+  let edge = [];
+  while (pitch > 4) {
+    interior = [];
+    edge = [];
+    const n = Math.ceil((2 * R) / pitch);
+    const x0 = CX - (n * pitch) / 2;
+    const y0 = CY - (n * pitch) / 2;
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        const x = x0 + c * pitch;
+        const y = y0 + r * pitch;
+        const corners = [
+          [x, y],
+          [x + pitch, y],
+          [x, y + pitch],
+          [x + pitch, y + pitch],
+        ];
+        const inside = corners.filter(
+          ([px, py]) => Math.hypot(px - CX, py - CY) <= R
+        ).length;
+        if (inside === 4) interior.push([x, y]);
+        else if (inside > 0) edge.push([x, y]);
+      }
+    }
+    if (interior.length >= 180) break;
+    pitch -= 0.2;
+  }
+  interior = interior.slice(0, Math.max(180, Math.min(interior.length, 200)));
+  const die = pitch - 1.1;
+
+  let dice = '';
+  for (const [x, y] of edge) {
+    dice += `<rect x="${(x + 0.55).toFixed(1)}" y="${(y + 0.55).toFixed(1)}" width="${die.toFixed(1)}" height="${die.toFixed(1)}" fill="none" stroke="var(--hairline)" stroke-width="0.5"></rect>`;
+  }
+  for (const [x, y] of interior) {
+    dice += `<rect class="wdie" x="${(x + 0.55).toFixed(1)}" y="${(y + 0.55).toFixed(1)}" width="${die.toFixed(1)}" height="${die.toFixed(1)}" fill="none" stroke="var(--hairline)" stroke-width="0.5"></rect>`;
+  }
+
+  div.innerHTML = `
+    <div class="dial-label">${label}${marks}</div>
+    <svg width="110" height="104" viewBox="0 0 110 104" role="img" aria-hidden="true">
+      <clipPath id="wafer-clip"><circle cx="${CX}" cy="${CY}" r="${R}"></circle></clipPath>
+      <circle cx="${CX}" cy="${CY}" r="${R}" fill="var(--paper)" stroke="var(--ink)" stroke-width="1"></circle>
+      <g clip-path="url(#wafer-clip)">${dice}</g>
+    </svg>
+    <div class="dial-value" id="dial-perm" style="font-size:13px">—</div>`;
+  const dieEls = div.querySelectorAll('.wdie');
+  const valueEl = div.querySelector('.dial-value');
+  return {
+    el: div,
+    set(v) {
+      const filled = Math.min(dieEls.length, Math.floor(v / DIE_VALUE));
+      dieEls.forEach((d, i) => {
+        if (i < filled) {
+          d.setAttribute('fill', 'var(--copper)');
+          d.setAttribute('stroke', 'var(--ink)');
+          d.setAttribute('stroke-width', '0.4');
+        } else {
+          d.setAttribute('fill', 'none');
+          d.setAttribute('stroke', 'var(--hairline)');
+          d.setAttribute('stroke-width', '0.5');
+        }
+      });
+      valueEl.textContent = `YIELD: ${fmtJobs(v)} / 9,000 · 1 DIE = ${DIE_VALUE} JOBS`;
+    },
+  };
+}
+
 function buildDials() {
   const wrap = document.getElementById('dials');
   const dInvest = makeDial({
@@ -268,12 +353,9 @@ function buildDials() {
     format: fmtJobs,
     id: 'dial-constr',
   });
-  const dPerm = makeDial({
+  const dPerm = makeWaferDial({
     label: 'Permanent jobs',
     srcKeys: ['micron-9000-direct'],
-    max: 9000,
-    format: fmtJobs,
-    id: 'dial-perm',
   });
   wrap.append(dInvest.el, dConstr.el, dPerm.el);
   onYear((y) => {
