@@ -9,6 +9,11 @@
     "maxFrameMsDuringPlay": 50,
     "maxLongTaskMs": 200
   },
+  "runtimeThrottled": {
+    "comment": "F5 — 6× CPU throttle, 375px, DPR 2 (the corridor's mobile floor). Measured 2026-06-10: playback p95 16.7ms, max 33.3ms.",
+    "maxFrameMsDuringPlay": 60,
+    "maxLongTaskMs": 400
+  },
   "lab": {
     "lcpMs": 1800,
     "cls": 0.02
