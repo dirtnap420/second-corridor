@@ -26,6 +26,7 @@ import {
 import { responsiveMount } from './responsive.js';
 import { initLive } from './live.js';
 import { renderSite } from './site.js';
+import { runIntro } from './intro.js';
 
 /* ---------------- motion preference (live) ---------------- */
 const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -479,7 +480,10 @@ async function boot() {
   }
   tabAmbient.addEventListener('click', () => setParticles('ambient'));
   tabFlows.addEventListener('click', () => setParticles('flows'));
-  if (!live.lodes) document.getElementById('tab-flows').disabled = true;
+  if (!live.lodes) {
+    tabFlows.disabled = true;
+    tabFlows.dataset.keepDisabled = 'true';
+  }
 
   const tabMap = document.getElementById('tab-map');
   const tabSection = document.getElementById('tab-section');
@@ -528,6 +532,10 @@ async function boot() {
   // initial year: deep link or 2022
   const initial = readHash();
   setYear(initial !== null ? initial : YEAR_MIN, { updateHash: false });
+
+  // the plotter opening — draw-over of the rendered DOM; skipped by
+  // ?nointro, reduced motion, or any input
+  runIntro({ mapInstance: map.instance, motion });
 }
 
 boot();
