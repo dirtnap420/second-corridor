@@ -1,0 +1,8 @@
+node_modules/
+dist/
+qa/shots/
+.cache/
+raw/
+.env
+.vercel
+*.log

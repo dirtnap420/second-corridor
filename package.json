@@ -1,0 +1,30 @@
+{
+  "name": "second-corridor",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "The Second Corridor — tracking New York's semiconductor buildout, 2022–2045, from public data.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && npm run lint:design",
+    "preview": "vite preview",
+    "lint:design": "node scripts/lint-design.mjs",
+    "geo": "node scripts/build-geo.mjs",
+    "og": "node scripts/build-og.mjs",
+    "data": "node scripts/fetch-qcew.mjs && node scripts/fetch-ipeds.mjs && node scripts/fetch-oews.mjs && node scripts/fetch-lodes.mjs && node scripts/fetch-usaspending.mjs && node scripts/fetch-bps.mjs && node scripts/fetch-acs.mjs && node scripts/fetch-nyiso.mjs",
+    "qa": "node qa/screenshot.mjs"
+  },
+  "dependencies": {
+    "d3": "^7.9.0",
+    "d3-sankey": "^0.12.3",
+    "topojson-client": "^3.1.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.50.0",
+    "sharp": "^0.34.0",
+    "topojson-server": "^3.0.1",
+    "topojson-simplify": "^3.0.3",
+    "us-atlas": "^3.0.1",
+    "vite": "^6.3.0"
+  }
+}

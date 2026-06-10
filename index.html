@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Second Corridor — New York's semiconductor buildout, 2022–2045</title>
+    <meta
+      name="description"
+      content="Tracking New York's semiconductor buildout, 2022–2045 — investment, jobs, and the talent pipeline, from public data."
+    />
+    <link rel="canonical" href="https://second-corridor.vercel.app/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="The Second Corridor" />
+    <meta
+      property="og:description"
+      content="Tracking New York's semiconductor buildout, 2022–2045 — investment, jobs, and the talent pipeline, from public data."
+    />
+    <meta property="og:url" content="https://second-corridor.vercel.app/" />
+    <meta property="og:image" content="https://second-corridor.vercel.app/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="The Second Corridor" />
+    <meta
+      name="twitter:description"
+      content="Tracking New York's semiconductor buildout, 2022–2045 — investment, jobs, and the talent pipeline, from public data."
+    />
+    <meta name="twitter:image" content="https://second-corridor.vercel.app/og.png" />
+
+    <link
+      rel="preload"
+      href="/fonts/archivo-v25-latin-700.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/ibm-plex-mono-v20-latin-regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <script type="module" src="/src/main.js"></script>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <header class="masthead col">
+      <p class="eyebrow">Field instrument · NY semiconductor buildout · 2022–2045</p>
+      <h1>The Second Corridor</h1>
+      <p class="body-copy">
+        Tracking New York's semiconductor buildout from public data: investment, jobs, and the
+        talent pipeline between Buffalo and Albany.
+      </p>
+      <hr class="masthead-rule" />
+      <div class="masthead-sub">
+        <span>All figures cited · estimates labeled</span>
+        <span>Data: BLS · Census · NSF · USAspending · NYISO</span>
+        <span id="masthead-vintage">Sources [1]+ below</span>
+      </div>
+    </header>
+
+    <main>
+      <!-- ============ 01 · THE CORRIDOR ============ -->
+      <section class="sheet col" id="s01" aria-labelledby="h01">
+        <p class="eyebrow">01 · The corridor</p>
+        <h2 id="h01">Five nodes between Buffalo and Albany.</h2>
+        <p class="body-copy">
+          A fabrication corridor is being assembled along I-90: a
+          $100B<a class="cite" data-cite="micron-100b" href="#sources"></a> megafab at Clay, the
+          country's EUV research center at
+          Albany<a class="cite" data-cite="euv-825m" href="#sources"></a>, and the talent
+          infrastructure between them. Scrub the timeline.
+        </p>
+
+        <div class="plate plate--main" id="instrument">
+          <div class="plate-caption plate-caption--top">
+            <span>Fig. 01 — corridor map</span>
+            <span>Conic conformal · NY counties</span>
+          </div>
+          <div class="instrument-views">
+            <div class="map-stage" id="map-stage"></div>
+          </div>
+          <div class="node-plate" id="node-plate">
+            <span class="mono" style="color: var(--muted); font-size: 11px; letter-spacing: 0.08em"
+              >SELECT A NODE FOR ITS DATA PLATE</span
+            >
+          </div>
+          <div class="dials" id="dials"></div>
+          <div class="scrubber" id="scrubber-row">
+            <button id="play" class="btn" aria-pressed="false">Play</button>
+            <div class="scrubber-track">
+              <div class="scrubber-ticks" id="scrub-ticks" aria-hidden="true"></div>
+              <input
+                type="range"
+                id="year-slider"
+                class="scrub"
+                min="2022"
+                max="2045"
+                step="1"
+                value="2022"
+                aria-label="Timeline year"
+              />
+            </div>
+            <output id="year-readout" class="scrubber-year" aria-live="polite" for="year-slider"
+              >2022</output
+            >
+          </div>
+          <div class="ledger" id="ledger"></div>
+          <div class="plate-caption plate-caption--bottom">
+            <span>Milestones per cited record</span>
+            <span>Node states · trace · particles synced to year</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 02 · THE BUILDOUT ============ -->
+      <section class="sheet col" id="s02" aria-labelledby="h02">
+        <p class="eyebrow">02 · The buildout</p>
+        <h2 id="h02">Two decades of construction, then operations.</h2>
+        <p class="body-copy">
+          Four series from the cited anchors: cumulative capital at Clay, the construction
+          workforce band, Micron permanent jobs, and the indirect base that forms around them.
+        </p>
+        <div class="plate" id="buildout-plate">
+          <div class="plate-caption plate-caption--top">
+            <span>Fig. 02 — derived series, 2022–2045</span>
+            <span>Interpolated between cited anchors — not a forecast</span>
+          </div>
+          <div class="plate-body chart-wrap" id="buildout-chart"></div>
+          <div class="plate-caption plate-caption--bottom" id="buildout-notes">
+            <span
+              >Constr: level held at the only cited figure through the cited
+              continuous-construction window; ramp-down illustrative.</span
+            >
+            <span>Supply: derived — cited ~50,000 total minus cited 9,000 direct.</span>
+          </div>
+          <details class="numbers" id="buildout-numbers">
+            <summary>View the numbers</summary>
+          </details>
+        </div>
+      </section>
+
+      <!-- ============ 03 · THE CAPITAL STACK ============ -->
+      <section class="sheet col" id="s03" aria-labelledby="h03">
+        <p class="eyebrow">03 · The capital stack</p>
+        <h2 id="h03">Who pays for the corridor.</h2>
+        <p class="body-copy">
+          Drawn to scale from the cited commitments: Micron's private capital, New York's Green
+          CHIPS package, federal CHIPS direct funding, and federal R&amp;D money at Albany.
+        </p>
+        <div class="plate" id="capital-plate">
+          <div class="plate-caption plate-caption--top">
+            <span>Fig. 03 — capital stack, $B</span>
+            <span>Band widths to scale</span>
+          </div>
+          <div class="plate-body chart-wrap" id="capital-sankey"></div>
+          <div class="plate-caption plate-caption--bottom">
+            <span
+              >Green CHIPS is a performance-based state tax credit — realized as milestones are
+              met, not disbursed up front.</span
+            >
+          </div>
+          <details class="numbers" id="capital-numbers">
+            <summary>View the numbers</summary>
+          </details>
+        </div>
+      </section>
+
+      <!-- ============ 04 · THE TALENT LATTICE ============ -->
+      <section class="sheet col" id="s04" aria-labelledby="h04">
+        <p class="eyebrow">04 · The talent lattice</p>
+        <h2 id="h04">How people reach the cleanroom.</h2>
+        <p class="body-copy">
+          The cited programs link the corridor's schools to its employers — co-ops, certificates,
+          and retraining routes from Rochester and the Finger Lakes into the fabs.
+        </p>
+        <div class="plate" id="talent-plate">
+          <div class="plate-caption plate-caption--top">
+            <span>Fig. 04 — talent pathways</span>
+            <span>Structure: public record · widths: illustrative</span>
+          </div>
+          <div class="plate-body chart-wrap" id="talent-sankey"></div>
+          <div class="plate-caption plate-caption--bottom">
+            <span>Structure: public record · widths: illustrative</span>
+          </div>
+          <details class="numbers" id="talent-numbers">
+            <summary>View the numbers</summary>
+          </details>
+        </div>
+      </section>
+
+      <!-- ============ 05 · THE INSTALLED BASE ============ -->
+      <section class="sheet col" id="s05" aria-labelledby="h05">
+        <p class="eyebrow">05 · The installed base</p>
+        <h2 id="h05">The corridor did not start empty.</h2>
+        <p class="body-copy">
+          New York's installed semiconductor base, by the state's own count, and the teaching
+          hardware already running at RIT.
+        </p>
+        <div class="plate" id="base-plate">
+          <div class="plate-caption plate-caption--top">
+            <span>Fig. 05 — installed base</span>
+            <span>Context plate</span>
+          </div>
+          <div class="spec-grid" id="installed-base"></div>
+        </div>
+      </section>
+
+      <!-- ============ SOURCES ============ -->
+      <section class="sheet col sources" id="sources" aria-labelledby="hsrc">
+        <p class="eyebrow">Sources</p>
+        <h2 id="hsrc">Every number, sourced.</h2>
+        <ol id="sources-list"></ol>
+      </section>
+    </main>
+
+    <footer class="colophon">
+      <div class="col" id="colophon-line">
+        Built by [NAME] · [CONTACT/URL] · Data refreshed <span id="colophon-vintage">—</span>
+      </div>
+    </footer>
+  </body>
+</html>
