@@ -490,6 +490,14 @@ function markStage(name) {
 
 async function boot() {
   markStage('boot:start');
+  // F20: reserve the map stage's final height synchronously (pre-paint,
+  // before any await) with the exact formula renderMap uses, so the SVG
+  // mounting later never shifts the page. CSS can't express this without
+  // aspect-ratio feeding back into the block's width. Cleared after mount.
+  const stageEl = document.getElementById('map-stage');
+  stageEl.style.height = `${Math.round(
+    Math.min(560, Math.max(260, stageEl.clientWidth * 0.55))
+  )}px`;
   // live sections register their data sources into the numbered list,
   // so they load before the sources list and citation marks are built
   const live = await initLive();
@@ -524,6 +532,7 @@ async function boot() {
     renderMap(document.getElementById('map-stage'), geo, mapOpts, w)
   );
   onYear((y) => map.update(y));
+  stageEl.style.height = ''; // F20 reservation done — the SVG owns the height now
   markStage('boot:map-mounted');
 
   function updateFlowsLegend() {

@@ -148,7 +148,8 @@ Runtime findings:
 - [ ] F27 — clamp play-loop delta
 - [ ] F10 — preload Archivo 900; audit 500
 - [ ] F19 — parallelize `boot()`
-- [ ] F20 — reserve `.map-stage` space (CLS)
+- [x] F20 — reserve `.map-stage` space (CLS) *(landed early in Wave 1 — CI's
+      slower runner exposed the unreserved stage as CLS 0.175; see deviations)*
 
 Pipeline script bugs (independent of CI):
 - [ ] P25 — fail-soft orchestrator replaces `&&` chain (first cut of P42)
@@ -546,3 +547,16 @@ scope on the GCM token before pushing `.github/workflows/`.
 - Measured at exit: desktop playback p95 16.7ms / max 16.8ms, zero long
   tasks; throttled (6×, DPR 2) p95 16.7ms / max 33.3ms; Lighthouse median
   perf 0.99 / a11y 0.97 / bp 1.0, CLS 0.013.
+- **F20 pulled forward from Wave 2:** first CI run failed Lighthouse with
+  CLS 0.175 (vs 0.013 locally) — on the slower runner the map SVG mounts
+  after first paint, so the unreserved `.map-stage` collapse counts fully.
+  Fixed the root cause instead of loosening the CLS budget. Note: the pure-CSS
+  reservation (`aspect-ratio` + `min-height`) was tried first and **rejected by
+  the visual gate** — min-height transfers through aspect-ratio into block
+  width (stage ballooned 333→473px at mobile and the responsive mount rendered
+  to it). Final fix: one synchronous pre-paint line in `boot()` setting the
+  stage height with renderMap's exact formula, cleared after mount. Visual
+  baselines unaffected (verified 12/12).
+- Observation for Wave 2's defect sweep: pre-existing ~21px horizontal
+  overflow at the 375px viewport (document scroll width 396) — likely one of
+  the D-item clipping defects; confirm which item covers it.
