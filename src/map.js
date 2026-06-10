@@ -38,7 +38,9 @@ export function renderMap(container, topo, opts, width) {
   const svg = document.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   svg.setAttribute('width', W);
-  svg.setAttribute('role', 'img');
+  // role=group, not img: the node markers inside are real buttons, and
+  // role=img would hide them from assistive tech (axe: nested-interactive)
+  svg.setAttribute('role', 'group');
   svg.setAttribute('aria-label', 'Corridor map of New York State with five semiconductor nodes');
   svg.innerHTML = `<title>The corridor instrument</title>
     <desc>New York State counties with five corridor nodes — STAMP, RIT, Clay, Marcy, and Albany NanoTech — connected by a corridor trace; switchable to a stationing diagram with data risers.</desc>`;
