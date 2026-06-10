@@ -1,5 +1,5 @@
 {
-  "comment": "F1 — the performance budget. Numbers chosen to be passable today; the point is catching drift. Bytes are raw (uncompressed); KiB = 1024 bytes. Enforced by scripts/lint-size.mjs (build), qa/perf.mjs (runtime), and lighthouserc.json (lab metrics).",
+  "comment": "F1 — the performance budget. Numbers chosen to be passable today; the point is catching drift. Bytes are raw (uncompressed); KiB = 1024 bytes. Enforced by scripts/lint-size.mjs (build), qa/perf.mjs (runtime), and qa/lighthouse.mjs (lab metrics).",
   "bundle": {
     "mainJsBytes": 184320,
     "cssBytes": 16384,
