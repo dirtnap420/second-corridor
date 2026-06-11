@@ -9,6 +9,7 @@
       content="How The Second Corridor knows what it knows: the citation gate, suppression discipline, derived-vs-measured rules, refresh cadence, data dictionary, and how to cite it."
     />
     <link rel="canonical" href="https://second-corridor.vercel.app/methods" />
+    <link rel="alternate" type="application/atom+xml" title="Data changelog" href="/feed.xml" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta property="og:type" content="article" />
     <meta property="og:title" content="Methods — The Second Corridor" />
@@ -35,6 +36,8 @@
           <a href="#limitations">limitations</a>
           <a href="#anchors">anchors</a>
           <a href="#data">data downloads</a>
+          <a href="#follow">following changes</a>
+          <a href="#permanence">permanence</a>
           <a href="/decisions">decisions</a>
           <a href="/changelog">changelog</a>
         </nav>
@@ -325,6 +328,39 @@ retrieved YYYY-MM-DD.</code></pre>
         <p>
           A print-ready brief of the whole instrument:
           <a href="/brief.pdf">brief.pdf</a> (regenerated with each data refresh).
+        </p>
+
+        <h2 id="follow">Following changes</h2>
+        <p>
+          Every change to the published record lands in two places; pick either.
+          There is no mailing list to maintain and no account to create — both
+          channels are the publishing infrastructure itself.
+        </p>
+        <ul>
+          <li>
+            <strong>The repository.</strong> Watch
+            <a href="https://github.com/dirtnap420/second-corridor">github.com/dirtnap420/second-corridor</a>
+            — every refresh that changes the data arrives as a pull request, and
+            value revisions wait for review there.
+          </li>
+          <li>
+            <strong>The Atom feed.</strong> Subscribe to
+            <a href="/feed.xml">/feed.xml</a> in any feed reader — one entry per
+            <a href="/changelog">changelog</a> block, generated at build from the
+            same record the page renders.
+          </li>
+        </ul>
+
+        <h2 id="permanence">Permanence</h2>
+        <p>
+          The site is a render of the repository, not the other way around. The
+          <a href="https://github.com/dirtnap420/second-corridor">public repository</a>
+          carries the full pipeline, the published data files, and their complete
+          revision history; every source URL is snapshotted to the Internet
+          Archive, and the snapshot links are themselves published in
+          <a href="/data/archives.json">archives.json</a>. If this domain ever
+          stops resolving, cite against the repository and the archive links —
+          they hold what the record said, and when.
         </p>
       </main>
 

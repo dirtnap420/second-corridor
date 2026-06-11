@@ -1,9 +1,9 @@
 {
   "comment": "F1 — the performance budget. Numbers chosen to be passable today; the point is catching drift. Bytes are raw (uncompressed); KiB = 1024 bytes. Enforced by scripts/lint-size.mjs (build), qa/perf.mjs (runtime), and qa/lighthouse.mjs (lab metrics).",
   "bundle": {
-    "comment": "Revised at Wave 4 (was 184320/16384): the storytelling wave added the narrative layer — takeaways, verdicts, phases, stamps — measured +7.5KB JS / +4.9KB CSS. Revised again at Wave 6 (cssBytes 20480→24576): the gate sums ALL dist CSS and the citability wave added a standalone 3.4KB subpage sheet (methods/decisions/changelog) that the instrument page never loads; the instrument's own sheet stays ~19.7KB. F9 (scoped d3, Wave 7) recovers bundle weight.",
+    "comment": "Revised at Wave 4 (was 184320/16384): the storytelling wave added the narrative layer — takeaways, verdicts, phases, stamps — measured +7.5KB JS / +4.9KB CSS. Revised at Wave 6 (cssBytes 20480→24576): the gate sums ALL dist CSS and the citability wave added a standalone 3.4KB subpage sheet that the instrument page never loads. Revised at Wave 8 (cssBytes 24576→26624): the engagement wave's chrome — milestone toast, mini-TOC rail, county-find selects, tour/embed styles — measured ~+1.5KB. F9 (Wave 7) already recovered the JS side to below the Wave 0 baseline.",
     "mainJsBytes": 204800,
-    "cssBytes": 24576,
+    "cssBytes": 26624,
     "fontTotalBytes": 92160
   },
   "runtime": {

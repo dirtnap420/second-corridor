@@ -94,6 +94,28 @@ function absenceNote(panelId, html) {
   panel.appendChild(p);
 }
 
+/* S36: find-your-county — a pure highlight, no data change. For a regional
+   reader, self-relevance is the strongest attention device there is; the
+   tables already carry every corridor county. */
+function countySelect(panelId, options, label = 'FIND YOUR COUNTY…') {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  const wrap = document.createElement('p');
+  wrap.className = 'county-find';
+  const sel = document.createElement('select');
+  sel.setAttribute('aria-label', 'Highlight your county on this figure');
+  sel.innerHTML =
+    `<option value="">${label}</option>` +
+    options.map((o) => `<option value="${o.value}">${o.label}</option>`).join('');
+  sel.addEventListener('change', () => {
+    panel.querySelectorAll('[data-fips]').forEach((el) => {
+      el.classList.toggle('county-hit', !!sel.value && el.dataset.fips === sel.value);
+    });
+  });
+  wrap.appendChild(sel);
+  panel.before(wrap);
+}
+
 /* S48: the WATCHING verdict composes from whichever datasets loaded */
 const watching = { permits: null, completions: null };
 function updateWatching() {
@@ -472,7 +494,7 @@ function renderLodes(data) {
     const barStyle = isSelf
       ? `display:block;height:13px;width:${w}%;background:none;border:1px solid var(--ink);opacity:0.55;box-sizing:border-box`
       : `display:block;height:13px;width:${w}%;background:${isMonroe ? 'var(--copper)' : 'var(--ink)'};opacity:${isMonroe ? 1 : 0.78}`;
-    html += `<div style="display:grid;grid-template-columns:minmax(110px,150px) 1fr 130px;gap:10px;align-items:center;padding:4px 0;border-top:1px dotted var(--hairline)">
+    html += `<div data-fips="${o.fips}" style="display:grid;grid-template-columns:minmax(110px,150px) 1fr 130px;gap:10px;align-items:center;padding:4px 0;border-top:1px dotted var(--hairline)">
       <span style="${isMonroe ? 'color:var(--copper);font-weight:500' : ''}">${i + 1}. ${o.name}, ${o.state}${isSelf ? ' · SELF' : ''}</span>
       <span aria-hidden="true" style="${barStyle}"></span>
       <span style="text-align:right;color:var(--muted)">${fmt(o.jobs)} · ${(o.share * 100).toFixed(1)}%</span>
@@ -496,6 +518,12 @@ function renderLodes(data) {
       `MONROE — ROCHESTER — RANKS #${monroeRank} · ${fmt(monroe.jobs)} COMMUTERS ALREADY WORK IN ONONDAGA. <a class="cite" href="#src-${n}">[${n}]</a>`
     );
   }
+
+  /* S36 */
+  countySelect(
+    'lodes-panel',
+    rows.map((o) => ({ value: o.fips, label: `${o.name}, ${o.state}` }))
+  );
 
   const numbersEl = document.getElementById('lodes-numbers');
   let trows = '';
@@ -762,6 +790,7 @@ function renderBps(data) {
 
     const fig = document.createElement('figure');
     fig.style.cssText = 'margin:0';
+    fig.dataset.fips = c.fips; // S36
     fig.innerHTML = `<svg width="${MW}" height="${MH}" viewBox="0 0 ${MW} ${MH}" role="img" aria-label="Housing units permitted per year, ${c.name} County">
       <title>${c.name} County housing permits</title>
       <text x="0" y="11" class="chart-label" style="fill:var(--ink);font-weight:500">${c.name.toUpperCase()}</text>
@@ -772,6 +801,12 @@ function renderBps(data) {
     </svg>`;
     grid.appendChild(fig);
   }
+
+  /* S36 */
+  countySelect(
+    'bps-panel',
+    data.counties.map((c) => ({ value: c.fips, label: `${c.name} County` }))
+  );
 
   const numbersEl = document.getElementById('bps-numbers');
   const years = data.counties[0].series.map((s) => s.year);
@@ -808,7 +843,7 @@ function renderAcs(data) {
 
   for (const c of data.counties) {
     const segs = BANDS.map((b) => ({ ...b, share: c[b.key] / c.pop25 }));
-    html += `<div style="display:grid;grid-template-columns:minmax(96px,130px) 1fr 64px;gap:10px;align-items:center;padding:4px 0;border-top:1px dotted var(--hairline)">
+    html += `<div data-fips="${c.fips}" style="display:grid;grid-template-columns:minmax(96px,130px) 1fr 64px;gap:10px;align-items:center;padding:4px 0;border-top:1px dotted var(--hairline)">
       <span>${c.name}</span>
       <span style="display:flex;height:14px">${segs
         .map(
@@ -821,6 +856,12 @@ function renderAcs(data) {
   }
   wrap.innerHTML = html;
   panel.appendChild(wrap);
+
+  /* S36 */
+  countySelect(
+    'acs-panel',
+    data.counties.map((c) => ({ value: c.fips, label: `${c.name} County` }))
+  );
 
   const numbersEl = document.getElementById('acs-numbers');
   let trows = '';

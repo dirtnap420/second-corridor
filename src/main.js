@@ -286,7 +286,11 @@ function buildLedger() {
     const marks = [...new Set(m.src.map((s) => cite(s)).filter(Boolean))]
       .map((n) => `<a class="cite" href="#src-${n}">[${n}]</a>`)
       .join('');
-    li.innerHTML = `<span class="yr">${m.year}</span><span>${m.label}${marks}</span>`;
+    // S22: future-dated promises become concrete distances — computed
+    // against today, so the suffixes age themselves out
+    const dy = m.year - Math.floor(TODAY);
+    const rel = m.year > TODAY ? `<span class="ledger-rel"> — in ${dy} yr${dy === 1 ? '' : 's'}</span>` : '';
+    li.innerHTML = `<span class="yr">${m.year}</span><span>${m.label}${marks}${rel}</span>`;
     li.addEventListener('click', () => {
       stopPlay();
       glideTo(m.year);
@@ -472,6 +476,73 @@ function makeWaferDial({ label, srcKeys }) {
   };
 }
 
+/* ---------------- S21: milestone toast during play ----------------
+   The map pings nodes when they activate, but the TEXT of a beat never
+   surfaces during playback — flash the crossed milestone's label beside the
+   year readout for ~1.2s. aria-hidden: D50 owns announcements (the live
+   region is deliberately silenced during play). Reduced motion: no flashes. */
+function buildToast() {
+  const wrap = document.querySelector('.scrubber-year-wrap');
+  if (!wrap) return;
+  const byYear = new Map();
+  for (const m of MILESTONES) {
+    if (!m.src.some((s) => cite(s))) continue;
+    if (!byYear.has(m.year)) byYear.set(m.year, m.label);
+  }
+  const el = document.createElement('span');
+  el.className = 'milestone-toast';
+  el.setAttribute('aria-hidden', 'true');
+  wrap.appendChild(el);
+  let lastY = null;
+  let hideTimer = null;
+  onYear((year) => {
+    const y = Math.floor(year + 1e-6);
+    if (y === lastY) return;
+    const crossed =
+      lastY !== null && state.playing && !motion.reduced && y > lastY && byYear.has(y);
+    lastY = y;
+    if (!crossed) return;
+    let short = byYear.get(y).split(/[;—,]/)[0].trim();
+    if (short.length > 34) short = short.slice(0, 33).trimEnd() + '…';
+    el.textContent = short.toUpperCase();
+    el.classList.add('show');
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => el.classList.remove('show'), 1200);
+  });
+}
+
+/* ---------------- D49: mini-TOC rail at ≥1400px ----------------
+   Twelve sheets is a long scroll with no wayfinding; at wide viewports a
+   fixed mono index costs nothing. Hidden below 1400px in CSS. */
+function buildTocRail() {
+  const items = [...Array(12)]
+    .map((_, i) => [`s${String(i + 1).padStart(2, '0')}`, String(i + 1).padStart(2, '0')])
+    .concat([['sources', 'SRC']]);
+  const nav = document.createElement('nav');
+  nav.className = 'toc-rail';
+  nav.setAttribute('aria-label', 'Section index');
+  nav.innerHTML = items
+    .map(([id, label]) => `<a href="#${id}" data-sec="${id}">${label}</a>`)
+    .join('');
+  document.body.appendChild(nav);
+  const links = new Map([...nav.querySelectorAll('a')].map((a) => [a.dataset.sec, a]));
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          links.forEach((a) => a.classList.remove('current'));
+          links.get(e.target.id)?.classList.add('current');
+        }
+      }
+    },
+    { rootMargin: '-40% 0px -55% 0px' }
+  );
+  items.forEach(([id]) => {
+    const el = document.getElementById(id);
+    if (el) io.observe(el);
+  });
+}
+
 /* ---------------- S19: era readout under the year ----------------
    The operative milestone state — the number becomes a story state. */
 function buildEra() {
@@ -586,6 +657,49 @@ function buildInstalledBase() {
     note.className = 'spec-cell spec-cell--note';
     note.innerHTML = `<div class="label">All figures: state &amp; institutional record — sources in each cell</div>`;
     grid.appendChild(note);
+  }
+
+  /* S41: spec-cell numerals count up over ~300ms on first reveal — cheap
+     salience for the context plate. tabular-nums (D41) prevents jitter;
+     reduced motion renders the final values instantly (no setup at all).
+     Only the leading number animates; prefixes/suffixes (~, +, MM) hold. */
+  if (!motion.reduced && 'IntersectionObserver' in window) {
+    const targets = [...grid.querySelectorAll('.spec-cell .big')]
+      .map((el) => {
+        const textNode = el.firstChild; // the value text; the cite mark follows
+        const orig = textNode?.textContent || '';
+        const m = orig.match(/^([^\d]*)([\d,]+)(.*)$/);
+        if (!m || !Number(m[2].replace(/,/g, ''))) return null;
+        const sep = m[2].includes(',');
+        return {
+          textNode,
+          orig, // the cited figure, restored verbatim at the end
+          pre: m[1],
+          n: Number(m[2].replace(/,/g, '')),
+          post: m[3],
+          fmt: (v) => (sep ? v.toLocaleString('en-US') : String(v)),
+        };
+      })
+      .filter(Boolean);
+    if (targets.length) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (!entries[0].isIntersecting) return;
+          io.disconnect();
+          const t0 = performance.now();
+          const unsub = onTick((now) => {
+            const k = Math.min(1, (now - t0) / 300);
+            for (const t of targets) {
+              t.textNode.textContent =
+                k >= 1 ? t.orig : `${t.pre}${t.fmt(Math.round(t.n * k))}${t.post}`;
+            }
+            if (k >= 1) unsub();
+          });
+        },
+        { threshold: 0.4 }
+      );
+      io.observe(grid);
+    }
   }
 }
 
@@ -770,6 +884,8 @@ async function boot() {
   buildLedger();
   buildDials();
   buildEra();
+  buildToast(); // S21
+  buildTocRail(); // D49
 
   const site = responsiveMount(document.getElementById('site-panel'), (w) =>
     renderSite(document.getElementById('site-panel'), w)

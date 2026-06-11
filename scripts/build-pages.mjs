@@ -1,4 +1,4 @@
-// build-pages.mjs — R12 + R22: generated pages.
+// build-pages.mjs — R12 + R22 + R40: generated pages.
 //
 // changelog.html (repo root, vite input) — rendered from CHANGELOG-DATA.md,
 //   newest first; an honest empty state until the first post-launch change.
@@ -6,6 +6,10 @@
 //   instant redirect into /#sNN that preserves any instrument-state hash.
 //   Newsrooms share figures, not homepages (R22); cards come from
 //   build-og.mjs (R23). Both are build artifacts, gitignored.
+// public/feed.xml (R40, subsumes R39) — Atom 1.0 feed of the same changelog
+//   blocks, one entry per refresh; the changelog block IS the refresh note.
+//   Deterministic: every date comes from the changelog/registry, never the
+//   build clock.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { readSections, latestRetrieved } from './lib/sections.mjs';
@@ -55,6 +59,7 @@ const changelogHtml = `<!doctype html>
     <title>Data changelog — The Second Corridor</title>
     <meta name="description" content="Every change to the published record, one block per refresh — the visible heartbeat of the tracker." />
     <link rel="canonical" href="${SITE}/changelog" />
+    <link rel="alternate" type="application/atom+xml" title="Data changelog" href="/feed.xml" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta property="og:type" content="article" />
     <meta property="og:title" content="Data changelog — The Second Corridor" />
@@ -97,6 +102,51 @@ const changelogHtml = `<!doctype html>
 </html>
 `;
 writeFileSync(fileURLToPath(new URL('changelog.html', root)), changelogHtml);
+
+/* ================= public/feed.xml (R40 — Atom 1.0; R39 folds in) ================= */
+// One entry per changelog block (newest first). Until the first post-launch
+// change there is exactly one entry: the launch baseline. RFC 3339 dates are
+// the changelog's own YYYY-MM-DD stamps at T00:00:00Z — no build clock.
+const atomDate = (d) => `${d}T00:00:00Z`;
+const feedEntries = blocks.length
+  ? blocks.map((b) => ({
+      date: b.date,
+      title: `Data refresh ${b.date}`,
+      // items are already entity-escaped text + <strong> markup from the
+      // changelog parse; wrap as a list, then escape the whole fragment for
+      // Atom content type="html"
+      html: `<ul>${b.items.map((i) => `<li>${i}</li>`).join('')}</ul>`,
+    }))
+  : [
+      {
+        date: baseline,
+        title: 'Launch baseline',
+        html: `<p>The published record is the launch baseline, retrieved ${baseline}; future refreshes will appear here.</p>`,
+      },
+    ];
+const feedXml = `<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>The Second Corridor — data changelog</title>
+  <subtitle>Every change to the published record of New York's semiconductor buildout.</subtitle>
+  <link href="${SITE}/" />
+  <link rel="self" type="application/atom+xml" href="${SITE}/feed.xml" />
+  <id>${SITE}/</id>
+  <updated>${atomDate(feedEntries[0].date)}</updated>
+  <author><name>Alex</name></author>
+${feedEntries
+  .map(
+    (e) => `  <entry>
+    <id>${SITE}/changelog#${e.date}</id>
+    <link href="${SITE}/changelog" />
+    <title>${escapeHtml(e.title)}</title>
+    <updated>${atomDate(e.date)}</updated>
+    <content type="html">${escapeHtml(e.html)}</content>
+  </entry>`
+  )
+  .join('\n')}
+</feed>
+`;
+writeFileSync(fileURLToPath(new URL('public/feed.xml', root)), feedXml);
 
 /* ================= public/f/NN.html (R22) ================= */
 const sections = readSections();
@@ -163,5 +213,5 @@ ${urls.map((u) => `  <url><loc>${SITE}${u}</loc><lastmod>${lastmod}</lastmod></u
 writeFileSync(fileURLToPath(new URL('public/sitemap.xml', root)), sitemap);
 
 console.log(
-  `pages written: changelog.html (${blocks.length} block(s)) + ${sections.length} share shims → public/f/ + sitemap.xml`
+  `pages written: changelog.html (${blocks.length} block(s)) + feed.xml (${feedEntries.length} entr(y/ies)) + ${sections.length} share shims → public/f/ + sitemap.xml`
 );

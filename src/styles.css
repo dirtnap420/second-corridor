@@ -844,8 +844,30 @@ input[type='range'].scrub.nudge::-webkit-slider-thumb {
    width + reserved two-line height: era text changes on every milestone the
    glide crosses, and an auto-sized column would reflow the whole track. */
 .scrubber-year-wrap {
+  position: relative; /* S21: the toast anchors to it */
   text-align: right;
   width: 96px;
+}
+/* S21: transient milestone label during play — aria-hidden, D50 owns
+   announcements */
+.milestone-toast {
+  position: absolute;
+  right: 100%;
+  top: 4px;
+  margin-right: 10px;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  background: var(--copper);
+  color: var(--paper);
+  padding: 3px 8px;
+  opacity: 0;
+  transition: opacity 180ms linear;
+  pointer-events: none;
+}
+.milestone-toast.show {
+  opacity: 1;
 }
 .era-readout {
   font-family: var(--font-mono);
@@ -1404,6 +1426,63 @@ footer.colophon a:hover {
 }
 .plate-links a:hover {
   color: var(--copper-text);
+}
+/* S22: future milestones state their distance */
+.ledger-rel {
+  color: var(--muted);
+}
+/* D49: mini-TOC rail — wide viewports only */
+.toc-rail {
+  display: none;
+}
+@media (min-width: 1400px) {
+  .toc-rail {
+    position: fixed;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    z-index: 5;
+  }
+  .toc-rail a {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 5px 7px;
+    min-width: 24px;
+    text-align: center;
+    border-right: 2px solid transparent;
+  }
+  .toc-rail a:hover {
+    color: var(--ink);
+  }
+  .toc-rail a.current {
+    color: var(--copper-text);
+    font-weight: 500;
+    border-right-color: var(--copper);
+  }
+}
+/* S36: find-your-county — pure highlight */
+.county-find {
+  padding: 10px 14px 0;
+  margin: 0;
+}
+.county-find select {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+  padding: 4px 8px;
+  max-width: 100%;
+}
+.county-hit {
+  outline: 2px solid var(--copper);
+  outline-offset: 1px;
 }
 
 /* ---------- print: a credible PDF brief ---------- */
