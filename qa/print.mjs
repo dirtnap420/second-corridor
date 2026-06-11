@@ -46,6 +46,16 @@ const page = await browser.newPage({
 await page.goto(`${BASE}/?nointro`, { waitUntil: 'networkidle' });
 await page.evaluate(() => document.fonts.ready);
 await page.waitForTimeout(500);
+// settle F28's offscreen-gated surfaces before printing (beforeprint also
+// flushes them for real Ctrl+P users, but CDP printToPDF may not fire it)
+await page.evaluate(async () => {
+  for (let y = 0; y < document.body.scrollHeight; y += 800) {
+    window.scrollTo(0, y);
+    await new Promise((r) => setTimeout(r, 30));
+  }
+  window.scrollTo(0, 0);
+});
+await page.waitForTimeout(300);
 
 const header = await page.evaluate(() => document.getElementById('print-header')?.textContent || '');
 if (!/PRINTED AT YEAR \d{4}/.test(header)) fail(`print header not populated: "${header.slice(0, 60)}"`);

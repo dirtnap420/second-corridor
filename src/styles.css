@@ -243,6 +243,17 @@ h2 {
   border: 1px solid var(--ink);
   margin-top: 26px;
 }
+/* F33 + F34 (CSS containment): tested and DROPPED — Wave 7 deviation log has
+   the full story. F33 (content-visibility on below-fold sections): the
+   plates' responsiveMount queries clientWidth at boot, piercing the
+   containment and forcing layout anyway, and full-page captures render
+   CV-skipped sections blank — blinding the visual gate below the fold.
+   F34 (contain: layout paint on .plate): establishes formatting contexts
+   that shift sub-pixel layout inside every plate (~0.3–0.46% of pixels at
+   every width) and makes plates monolithic for print fragmentation
+   (brief paginated 17 → 23 pages, tall plates at clip risk). Neither had a
+   measured win once F35 removed the per-frame ledger walks; the visual
+   identity and the print brief outrank speculative layout isolation. */
 .plate--main {
   box-shadow: var(--shadow-offset);
 }

@@ -68,7 +68,10 @@ async function loadPage({ routes = null, allowConsole = [] } = {}) {
 
 async function textSweep(page, label) {
   const bad = await page.evaluate(() => {
-    const text = document.body.innerText;
+    // textContent, not innerText: F33's content-visibility skips rendering of
+    // below-fold sections, and innerText only reflects rendered text — the
+    // sweep must see the whole document regardless of paint state
+    const text = document.body.textContent;
     const hits = [];
     for (const re of [/\bNaN\b/, /\bundefined\b/, /\bInfinity\b/, /\[object /, /Invalid Date/]) {
       const m = text.match(re);
@@ -159,6 +162,23 @@ function reportIssues(issues, label) {
   if (w6.copyLinks >= 14 && w6.archived >= 25 && w6.ages >= 8 && w6.next && w6.plateCsvLinks >= 8)
     ok(`wave-6 chrome present (${w6.copyLinks} copy-links, ${w6.archived} archived, ${w6.plateCsvLinks} CSV links, ${w6.rev})`);
 
+  /* F33: content-visibility must never break cite anchor jumps — clicking a
+     mark has to land on (and force-render) the deferred sources section */
+  await page.click('.masthead a.cite');
+  await page.waitForTimeout(400);
+  const anchor = await page.evaluate(() => {
+    const id = location.hash.slice(1);
+    const el = document.getElementById(id);
+    if (!el) return { ok: false, why: `no element for ${location.hash}` };
+    const r = el.getBoundingClientRect();
+    return {
+      ok: r.height > 0 && r.top >= 0 && r.top < window.innerHeight,
+      why: `${id} at top=${Math.round(r.top)} h=${Math.round(r.height)}`,
+    };
+  });
+  if (!anchor.ok) fail(`cite anchor jump broken under content-visibility: ${anchor.why}`);
+  else ok(`cite anchor jump lands on the rendered source row (${anchor.why})`);
+
   await textSweep(page, 'real data');
   reportIssues(issues, 'real data');
 
@@ -196,8 +216,8 @@ function reportIssues(issues, label) {
   });
   const state = await page.evaluate(() => ({
     qcewVisible: !document.getElementById('qcew-plate').hidden,
-    suppressedLabels: document.body.innerText.match(/suppressed \(BLS confidentiality\)/g)?.length || 0,
-    compSuppressed: document.body.innerText.includes('ALL MONTHS SUPPRESSED'),
+    suppressedLabels: document.body.textContent.match(/suppressed \(BLS confidentiality\)/g)?.length || 0,
+    compSuppressed: document.body.textContent.includes('ALL MONTHS SUPPRESSED'),
     zeros: [...document.querySelectorAll('#qcew-panel rect[fill="var(--copper)"]')].length,
   }));
   if (!state.qcewVisible) fail('qcew plate hidden under all-suppressed fixture');
