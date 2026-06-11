@@ -296,6 +296,42 @@ h2 {
 #play {
   min-width: 88px;
 }
+
+/* D3: talent lattice renders as a route list below 560px (see sankey.js) */
+.route-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.route {
+  border-left: 3px solid var(--copper);
+  padding-left: 12px;
+}
+.route-chip {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: var(--ls-micro);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  padding: 4px 8px;
+}
+.route-from,
+.route-to {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink);
+  margin-top: 6px;
+}
+.route-from {
+  color: var(--muted);
+}
 .micro-tabs .btn {
   border: 0;
   border-left: 1px solid var(--ink);
