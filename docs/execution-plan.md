@@ -377,26 +377,26 @@ Mobile (design):
 ## Wave 8 — engagement texture + reach channels (~1–2 sessions)
 
 Motion & depth (F37 prerequisite long since landed):
-- [ ] S40 — Fig 02 draw-on-scroll
-- [ ] S41 — Fig 05 count-ups
-- [ ] S36 — find-your-county highlighter
-- [ ] S15 — 60-second guided tour
-- [ ] S21 — milestone toast during play
-- [ ] S22 — relative time on future milestones
-- [ ] D49 — mini-TOC rail
-- [ ] D43 — dark theme *(per decision #8; includes canvas token read)*
+- [x] S40 — Fig 02 draw-on-scroll
+- [x] S41 — Fig 05 count-ups
+- [x] S36 — find-your-county highlighter
+- [x] S15 — 60-second guided tour
+- [x] S21 — milestone toast during play
+- [x] S22 — relative time on future milestones
+- [x] D49 — mini-TOC rail
+- [x] ~~D43 — dark theme~~ *(dropped per decision #8)*
 
 Reach channels:
-- [ ] R28 — embed mode
-- [ ] R29 — oEmbed descriptor
-- [ ] R30 — five-numbers share image
-- [ ] R39 — refresh notes as posts
-- [ ] R40 — RSS/Atom feed
-- [ ] ~~R41 — press kit~~ *(deferred indefinitely — personal-project scope, 2026-06-11)*
-- [ ] ~~R42 — mapped outreach (first sends; groundbreaking window)~~ *(deferred indefinitely — personal-project scope, 2026-06-11)*
-- [ ] R46 — subscribe-without-infrastructure docs
-- [ ] R47 — analytics decision implemented (per decision #6)
-- [ ] R48 — permanence statement
+- [x] R28 — embed mode
+- [x] R29 — oEmbed descriptor
+- [x] R30 — five-numbers share image
+- [x] R39 — refresh notes as posts *(merged into R40 — the changelog entries ARE the notes; no social posts per personal-project scope)*
+- [x] R40 — RSS/Atom feed
+- [x] ~~R41 — press kit~~ *(deferred indefinitely — personal-project scope, 2026-06-11)*
+- [x] ~~R42 — mapped outreach (first sends; groundbreaking window)~~ *(deferred indefinitely — personal-project scope, 2026-06-11)*
+- [x] R46 — subscribe-without-infrastructure docs
+- [x] R47 — analytics decision implemented (per decision #6: none — and not advertised; nothing renders, recorded here)
+- [x] R48 — permanence statement
 
 **Exit:** embed renders in a test iframe; feed validates; tour plays clean under
 reduced motion (skips); deploy.
@@ -447,6 +447,46 @@ Triage every remaining P3 explicitly — do, defer, or drop with a Deviations no
   overruns; both split cleanly at their cluster boundaries if needed.
 
 ## Deviations & notes
+
+**Wave 8 progress (2026-06-11, branch `wave-8-engagement`):**
+- All boxes closed (R41/R42 deferred per Alex's personal-project scope; D43
+  long dropped). Notes:
+- **Tour captions are deictic by design** — they point at what is on screen
+  and state no figures of their own; the plates beneath carry the cites.
+  This is how S15 satisfies the copy guardrail without a sign-off cycle.
+- **R39 merged into R40:** the changelog blocks are the refresh notes; the
+  Atom feed serves them. No social-post pipeline (personal-project scope).
+- **R28 implementation:** the embedded plate is MOVED, not cloned, so its
+  ResizeObserver/IntersectionObserver wiring keeps working; in-page anchors
+  rewrite to absolute site URLs; height rides postMessage. Found in testing:
+  `about:blank` inherits the embedding document's CSP in Chromium — the
+  contract's iframe-host page is served via route interception instead.
+- Embed pages legitimately leave the display-font preloads unused; the
+  contract's embed pass allowlists exactly that warning.
+- Cluster C (feed/share-image/methods copy) was built by a parallel agent in
+  a worktree on disjoint files and merged after its own green build+contract
+  run.
+- **Exit review workflow (4 lenses × adversarial verification, 33 agents)
+  confirmed 14 real findings before the PR — all fixed and gate-pinned:**
+  the big ones were (a) an embed of a HIDDEN plate (data 404) fell back to
+  the entire site inside the host's iframe — now an honest unavailable card
+  that still attributes, links back, and posts its height; (b) the embed's
+  one-shot anchor rewrite missed dynamically re-rendered content (era
+  readout, node plate, responsive rebuilds) — now a delegated click handler
+  is the mechanism and the rewrite is just affordance; (c) the tour had no
+  reentry guard (stacked dialogs), didn't cancel an in-flight glide or play
+  on beat advance (wrong-year captions), and re-triggered the R22
+  smooth-scroll cancellation on beat 3 (year now applies before the page
+  scroll); (d) the tour was effectively silent to screen readers (captions
+  now aria-live, progress in the button names, focus restored to the
+  invoker on close) and embeds had no landmark/heading/title (role=main +
+  sr-only h1 + per-figure document.title). The contract gained the degraded
+  embed pass and axe runs on both new surfaces (tour open, embed) — the
+  empty-allowlist posture now actually covers this wave's UI.
+- cssBytes 24576→26624 (engagement chrome ~+1.5KB; rationale in the budget).
+- Baselines regenerated (tour button, ledger distance suffixes, county
+  selects are static chrome at every width); D49's rail verified at 1560px
+  (outside the baseline grid).
 
 **2026-06-11 — Wave 7 checkpoint + Wave 8 scope (Alex):**
 - PR #8 approved and merged (92f346e); production auto-deployed.

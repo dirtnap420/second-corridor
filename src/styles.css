@@ -1538,6 +1538,16 @@ footer.colophon a:hover {
   color: var(--muted);
   padding: 8px 2px 0;
 }
+.embed-unavailable {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  border: 1px solid var(--hairline);
+  background: var(--paper);
+  padding: 22px 16px;
+  margin: 0;
+}
 .embed-foot a {
   color: var(--copper-text);
 }

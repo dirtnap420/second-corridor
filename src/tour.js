@@ -34,7 +34,21 @@ const BEATS = (todayYear) => [
   },
 ];
 
-export function runTour({ glideTo, setYear, motion, todayYear, onEnd = null }) {
+let active = null; // singleton — a second invocation finishes the first
+
+export function runTour({
+  glideTo,
+  setYear,
+  stopPlay = () => {},
+  cancelGlide = () => {},
+  motion,
+  todayYear,
+  onEnd = null,
+  // explicit, because the caller may disable the button (dropping focus to
+  // <body>) before this runs — restore focus here on exit
+  invoker = document.activeElement,
+}) {
+  if (active) active.finish(); // no stacked dialogs, no leaked listeners
   const beats = BEATS(todayYear);
   let i = -1;
   let done = false;
@@ -44,9 +58,9 @@ export function runTour({ glideTo, setYear, motion, todayYear, onEnd = null }) {
   card.setAttribute('role', 'dialog');
   card.setAttribute('aria-label', 'Guided tour');
   card.innerHTML = `
-    <p class="tour-cap"></p>
+    <p class="tour-cap" aria-live="polite"></p>
     <div class="tour-row">
-      <span class="tour-step" aria-hidden="true"></span>
+      <span class="tour-step"></span>
       <button class="btn tour-next">Next</button>
       <button class="btn tour-end">End tour</button>
     </div>`;
@@ -59,23 +73,38 @@ export function runTour({ glideTo, setYear, motion, todayYear, onEnd = null }) {
   function finish() {
     if (done) return;
     done = true;
+    active = null;
     window.removeEventListener('keydown', onKey);
     card.remove();
-    if (onEnd) onEnd();
+    if (onEnd) onEnd(); // re-enables the invoker before focus lands on it
+    // WCAG 2.4.3: the focused node was removed — hand focus back to the
+    // control that opened the tour, not <body>
+    if (invoker && document.contains(invoker)) invoker.focus();
   }
 
   function show(idx) {
     i = idx;
     const b = beats[i];
-    const el = document.querySelector(b.target);
-    if (el) el.scrollIntoView({ behavior: motion.reduced ? 'instant' : 'smooth', block: 'start' });
+    // settle the instrument BEFORE scrolling: a beat's setYear triggers the
+    // ledger's smooth follow-scroll, which would cancel an in-flight smooth
+    // page scroll (the R22 mechanism) — year first, page scroll second.
+    // And never apply a year on top of a running glide or play loop.
+    stopPlay();
+    cancelGlide();
     if (typeof b.year === 'number') {
       if (b.glide && !motion.reduced) glideTo(b.year);
       else setYear(b.year);
     }
+    const el = document.querySelector(b.target);
+    if (el) el.scrollIntoView({ behavior: motion.reduced ? 'instant' : 'smooth', block: 'start' });
     capEl.innerHTML = b.cap.map((l) => `<span>${l}</span>`).join('<br>');
     stepEl.textContent = `${i + 1} / ${beats.length}`;
-    nextBtn.textContent = i === beats.length - 1 ? 'Explore freely' : 'Next';
+    const last = i === beats.length - 1;
+    nextBtn.textContent = last ? 'Explore freely' : 'Next';
+    nextBtn.setAttribute(
+      'aria-label',
+      last ? 'Explore freely — end of tour' : `Next — step ${i + 2} of ${beats.length}`
+    );
     nextBtn.focus();
   }
 
@@ -86,6 +115,9 @@ export function runTour({ glideTo, setYear, motion, todayYear, onEnd = null }) {
   nextBtn.addEventListener('click', () => (i >= beats.length - 1 ? finish() : show(i + 1)));
   endBtn.addEventListener('click', finish);
 
-  show(0);
+  active = { finish };
+  // a frame later, so the live region exists in the a11y tree before its
+  // first write (same-task insert+mutate can miss the announcement)
+  setTimeout(() => !done && show(0), 0);
   return { finish };
 }

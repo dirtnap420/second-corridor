@@ -97,13 +97,15 @@ function absenceNote(panelId, html) {
 /* S36: find-your-county — a pure highlight, no data change. For a regional
    reader, self-relevance is the strongest attention device there is; the
    tables already carry every corridor county. */
-function countySelect(panelId, options, label = 'FIND YOUR COUNTY…') {
+function countySelect(panelId, options, figLabel = 'this figure', label = 'FIND YOUR COUNTY…') {
   const panel = document.getElementById(panelId);
   if (!panel) return;
   const wrap = document.createElement('p');
   wrap.className = 'county-find';
   const sel = document.createElement('select');
-  sel.setAttribute('aria-label', 'Highlight your county on this figure');
+  // per-figure name: three of these exist on the page, and a screen
+  // reader's form-controls listing must tell them apart
+  sel.setAttribute('aria-label', `Highlight your county on ${figLabel}`);
   sel.innerHTML =
     `<option value="">${label}</option>` +
     options.map((o) => `<option value="${o.value}">${o.label}</option>`).join('');
@@ -522,7 +524,8 @@ function renderLodes(data) {
   /* S36 */
   countySelect(
     'lodes-panel',
-    rows.map((o) => ({ value: o.fips, label: `${o.name}, ${o.state}` }))
+    rows.map((o) => ({ value: o.fips, label: `${o.name}, ${o.state}` })),
+    'the commute origins figure (07)'
   );
 
   const numbersEl = document.getElementById('lodes-numbers');
@@ -805,7 +808,8 @@ function renderBps(data) {
   /* S36 */
   countySelect(
     'bps-panel',
-    data.counties.map((c) => ({ value: c.fips, label: `${c.name} County` }))
+    data.counties.map((c) => ({ value: c.fips, label: `${c.name} County` })),
+    'the housing permits figure (10a)'
   );
 
   const numbersEl = document.getElementById('bps-numbers');
@@ -860,7 +864,8 @@ function renderAcs(data) {
   /* S36 */
   countySelect(
     'acs-panel',
-    data.counties.map((c) => ({ value: c.fips, label: `${c.name} County` }))
+    data.counties.map((c) => ({ value: c.fips, label: `${c.name} County` })),
+    'the education mix figure (10b)'
   );
 
   const numbersEl = document.getElementById('acs-numbers');

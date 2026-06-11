@@ -521,8 +521,16 @@ function buildTocRail() {
   const nav = document.createElement('nav');
   nav.className = 'toc-rail';
   nav.setAttribute('aria-label', 'Section index');
+  // accessible names carry the section headings, not just '01'
+  const nameOf = (id, label) =>
+    id === 'sources'
+      ? 'Sources'
+      : `${label} — ${document.getElementById(`h${label}`)?.textContent.trim() || 'section'}`;
   nav.innerHTML = items
-    .map(([id, label]) => `<a href="#${id}" data-sec="${id}">${label}</a>`)
+    .map(
+      ([id, label]) =>
+        `<a href="#${id}" data-sec="${id}" aria-label="${nameOf(id, label)}">${label}</a>`
+    )
     .join('');
   document.body.appendChild(nav);
   const links = new Map([...nav.querySelectorAll('a')].map((a) => [a.dataset.sec, a]));
@@ -530,8 +538,15 @@ function buildTocRail() {
     (entries) => {
       for (const e of entries) {
         if (e.isIntersecting) {
-          links.forEach((a) => a.classList.remove('current'));
-          links.get(e.target.id)?.classList.add('current');
+          links.forEach((a) => {
+            a.classList.remove('current');
+            a.removeAttribute('aria-current');
+          });
+          const cur = links.get(e.target.id);
+          if (cur) {
+            cur.classList.add('current');
+            cur.setAttribute('aria-current', 'true');
+          }
         }
       }
     },
@@ -760,24 +775,58 @@ export const EMBED = (() => {
 })();
 function setupEmbed() {
   if (!EMBED) return false;
-  const plate = document.getElementById(EMBED_PLATES[EMBED]);
-  if (!plate || plate.hidden) return false;
   const num = EMBED.replace('fig', '').slice(0, 2);
+  const plate = document.getElementById(EMBED_PLATES[EMBED]);
   document.body.classList.add('embed-mode');
   const shell = document.createElement('div');
   shell.className = 'embed-shell';
-  shell.appendChild(plate);
+  // a landmark + a heading: the iframe document must be navigable on its own
+  shell.setAttribute('role', 'main');
+  const h1 = document.createElement('h1');
+  h1.className = 'visually-hidden';
+  const figName =
+    document.getElementById(`s${num}`)?.querySelector('h2')?.textContent.trim() || 'corridor figure';
+  h1.textContent = `Fig. ${num} — ${figName} — The Second Corridor`;
+  document.title = `Fig. ${num} — ${figName} — The Second Corridor`;
+  shell.appendChild(h1);
+
+  if (plate && !plate.hidden) {
+    shell.appendChild(plate); // MOVED, not cloned — observers keep working
+  } else {
+    // a measured plate can be hidden (its data file failed to load) — a host
+    // iframe must never get the whole site as a fallback; render an honest
+    // unavailable card that still attributes and links back
+    const card = document.createElement('p');
+    card.className = 'embed-unavailable';
+    card.textContent = `FIG. ${num} IS TEMPORARILY UNAVAILABLE — ITS DATA DID NOT LOAD.`;
+    shell.appendChild(card);
+  }
+
   const foot = document.createElement('footer');
   foot.className = 'embed-foot';
-  foot.innerHTML = `FROM <a href="https://second-corridor.vercel.app/f/${num}" rel="noopener" target="_blank">THE SECOND CORRIDOR</a> · EVERY NUMBER CITED · ESTIMATES LABELED`;
+  foot.innerHTML = `FROM <a href="https://second-corridor.vercel.app/f/${num}" rel="noopener" target="_blank" aria-label="The Second Corridor — opens the full site in a new tab">THE SECOND CORRIDOR</a> · EVERY NUMBER CITED · ESTIMATES LABELED`;
   shell.appendChild(foot);
   document.body.insertBefore(shell, document.body.firstChild);
-  // in-page anchors have no targets here — point them at the full site
-  shell.querySelectorAll('a[href^="#"]').forEach((a) => {
+
+  // in-page anchors have no targets here — point them at the full site.
+  // Some surfaces (era readout, node plate, responsive rebuilds) regenerate
+  // relative anchors AFTER this runs, so a delegated handler is the real
+  // mechanism; the one-shot rewrite below covers hover/status-bar affordance
+  // for everything present now.
+  const rewrite = (a) => {
     a.setAttribute('href', `https://second-corridor.vercel.app/${a.getAttribute('href')}`);
     a.setAttribute('target', '_blank');
     a.setAttribute('rel', 'noopener');
+    a.setAttribute('aria-label', `${a.textContent.trim()} — opens the full site in a new tab`);
+  };
+  shell.querySelectorAll('a[href^="#"]').forEach(rewrite);
+  shell.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a || !shell.contains(a)) return;
+    e.preventDefault(); // never push hash entries onto the HOST's history
+    window.open(`https://second-corridor.vercel.app/${a.getAttribute('href')}`, '_blank', 'noopener');
   });
+
   // height handshake for host iframes
   if (window.parent !== window) {
     const post = () =>
@@ -787,6 +836,7 @@ function setupEmbed() {
       );
     new ResizeObserver(post).observe(shell);
     window.addEventListener('load', post);
+    post();
   }
   return true;
 }
@@ -1179,12 +1229,24 @@ async function boot() {
     if (rows && summary) summary.textContent = `Open the data table · ${rows} rows`;
   });
 
-  // S15: the guided tour — author-driven first pass, lazy like the poster
-  document.getElementById('tour')?.addEventListener('click', async () => {
-    stopPlay();
-    cancelGlide();
+  // S15: the guided tour — author-driven first pass, lazy like the poster.
+  // The button disables while a tour runs (belt) and runTour itself is a
+  // singleton (braces) — no stacked dialogs from a double-click.
+  const tourBtn = document.getElementById('tour');
+  tourBtn?.addEventListener('click', async () => {
+    if (tourBtn.disabled) return;
+    tourBtn.disabled = true;
     const { runTour } = await import('./tour.js');
-    runTour({ glideTo, setYear: (y) => setYear(y), motion, todayYear });
+    runTour({
+      glideTo,
+      setYear: (y) => setYear(y),
+      stopPlay,
+      cancelGlide,
+      motion,
+      todayYear,
+      invoker: tourBtn,
+      onEnd: () => (tourBtn.disabled = false),
+    });
   });
 
   // S6: one-shot scrubber invitation after the opening settles — the most

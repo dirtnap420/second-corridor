@@ -408,6 +408,65 @@ function reportIssues(issues, label) {
   else ok(`embed iframe handshake: host received height ${h}`);
   await page.close();
 
+  // R28 degraded path: a hidden plate (its data failed) must yield an honest
+  // unavailable card — never the whole site inside a host's iframe
+  {
+    const { page: p404, issues: i404 } = await loadPage({
+      url: `${BASE}/?embed=fig06`,
+      routes: {
+        '**/data/qcew.json': (route) =>
+          route.fulfill({ status: 404, contentType: 'text/plain', body: 'not found' }),
+      },
+      allowConsole: [
+        /preloaded using link preload but not used/,
+        /Failed to load resource.*404/,
+      ],
+    });
+    const deg = await p404.evaluate(() => ({
+      mode: document.body.classList.contains('embed-mode'),
+      unavailable: !!document.querySelector('.embed-unavailable'),
+      foot: !!document.querySelector('.embed-foot a'),
+      mastheadHidden: getComputedStyle(document.querySelector('.masthead')).display === 'none',
+    }));
+    if (!deg.mode || !deg.unavailable || !deg.foot || !deg.mastheadHidden)
+      fail(`embed degraded path leaked the site: ${JSON.stringify(deg)}`);
+    else ok('embed of a hidden plate renders the unavailable card, never the full site');
+    reportIssues(i404, 'embed-degraded');
+    await p404.close();
+  }
+
+  // axe on both new surfaces (bypassCSP — the harness's injection is inline)
+  {
+    const ax = await browser.newPage({ viewport: { width: 1280, height: 1400 }, bypassCSP: true });
+    await ax.goto(`${BASE}/?embed=fig07`, { waitUntil: 'networkidle' });
+    await ax.waitForTimeout(500);
+    await ax.addScriptTag({ path: require.resolve('axe-core/axe.min.js') });
+    const axeEmbed = await ax.evaluate(async () => {
+      const r = await window.axe.run(document, { resultTypes: ['violations'] });
+      return r.violations
+        .filter((v) => v.impact === 'serious' || v.impact === 'critical')
+        .map((v) => `${v.id} (${v.nodes.length})`);
+    });
+    if (axeEmbed.length) fail(`embed axe: ${axeEmbed.join(', ')}`);
+    else ok('embed: axe clean');
+
+    await ax.goto(`${BASE}/?nointro`, { waitUntil: 'networkidle' });
+    await ax.waitForTimeout(500);
+    await ax.click('#tour');
+    await ax.waitForSelector('.tour-card');
+    await ax.waitForFunction(() => document.querySelector('.tour-step')?.textContent);
+    await ax.addScriptTag({ path: require.resolve('axe-core/axe.min.js') });
+    const axeTour = await ax.evaluate(async () => {
+      const r = await window.axe.run(document, { resultTypes: ['violations'] });
+      return r.violations
+        .filter((v) => v.impact === 'serious' || v.impact === 'critical')
+        .map((v) => `${v.id} (${v.nodes.length})`);
+    });
+    if (axeTour.length) fail(`tour-open axe: ${axeTour.join(', ')}`);
+    else ok('tour open: axe clean');
+    await ax.close();
+  }
+
   // S15: the tour must play clean under reduced motion (beats jump, no glide)
   const tp = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
   const tIssues = [];
@@ -419,6 +478,8 @@ function reportIssues(issues, label) {
   await tp.waitForTimeout(600);
   await tp.click('#tour');
   await tp.waitForSelector('.tour-card');
+  // the first beat renders a tick later (live-region timing) — wait for it
+  await tp.waitForFunction(() => document.querySelector('.tour-step')?.textContent);
   const seen = [];
   for (let i = 0; i < 5; i++) {
     seen.push(await tp.evaluate(() => document.querySelector('.tour-step')?.textContent));
