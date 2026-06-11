@@ -81,7 +81,7 @@ function headInjection() {
               '@type': 'Article',
               headline: "The Second Corridor — New York's semiconductor buildout, 2022–2045",
               description:
-                "Tracking New York's semiconductor buildout — investment, jobs, and the talent pipeline, from public data. Every number cited, estimates labeled.",
+                "Tracking New York's semiconductor buildout — Micron's megafab at White Pine Commerce Park in Clay, near Syracuse: investment, jobs, and the talent pipeline, from public data. Every number cited, estimates labeled.",
               author: { '@type': 'Person', name: 'Alex', email: 'Alex@ozarkintelligence.com' },
               mainEntityOfPage: `${SITE}/`,
               url: `${SITE}/`,

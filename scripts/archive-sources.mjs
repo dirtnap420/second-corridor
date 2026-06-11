@@ -84,6 +84,33 @@ for (const url of urls) {
   await sleep(DELAY_MS);
 }
 
+/* R19 — self-archive the SITE, not just its sources: the recommended
+   citation says "retrieved <date>", and that must resolve against what the
+   site actually said. Always re-saved (no skip) — weekly granularity
+   matches the data cadence. Recorded under prev.site so the source-URL
+   logic above stays untouched. */
+prev.site = prev.site || {};
+for (const path of ['', 'methods']) {
+  const url = `https://second-corridor.vercel.app/${path}`;
+  try {
+    const res = await fetch(`https://web.archive.org/save/${encodeURIComponent(url)}`, {
+      method: 'GET',
+      redirect: 'follow',
+      headers: { 'User-Agent': 'second-corridor-archiver (citation preservation)' },
+      signal: AbortSignal.timeout(90000),
+    });
+    if (res.ok && /web\.archive\.org\/web\//.test(res.url)) {
+      prev.site[url] = { archiveUrl: res.url, archivedAt: STAMP };
+      console.log(`  site archived: ${url}`);
+    } else {
+      console.error(`  site archive failed (HTTP ${res.status}): ${url}`);
+    }
+  } catch (e) {
+    console.error(`  site archive failed (${e.message?.slice(0, 60)}): ${url}`);
+  }
+  await sleep(DELAY_MS);
+}
+
 writeFileSync(OUT_PATH, JSON.stringify(prev));
 console.log(`archives.json: ${saved} saved, ${kept} already archived, ${failed} failed of ${urls.length} URLs`);
 if (saved === 0 && kept === 0 && urls.length > 0) {

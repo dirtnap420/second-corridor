@@ -494,6 +494,64 @@ function reportIssues(issues, label) {
   await tp.close();
 }
 
+/* ================= pass 8 — machine-readable trust + resize storm ================= */
+{
+  console.log('PASS 8 — JSON-LD integrity (R17) + responsive year survival (F47)');
+  // R17: JSON.stringify silently drops undefined — a provenance rename would
+  // silently strip Dataset fields and degrade the one passive discovery
+  // channel left. Assert the structure on every build.
+  const { existsSync } = await import('node:fs');
+  const { LIVE_SOURCE_DEFS } = await import('../src/live-sources.js');
+  const html = await (await fetch(`${BASE}/`)).text();
+  const m = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+  if (!m) fail('JSON-LD block missing from the built index');
+  else {
+    try {
+      const graph = JSON.parse(m[1])['@graph'];
+      const article = graph.find((n) => n['@type'] === 'Article');
+      const datasets = graph.filter((n) => n['@type'] === 'Dataset');
+      const expected = LIVE_SOURCE_DEFS.filter((d) =>
+        existsSync(fixture(`../../public/data/${d.dataset}.json`))
+      ).length;
+      const bad = [];
+      if (!article || !/^\d{4}-\d{2}-\d{2}/.test(article.dateModified || '')) bad.push('Article.dateModified');
+      if (datasets.length !== expected) bad.push(`expected ${expected} Dataset nodes, got ${datasets.length}`);
+      for (const d of datasets) {
+        for (const k of ['name', 'temporalCoverage', 'dateModified', 'license']) {
+          if (!d[k]) bad.push(`Dataset missing ${k}`);
+        }
+        if (!d.distribution || d.distribution.length !== 2 || d.distribution.some((x) => !x.contentUrl))
+          bad.push(`Dataset ${d.name}: distribution incomplete`);
+      }
+      if (bad.length) fail(`JSON-LD drift: ${[...new Set(bad)].join('; ')}`);
+      else ok(`JSON-LD intact: Article + ${datasets.length} complete Dataset nodes`);
+    } catch (e) {
+      fail(`JSON-LD does not parse: ${e.message}`);
+    }
+  }
+
+  // F47: a resize storm (rotate, devtools, window drag) must never lose the
+  // year — responsiveMount's pendingYear reapply is the mechanism under test
+  const { page, issues } = await loadPage();
+  for (const w of [1100, 700, 420, 980, 1280]) {
+    await page.setViewportSize({ width: w, height: 1000 });
+    await page.waitForTimeout(80); // faster than the 150ms rebuild debounce
+  }
+  await page.waitForTimeout(800); // let the debounced rebuilds settle
+  const after = await page.evaluate(() => ({
+    readout: document.getElementById('year-readout')?.textContent,
+    hash: location.hash,
+    mapSvg: !!document.querySelector('#map-stage svg'),
+  }));
+  if (after.readout !== '2030' || !after.hash.includes('y=2030'))
+    fail(`resize storm lost the year: readout=${after.readout} hash=${after.hash}`);
+  else if (!after.mapSvg) fail('resize storm: map did not re-mount');
+  else ok('resize storm: year and hash survive rebuilds, map re-mounted');
+  await textSweep(page, 'resize-storm');
+  reportIssues(issues, 'resize-storm');
+  await page.close();
+}
+
 await browser.close();
 server.kill();
 

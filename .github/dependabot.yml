@@ -1,0 +1,17 @@
+# P7 — the pipeline's dependencies are production infrastructure (playwright,
+# sharp, vite run on a weekly schedule). Monthly, grouped: one PR per
+# ecosystem, validated by the full CI gate battery like any other PR.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      npm-deps:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

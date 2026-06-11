@@ -405,15 +405,20 @@ reduced motion (skips); deploy.
 
 Triage every remaining P3 explicitly — do, defer, or drop with a Deviations note:
 
-- [ ] P6 · P7 · P12 · P15 · P21 · P22 · P23 · P24 · P26 · P29 · P30 · P31 · P33 ·
-      P38 · P40 · P41 · P46 · P47 · P48
-- [ ] F8 (decision #6 record) · F12 · F16 · F17 · F18 · F22 · F23 · F25 · F26 ·
-      F36 · F38 · F45 · F46 · F47 · F49 · F50
-- [ ] R17 · R19 · R27 · R35 · R36 · R37 · R43 · R44 · R45 · R49 · R50
-- [ ] Final audit: full battery at 3 widths × 4 years · print PDF review ·
-      accessibility spot-check (keyboard walk, SR pass on instrument) ·
-      Lighthouse vs budget · README updated to reflect everything above
-- [ ] Close this doc: every box checked or in Deviations
+- [x] P6 · P7 · P12 · P15 · P21 · P22 · P23 · P24 · P26 · P29 · P30 · P31 · P33 ·
+      P38 · P40 · P41 · P46 · P47 · P48 *(all 19 adjudicated — verdict table in
+      the Wave 9 deviations entry)*
+- [x] F8 (decision #6 record) · F12 · F16 · F17 · F18 · F22 · F23 · F25 · F26 ·
+      F36 · F38 · F45 · F46 · F47 · F49 · F50 *(all 16 adjudicated — see deviations)*
+- [x] R17 · R19 · R27 · R35 · R36 · R37 · R43 · R44 · R45 · R49 · R50
+      *(all 11 adjudicated — see deviations)*
+- [x] Final audit: full battery at 3 widths × 4 years · print PDF review
+      (brief read page-by-page: frozen-year header, ledger TODAY divider,
+      Fig 02 callouts, clean breaks) · accessibility spot-check (scripted
+      keyboard walk 9/9: skip link, slider arrows + visible thumb focus,
+      node Enter-select, play aria states, tour open/advance/Esc/focus-
+      restore, disclosures) · Lighthouse vs budget · README updated
+- [x] Close this doc: every box checked or in Deviations
 
 ---
 
@@ -447,6 +452,62 @@ Triage every remaining P3 explicitly — do, defer, or drop with a Deviations no
   overruns; both split cleanly at their cluster boundaries if needed.
 
 ## Deviations & notes
+
+**Wave 9 — THE PLAN CLOSES (2026-06-11, branch `wave-9-longtail`):**
+All 46 remaining items adjudicated by an evidence-based triage workflow
+(three agents, file:line receipts required), then implemented or recorded:
+
+- **DONE already, by earlier waves (14):** P15 (revision tracking = P9's
+  was/now diffs) · P22 (suppression flips in changes.json + S44 chips) ·
+  P23 (the citation-integrity unit test, proven against a real defect in
+  Wave 1) · P24 (the contract textSweep) · P33 (key→n ships as committed
+  sources.json; the poster's REV stamp resolves old footnotes against git
+  history) · F8≡R47 (decision #6, recorded) · F16 (the CSS gate) · F17
+  (og.png 61KB, design-system rendered) · F22 (eager-data decision + code
+  comment) · F23 (no-inline-data decision recorded in the doc) · F26 (deep
+  link fast path, verified Wave 5) · F49 (audited: every animation rides
+  the F37 conductor; the only timer is the reduced-motion play step) · F50
+  (the throttled budget IS the device floor, re-run per wave) · R35 (CSVs
+  are tidy by construction).
+- **DONE this wave (15):** P6 rollback (in docs/pipeline.md) · P7
+  dependabot.yml (monthly, grouped, gated by CI) · P12 raw/ uploaded as a
+  90-day artifact per weekly run · P26 API-conduct table (pipeline.md) ·
+  P38 April re-verify issue (manual-reverify label) · P40 staleness SLO
+  (staleAfterDays finally has a consumer; stale-source label) · P46
+  docs/pipeline.md + README's stale manual-deploy section rewritten · P47
+  npm run data:check · F18 apple-touch-icon (881B, from the favicon mark) ·
+  F36 the load-bearing 'auto' scroll cases documented in place (test half
+  skipped: smooth-scroll assertions are flaky; the RM side is pinned by the
+  bit-identical baselines) · F47 resize-storm contract pass (year + hash
+  survive; rebuild-count half skipped — needs src instrumentation) · R17
+  JSON-LD structural assertion in the contract (Article + 8 complete
+  Dataset nodes) · R19 the site self-archives weekly (/ and /methods,
+  adapted from per-deploy to weekly — matches the data cadence) · R44
+  head/JSON-LD descriptions name Micron · Clay · White Pine · Syracuse
+  (all already-cited rendered phrases) · R49 README "If this tracker goes
+  quiet" succession section.
+- **DEFERRED (9):** P29 link-health (real cost; archived links already
+  hedge rot) · P31 content-drift hashing (noisy without per-page
+  extraction; Wayback pins retrieval-time text) · F38 reduced-motion rAF
+  trace (harness rework; the visual gate would catch a painting loop) ·
+  F46 leak assertion (verified clean by inspection; heap asserts are
+  flaky) · R27 card-validator pass (manual, third-party services — Alex's
+  whenever) · R37 dataset registries · R43 community submissions · R45
+  Wikipedia (Q11 + track record) · R50 editorial calendar — the last four
+  per the personal-project scope.
+- **DROPPED (8):** P21 tripwires (the P4 review gate already blocks and
+  surfaces every revision) · P30 PDF preservation (already Wayback-
+  archived; a public repo must not republish copyrighted documents) · P41
+  refresh metrics (the per-run table in Actions logs is the consumer-less
+  version) · P48 QA-harness CI (against the Wave 1 M3 local-only decision;
+  prod is exercised by health.yml) · F12 font-display optional (evaluated:
+  all five weights render content; optional's failure mode is the harm) ·
+  F25 requestIdleCallback (no measurable problem to solve; risks the
+  citation-ordering constraint) · F45 settle-time tracking (against M3) ·
+  R36 GitHub releases (superseded by the shipped repo-watch + Atom feed
+  design).
+- Final audit recorded on the Wave 9 checklist above. The README's
+  verified-numbers block now reflects the close state.
 
 **Wave 8 progress (2026-06-11, branch `wave-8-engagement`):**
 - All boxes closed (R41/R42 deferred per Alex's personal-project scope; D43
