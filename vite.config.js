@@ -92,6 +92,9 @@ export default defineConfig({
   },
   plugins: [headInjection()],
   build: {
+    // F15: explicit target — the default is conservative; es2022 matches the
+    // browsers this site supports and ships fewer transpiled helpers
+    target: 'es2022',
     rollupOptions: {
       input: {
         index: here('index.html'),

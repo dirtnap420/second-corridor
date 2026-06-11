@@ -973,9 +973,15 @@ async function boot() {
   } else if (introWillRun) setYear(YEAR_MIN, { updateHash: false });
   else setYear(todayYear, { updateHash: false });
 
-  // poster export — dynamically imported on use, never in the main bundle
-  document.getElementById('export-poster').addEventListener('click', async () => {
-    const { exportPoster } = await import('./poster.js');
+  // poster export — dynamically imported on use, never in the main bundle.
+  // F14: warm the chunk on intent so the click itself is instant.
+  const posterBtn = document.getElementById('export-poster');
+  let posterWarm = null;
+  const warmPoster = () => (posterWarm ||= import('./poster.js'));
+  posterBtn.addEventListener('mouseenter', warmPoster, { once: true });
+  posterBtn.addEventListener('focus', warmPoster, { once: true });
+  posterBtn.addEventListener('click', async () => {
+    const { exportPoster } = await warmPoster();
     exportPoster({ year: state.year });
   });
 

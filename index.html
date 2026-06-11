@@ -29,11 +29,12 @@
     />
     <meta name="twitter:image" content="https://second-corridor.vercel.app/og.png" />
 
-    <!-- F10: preload the fonts the first screen actually renders — h1/h2 are
-         Archivo 900 (the LCP element), body copy is Archivo 400, eyebrows are
-         Plex Mono 500. Late font application reflows the masthead (worst on
-         Linux fallback metrics — caught by the CLS gate in CI). The 700/mono-400
-         preloads predate this; trimming the list is F42 (Wave 7). -->
+    <!-- F10+F42: preload exactly the fonts whose late application reflows the
+         first screen — h1/h2 are Archivo 900 (the LCP element), body copy is
+         Archivo 400, eyebrows are Plex Mono 500 (worst on Linux fallback
+         metrics — caught by the CLS gate in CI). Archivo 700 (strip figures)
+         and Plex Mono 400 swap in place without moving the masthead; their
+         preloads competed with the geo fetch for the critical path. -->
     <link
       rel="preload"
       href="/fonts/archivo-v25-latin-900.woff2"
@@ -55,20 +56,9 @@
       type="font/woff2"
       crossorigin
     />
-    <link
-      rel="preload"
-      href="/fonts/archivo-v25-latin-700.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
-    <link
-      rel="preload"
-      href="/fonts/ibm-plex-mono-v20-latin-regular.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
+    <!-- F21: the geometry is 13.5KB on the critical path to the centerpiece —
+         let it ride the HTML's connection immediately -->
+    <link rel="preload" href="/data/ny-geo.json" as="fetch" crossorigin />
     <script type="module" src="/src/main.js"></script>
     <link rel="stylesheet" href="/src/styles.css" />
   </head>

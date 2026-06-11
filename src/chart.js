@@ -2,7 +2,9 @@
 // (perm copper + supply violet, stack top = the cited ~50,000 total) with the
 // constr band overlaid at its own cited values (ink hatch between band edges).
 // The invest line rides in its own strip above. Cursor follows the scrubber.
-import { scaleLinear, area as d3area, line as d3line } from 'd3';
+// F9: scoped imports — no meta-package guesswork for the bundler
+import { scaleLinear } from 'd3-scale';
+import { area as d3area, line as d3line } from 'd3-shape';
 import {
   YEAR_MIN,
   YEAR_MAX,

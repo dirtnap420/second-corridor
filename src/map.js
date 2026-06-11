@@ -6,7 +6,9 @@
 // view only — flows are geography-bound). Particles render as plotter streaks
 // with age-based fade-in/out so density changes never pop. All surfaces are
 // driven by update(year); a copper carriage square rides the trace tip.
-import { geoConicConformal, geoPath, geoDistance, line as d3line, curveCatmullRom } from 'd3';
+// F9: scoped imports — no meta-package guesswork for the bundler
+import { geoConicConformal, geoPath, geoDistance } from 'd3-geo';
+import { line as d3line, curveCatmullRom } from 'd3-shape';
 import { feature, mesh, merge } from 'topojson-client';
 import { NODES, YEAR_MIN, YEAR_MAX, investAt } from './data.js';
 

@@ -46,7 +46,8 @@ while (Date.now() < deadline) {
     if (errors.length) throw new Error(`console errors: ${errors[0]}`);
     if (state.hidden.length) throw new Error(`plates hidden: ${state.hidden.join(', ')}`);
     if (state.sources < 20) throw new Error(`only ${state.sources} sources rendered`);
-    if (state.vintage !== expected) throw new Error(`colophon vintage ${state.vintage} ≠ expected ${expected} (deploy not live yet?)`);
+    // S45 (Wave 6) appended the relative age to the vintage — match the date prefix
+    if (!state.vintage || !state.vintage.startsWith(expected)) throw new Error(`colophon vintage ${state.vintage} ≠ expected ${expected} (deploy not live yet?)`);
     console.log(`healthy: vintage ${state.vintage}, ${state.sources} sources, all plates visible`);
     await browser.close();
     process.exit(0);

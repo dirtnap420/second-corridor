@@ -150,6 +150,13 @@ export function runIntro({ mapInstance, motion, finale = null }) {
   window.addEventListener('keydown', interruptFinish, { once: true });
   window.addEventListener('wheel', interruptFinish, { once: true, passive: true });
 
+  // F24: hard failsafe — the timeline ends at 2400ms, but the controls are
+  // disabled for its duration and a slow device (getTotalLength on a cold
+  // GPU) must never strand them. Standalone on purpose: not in timeouts[],
+  // so it fires even if the timeline machinery itself breaks. finish() is
+  // idempotent; on a normal run this is a no-op at 3s.
+  setTimeout(finish, 3000);
+
   const at = (ms, fn) => timeouts.push(setTimeout(() => !done && fn(), ms));
 
   /* ---- timeline (linear, pen-plotter cadence, ≤2.5s) ---- */
