@@ -111,8 +111,9 @@ Prelude — execution machinery (added 2026-06-10, do first):
       to reduce sync/lock races with `.git`
 - [x] M9 — `git tag v0-baseline` + regenerate `og.png` (`npm run og`) and
       verify no `[NAME]` placeholder baked into the social card
-- [ ] M10 — **Alex:** send a test email to Alex@ozarkintelligence.com; confirm
-      mailto: link choice (rec: plain mailto, accept the spam)
+- [x] M10 — **Alex:** send a test email to Alex@ozarkintelligence.com; confirm
+      mailto: link choice (rec: plain mailto, accept the spam) *(confirmed
+      working 2026-06-10, Wave 6 checkpoint)*
 
 - [x] F2 — `lint-size.mjs` bundle gate in `npm run build`
 - [x] F1 — `perf-budget.json` written
@@ -446,6 +447,17 @@ Triage every remaining P3 explicitly — do, defer, or drop with a Deviations no
   overruns; both split cleanly at their cluster boundaries if needed.
 
 ## Deviations & notes
+
+**2026-06-10 — Wave 6 checkpoint decisions (Alex, on PR #7):**
+- New copy approved in full (methods/decisions/changelog pages, absence
+  voice, delta-chip template, colophon lines) — the Q4 batch review for this
+  wave is closed.
+- **NYISO: ship in current state** — the terms-ledger adjudication stands;
+  nyiso.csv stays in the downloads.
+- Commit-history identity exposure (`Alex Harris <aharris128@gmail.com>`):
+  accepted, no history rewrite.
+- M10 closed: test email to the colophon address confirmed working.
+- PR #7 merged (1adfe78); production auto-deployed via the Git integration.
 
 **Wave 6 progress (2026-06-10, branch `wave-6-reach`):**
 - All boxes landed except R3 (staged — see below). Notes and deviations:
