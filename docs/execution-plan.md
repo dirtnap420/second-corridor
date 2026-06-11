@@ -392,8 +392,8 @@ Reach channels:
 - [ ] R30 — five-numbers share image
 - [ ] R39 — refresh notes as posts
 - [ ] R40 — RSS/Atom feed
-- [ ] R41 — press kit
-- [ ] R42 — mapped outreach (first sends; groundbreaking window)
+- [ ] ~~R41 — press kit~~ *(deferred indefinitely — personal-project scope, 2026-06-11)*
+- [ ] ~~R42 — mapped outreach (first sends; groundbreaking window)~~ *(deferred indefinitely — personal-project scope, 2026-06-11)*
 - [ ] R46 — subscribe-without-infrastructure docs
 - [ ] R47 — analytics decision implemented (per decision #6)
 - [ ] R48 — permanence statement
@@ -447,6 +447,16 @@ Triage every remaining P3 explicitly — do, defer, or drop with a Deviations no
   overruns; both split cleanly at their cluster boundaries if needed.
 
 ## Deviations & notes
+
+**2026-06-11 — Wave 7 checkpoint + Wave 8 scope (Alex):**
+- PR #8 approved and merged (92f346e); production auto-deployed.
+- **"Treat it like a personal project for now":** Q17 (audience priority) and
+  R6 (custom domain) are closed without further input — no outreach push, no
+  domain. Consequences for Wave 8: **R41 (press kit) and R42 (mapped
+  outreach sends) are deferred indefinitely**; everything that makes the
+  site itself better stays in (embed, feed, tour, share image — they serve a
+  reader who finds the site, not a campaign). R38's priority order stays
+  unfilled by design. Re-raise outreach only if Alex asks.
 
 **Wave 7 progress (2026-06-10, branch `wave-7-performance`):**
 - All 24 boxes closed; F33 and F34 closed as *tested-and-dropped* (below).
