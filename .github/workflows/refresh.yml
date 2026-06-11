@@ -1,0 +1,160 @@
+# P2+P37+P4+P36+P35 — the scheduled refresh.
+#
+# Cadence (P37): weekly full refresh; daily cheap check (USAspending only —
+# it is the FAIN watcher, and nightly publication is its tempo).
+# Review mode (P4, decision #5): changes land as a PR, never a direct commit.
+# PRs whose changes are new-periods-only auto-merge after 72h unreviewed.
+#
+# Note on tokens: PRs opened with the default GITHUB_TOKEN do not trigger the
+# ci workflow (GitHub anti-recursion). The gates therefore run INSIDE this
+# workflow against the refreshed data before the PR is opened; the PR carries
+# the `gates-green` label as proof, and auto-merge requires it.
+name: refresh
+
+on:
+  schedule:
+    - cron: '17 6 * * 1' # weekly full — Mondays 06:17 UTC
+    - cron: '47 5 * * *' # daily cheap check
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'full or daily'
+        required: false
+        default: 'full'
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Determine mode
+        id: mode
+        run: |
+          MODE="${{ github.event.inputs.mode }}"
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "${{ github.event.schedule }}" = "47 5 * * *" ]; then MODE=daily; else MODE=full; fi
+          fi
+          MODE="${MODE:-full}"
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          if [ "$MODE" = "daily" ]; then
+            echo "flags=--only=usaspending" >> "$GITHUB_OUTPUT"
+          else
+            echo "flags=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Refresh (${{ steps.mode.outputs.mode }})
+        id: run
+        continue-on-error: true
+        env:
+          CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
+        run: node scripts/refresh.mjs ${{ steps.mode.outputs.flags }}
+
+      - name: Wayback archive (weekly only)
+        if: steps.mode.outputs.mode == 'full'
+        continue-on-error: true
+        run: node scripts/archive-sources.mjs
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git status --porcelain public/ data-archive/ CHANGELOG-DATA.md | grep -q .; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            NPO=$(node -e "try{console.log(JSON.parse(require('fs').readFileSync('public/data/changes.json','utf8')).newPeriodsOnly?'true':'false')}catch{console.log('false')}")
+            echo "new_periods_only=$NPO" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # P36 — the FAIN watcher. The day a Micron CHIPS award appears on
+      # USAspending is this site's single biggest pending news event.
+      - name: FAIN alert
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FOUND=$(node -e "const d=JSON.parse(require('fs').readFileSync('public/data/spending.json','utf8'));console.log(d.awards.some(a=>/micron/i.test(a.recipient))?'yes':'no')")
+          if [ "$FOUND" = "yes" ]; then
+            if ! gh issue list --state open --label fain-alert --json number --jq length | grep -qv '^0$'; then
+              gh label create fain-alert --color B5562A --description "Micron CHIPS award appeared on USAspending" 2>/dev/null || true
+              gh issue create \
+                --title "🚨 FAIN ALERT: a Micron CHIPS award record is on USAspending" \
+                --label fain-alert \
+                --assignee dirtnap420 \
+                --body "The absence just became a presence: \`spending.json\` now contains a Micron award record. Fig 08's 'absence is the datapoint' framing inverts — review the refresh PR and the plate's 'it appeared' state (pre-drafted per P36). Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            fi
+          fi
+
+      - name: Run the gates against the refreshed data
+        id: gates
+        if: steps.diff.outputs.changed == 'true'
+        continue-on-error: true
+        run: |
+          npx playwright install --with-deps chromium
+          npm run build && npm test && node qa/offline.mjs && node qa/contract.mjs
+
+      - name: Open refresh PR
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          STAMP=$(date -u +%F)
+          BRANCH="data-refresh/$STAMP"
+          git config user.name "Alex"
+          git config user.email "aharris128@gmail.com"
+          git checkout -B "$BRANCH"
+          git add public/ data-archive/ CHANGELOG-DATA.md
+          git commit -m "Data refresh $STAMP (${{ steps.mode.outputs.mode }})"
+          git push -f origin "$BRANCH"
+          gh label create data-refresh --color 565880 2>/dev/null || true
+          gh label create new-period-only --color 3E7048 --description "auto-merges after 72h per decision #5" 2>/dev/null || true
+          gh label create gates-green --color 2EA043 --description "gates passed inside the refresh run" 2>/dev/null || true
+          LABELS="data-refresh"
+          [ "${{ steps.diff.outputs.new_periods_only }}" = "true" ] && LABELS="$LABELS,new-period-only"
+          [ "${{ steps.gates.outcome }}" = "success" ] && LABELS="$LABELS,gates-green"
+          if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
+            gh pr create --base main --head "$BRANCH" \
+              --title "Data refresh $STAMP" \
+              --label "$LABELS" \
+              --body "$(printf 'Automated refresh (%s mode). Gates inside this run: **%s** (PRs from GITHUB_TOKEN cannot trigger the ci workflow — anti-recursion).\n\nChanges:\n\n```json\n%s\n```\n\nRun: %s/%s/actions/runs/%s' "${{ steps.mode.outputs.mode }}" "${{ steps.gates.outcome }}" "$(node -e "const c=JSON.parse(require('fs').readFileSync('public/data/changes.json','utf8'));const o={};for(const[k,v]of Object.entries(c.datasets))o[k]={periodsAdded:v.periodsAdded,valuesChangedCount:v.valuesChangedCount,suppressionFlips:v.suppressionFlips.length};console.log(JSON.stringify(o,null,2).slice(0,3000))")" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")"
+          else
+            echo "PR for $BRANCH already open — branch updated"
+          fi
+
+      # P4 — auto-merge new-period-only refresh PRs older than 72h (decision #5)
+      - name: Auto-merge eligible refresh PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CUTOFF=$(date -u -d '72 hours ago' +%FT%TZ)
+          for N in $(gh pr list --state open --label data-refresh --label new-period-only --label gates-green --json number,createdAt --jq ".[] | select(.createdAt < \"$CUTOFF\") | .number"); do
+            echo "auto-merging refresh PR #$N (>72h, new periods only, gates green)"
+            gh pr merge "$N" --merge || echo "merge of #$N failed (conflicts or protection) — leaving for review"
+          done
+
+      # P35 — refresh outcome notifications, GitHub-only per decision Q13
+      - name: Failure issue
+        if: steps.run.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create refresh-failure --color D73A4A 2>/dev/null || true
+          TITLE="Refresh failure — $(date -u +%F) (${{ steps.mode.outputs.mode }})"
+          if [ -z "$(gh issue list --state open --label refresh-failure --search "$TITLE" --json number --jq '.[].number')" ]; then
+            gh issue create --title "$TITLE" --label refresh-failure --assignee dirtnap420 \
+              --body "One or more sources failed (fail-soft: the rest refreshed; last-good data restored for any invalid source). Logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          fi
