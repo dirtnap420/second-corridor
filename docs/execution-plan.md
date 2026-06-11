@@ -340,36 +340,36 @@ spreadsheet; methods/decisions pages live; deploy.
 ## Wave 7 — performance pass 2 + mobile (~1–2 sessions)
 
 Bundle & startup:
-- [ ] F9 — scoped d3 imports
-- [ ] F11 — drop unused font weights
-- [ ] F13 — poster-chunk CI assertion
-- [ ] F14 — poster prefetch on intent
-- [ ] F15 — explicit build target
-- [ ] F21 — preload geo JSON
-- [ ] F24 — intro failsafe re-enable
-- [ ] F42 — preload list trim
+- [x] F9 — scoped d3 imports *(−28.8KB: 202,403 → 173,573 B)*
+- [x] F11 — drop unused font weights *(audit: all five shipped weights render — nothing to drop)*
+- [x] F13 — poster-chunk CI assertion
+- [x] F14 — poster prefetch on intent
+- [x] F15 — explicit build target
+- [x] F21 — preload geo JSON
+- [x] F24 — intro failsafe re-enable
+- [x] F42 — preload list trim
 
 Runtime:
-- [ ] F28 — offscreen surface gating during play
-- [ ] F29 — adaptive particle pool
-- [ ] F30 — DPR scaling on low memory
-- [ ] F31 — morph length lerp
-- [ ] F32 — canvas pre-scale transform
-- [ ] F33 — content-visibility (test vs D11 anchors + print)
-- [ ] F34 — plate containment
-- [ ] F35 — ledger batched writes
+- [x] F28 — offscreen surface gating during play
+- [x] F29 — adaptive particle pool
+- [x] F30 — DPR scaling on low memory
+- [x] F31 — morph length lerp
+- [x] F32 — canvas pre-scale transform
+- [x] ~~F33 — content-visibility~~ *(tested and dropped — see deviations)*
+- [x] ~~F34 — plate containment~~ *(tested and dropped — see deviations)*
+- [x] F35 — ledger batched writes
 
 Delivery:
-- [ ] F39 — stale-while-revalidate on /data
-- [ ] F40 — explicit HTML cache policy
-- [ ] F41 — Brotli assertion
-- [ ] F43 — data 404 behavior
-- [ ] F44 — security headers + CSP
+- [x] F39 — stale-while-revalidate on /data
+- [x] F40 — explicit HTML cache policy
+- [x] F41 — Brotli assertion *(in the post-deploy health check)*
+- [x] F43 — data 404 behavior *(in the post-deploy health check)*
+- [x] F44 — security headers + CSP *(CSP as a build-time meta tag — see deviations)*
 
 Mobile (design):
-- [ ] D45 — compact mobile dials
-- [ ] D46 — mobile corridor crop
-- [ ] D47 — QCEW mobile ordering
+- [x] D45 — compact mobile dials
+- [x] D46 — mobile corridor crop
+- [x] D47 — QCEW mobile ordering *(already satisfied by D30, Wave 5 — verified)*
 
 **Exit:** full battery + before/after metrics appended to `performance-improvements.md`
 (F7 baseline vs now); throttled trace passes budget; deploy.
@@ -447,6 +447,43 @@ Triage every remaining P3 explicitly — do, defer, or drop with a Deviations no
   overruns; both split cleanly at their cluster boundaries if needed.
 
 ## Deviations & notes
+
+**Wave 7 progress (2026-06-10, branch `wave-7-performance`):**
+- All 24 boxes closed; F33 and F34 closed as *tested-and-dropped* (below).
+  Exit metrics vs the F7 baseline appended to `performance-improvements.md`:
+  main JS ends at 174,201 B — **below the Wave 0 baseline** despite carrying
+  the Waves 4–6 product (F9 alone recovered 28.8KB) — JS at 85.1% / CSS at
+  97.5% of budget; Lighthouse 0.99/1.0/1.0, CLS 0.004; both perf traces at
+  the frame ceiling with 0 frames over.
+- **F33 dropped** per the risk register's "ships with its own test or not at
+  all": (a) responsiveMount queries clientWidth on every plate at boot,
+  piercing the containment — only paint was deferred, which the compositor
+  already skips offscreen; (b) full-page captures render CV-skipped sections
+  blank, blinding the visual gate below the fold. The cite-anchor-jump test
+  it required stays in the contract as a scroll-margin regression guard.
+- **F34 dropped:** `contain: layout paint` on `.plate` shifts sub-pixel
+  layout inside every plate (0.3–0.46% of pixels at every width — bisected
+  file-by-file to styles.css) and makes plates monolithic for print
+  fragmentation (the brief paginated 17 → 23 pages with tall plates at clip
+  risk). No measured win once F35 removed the per-frame ledger walks.
+- **F44 (changed):** the CSP ships as a build-time `<meta>` tag, not a
+  vercel.json header — the local gates run against vite preview, which never
+  sees Vercel headers; a header-only CSP could break production invisibly.
+  As a meta tag the contract's console checks enforce it on every run — and
+  it immediately caught the /f shims' inline redirect script (now external
+  `/f/go.js`). nosniff + Referrer-Policy stay as headers. frame-ancestors
+  deliberately unset (meta can't carry it; embed mode is Wave 8).
+- **F41/F43 live in qa/health.mjs** (the prod-facing tool) rather than CI —
+  brotli and real-404 behavior only exist on the deployed edge. F43 is the
+  Wave 6 changes.json incident made into a permanent gate.
+- **Harness notes:** the QA captures now walk the page once before
+  shooting/printing (F28's gating means an unscrolled capture would show
+  boot-state years below the fold — exactly what a reader never sees);
+  contract text probes moved innerText → textContent (render-independent);
+  axe injection runs on bypassCSP pages because the harness itself is inline
+  script.
+- D45 hides the dial gauges + wafer key at <640px (value + label carry the
+  reading); S29's die-legend remains at ≥640px where the wafer renders.
 
 **2026-06-10 — Wave 6 checkpoint decisions (Alex, on PR #7):**
 - New copy approved in full (methods/decisions/changelog pages, absence
