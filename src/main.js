@@ -286,7 +286,11 @@ function buildLedger() {
     const marks = [...new Set(m.src.map((s) => cite(s)).filter(Boolean))]
       .map((n) => `<a class="cite" href="#src-${n}">[${n}]</a>`)
       .join('');
-    li.innerHTML = `<span class="yr">${m.year}</span><span>${m.label}${marks}</span>`;
+    // S22: future-dated promises become concrete distances — computed
+    // against today, so the suffixes age themselves out
+    const dy = m.year - Math.floor(TODAY);
+    const rel = m.year > TODAY ? `<span class="ledger-rel"> — in ${dy} yr${dy === 1 ? '' : 's'}</span>` : '';
+    li.innerHTML = `<span class="yr">${m.year}</span><span>${m.label}${marks}${rel}</span>`;
     li.addEventListener('click', () => {
       stopPlay();
       glideTo(m.year);
@@ -472,6 +476,88 @@ function makeWaferDial({ label, srcKeys }) {
   };
 }
 
+/* ---------------- S21: milestone toast during play ----------------
+   The map pings nodes when they activate, but the TEXT of a beat never
+   surfaces during playback — flash the crossed milestone's label beside the
+   year readout for ~1.2s. aria-hidden: D50 owns announcements (the live
+   region is deliberately silenced during play). Reduced motion: no flashes. */
+function buildToast() {
+  const wrap = document.querySelector('.scrubber-year-wrap');
+  if (!wrap) return;
+  const byYear = new Map();
+  for (const m of MILESTONES) {
+    if (!m.src.some((s) => cite(s))) continue;
+    if (!byYear.has(m.year)) byYear.set(m.year, m.label);
+  }
+  const el = document.createElement('span');
+  el.className = 'milestone-toast';
+  el.setAttribute('aria-hidden', 'true');
+  wrap.appendChild(el);
+  let lastY = null;
+  let hideTimer = null;
+  onYear((year) => {
+    const y = Math.floor(year + 1e-6);
+    if (y === lastY) return;
+    const crossed =
+      lastY !== null && state.playing && !motion.reduced && y > lastY && byYear.has(y);
+    lastY = y;
+    if (!crossed) return;
+    let short = byYear.get(y).split(/[;—,]/)[0].trim();
+    if (short.length > 34) short = short.slice(0, 33).trimEnd() + '…';
+    el.textContent = short.toUpperCase();
+    el.classList.add('show');
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => el.classList.remove('show'), 1200);
+  });
+}
+
+/* ---------------- D49: mini-TOC rail at ≥1400px ----------------
+   Twelve sheets is a long scroll with no wayfinding; at wide viewports a
+   fixed mono index costs nothing. Hidden below 1400px in CSS. */
+function buildTocRail() {
+  const items = [...Array(12)]
+    .map((_, i) => [`s${String(i + 1).padStart(2, '0')}`, String(i + 1).padStart(2, '0')])
+    .concat([['sources', 'SRC']]);
+  const nav = document.createElement('nav');
+  nav.className = 'toc-rail';
+  nav.setAttribute('aria-label', 'Section index');
+  // accessible names carry the section headings, not just '01'
+  const nameOf = (id, label) =>
+    id === 'sources'
+      ? 'Sources'
+      : `${label} — ${document.getElementById(`h${label}`)?.textContent.trim() || 'section'}`;
+  nav.innerHTML = items
+    .map(
+      ([id, label]) =>
+        `<a href="#${id}" data-sec="${id}" aria-label="${nameOf(id, label)}">${label}</a>`
+    )
+    .join('');
+  document.body.appendChild(nav);
+  const links = new Map([...nav.querySelectorAll('a')].map((a) => [a.dataset.sec, a]));
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          links.forEach((a) => {
+            a.classList.remove('current');
+            a.removeAttribute('aria-current');
+          });
+          const cur = links.get(e.target.id);
+          if (cur) {
+            cur.classList.add('current');
+            cur.setAttribute('aria-current', 'true');
+          }
+        }
+      }
+    },
+    { rootMargin: '-40% 0px -55% 0px' }
+  );
+  items.forEach(([id]) => {
+    const el = document.getElementById(id);
+    if (el) io.observe(el);
+  });
+}
+
 /* ---------------- S19: era readout under the year ----------------
    The operative milestone state — the number becomes a story state. */
 function buildEra() {
@@ -587,6 +673,49 @@ function buildInstalledBase() {
     note.innerHTML = `<div class="label">All figures: state &amp; institutional record — sources in each cell</div>`;
     grid.appendChild(note);
   }
+
+  /* S41: spec-cell numerals count up over ~300ms on first reveal — cheap
+     salience for the context plate. tabular-nums (D41) prevents jitter;
+     reduced motion renders the final values instantly (no setup at all).
+     Only the leading number animates; prefixes/suffixes (~, +, MM) hold. */
+  if (!motion.reduced && 'IntersectionObserver' in window) {
+    const targets = [...grid.querySelectorAll('.spec-cell .big')]
+      .map((el) => {
+        const textNode = el.firstChild; // the value text; the cite mark follows
+        const orig = textNode?.textContent || '';
+        const m = orig.match(/^([^\d]*)([\d,]+)(.*)$/);
+        if (!m || !Number(m[2].replace(/,/g, ''))) return null;
+        const sep = m[2].includes(',');
+        return {
+          textNode,
+          orig, // the cited figure, restored verbatim at the end
+          pre: m[1],
+          n: Number(m[2].replace(/,/g, '')),
+          post: m[3],
+          fmt: (v) => (sep ? v.toLocaleString('en-US') : String(v)),
+        };
+      })
+      .filter(Boolean);
+    if (targets.length) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (!entries[0].isIntersecting) return;
+          io.disconnect();
+          const t0 = performance.now();
+          const unsub = onTick((now) => {
+            const k = Math.min(1, (now - t0) / 300);
+            for (const t of targets) {
+              t.textNode.textContent =
+                k >= 1 ? t.orig : `${t.pre}${t.fmt(Math.round(t.n * k))}${t.post}`;
+            }
+            if (k >= 1) unsub();
+          });
+        },
+        { threshold: 0.4 }
+      );
+      io.observe(grid);
+    }
+  }
 }
 
 /* ---------------- node plate ---------------- */
@@ -614,6 +743,102 @@ function showNodePlate(node) {
     </dl>
     <div style="margin-top:6px">${node.plate}</div>
     ${figs ? `<div class="node-deeper">GO DEEPER → ${figs}</div>` : ''}`;
+}
+
+/* ---------------- R28: embed mode ----------------
+   ?embed=figNN renders one plate: no masthead, an attribution footer with a
+   backlink, postMessage height for the host iframe. Local newsrooms embed
+   charts they can't build; every embed is a live backlink. The plate is
+   MOVED (not cloned) so its observers and listeners keep working. */
+const EMBED_PLATES = {
+  fig01: 'instrument',
+  fig02: 'buildout-plate',
+  fig03: 'capital-plate',
+  fig04: 'talent-plate',
+  fig05: 'base-plate',
+  fig06: 'qcew-plate',
+  fig06a: 'qcew-plate',
+  fig06b: 'oews-plate',
+  fig06c: 'ipeds-plate',
+  fig07: 'lodes-plate',
+  fig08: 'spending-plate',
+  fig09: 'comp-plate',
+  fig10: 'bps-plate',
+  fig10a: 'bps-plate',
+  fig10b: 'acs-plate',
+  fig11: 'phys-plate',
+  fig12: 'synthesis-plate',
+};
+export const EMBED = (() => {
+  const p = new URLSearchParams(location.search).get('embed');
+  return p && EMBED_PLATES[p] ? p : null;
+})();
+function setupEmbed() {
+  if (!EMBED) return false;
+  const num = EMBED.replace('fig', '').slice(0, 2);
+  const plate = document.getElementById(EMBED_PLATES[EMBED]);
+  document.body.classList.add('embed-mode');
+  const shell = document.createElement('div');
+  shell.className = 'embed-shell';
+  // a landmark + a heading: the iframe document must be navigable on its own
+  shell.setAttribute('role', 'main');
+  const h1 = document.createElement('h1');
+  h1.className = 'visually-hidden';
+  const figName =
+    document.getElementById(`s${num}`)?.querySelector('h2')?.textContent.trim() || 'corridor figure';
+  h1.textContent = `Fig. ${num} — ${figName} — The Second Corridor`;
+  document.title = `Fig. ${num} — ${figName} — The Second Corridor`;
+  shell.appendChild(h1);
+
+  if (plate && !plate.hidden) {
+    shell.appendChild(plate); // MOVED, not cloned — observers keep working
+  } else {
+    // a measured plate can be hidden (its data file failed to load) — a host
+    // iframe must never get the whole site as a fallback; render an honest
+    // unavailable card that still attributes and links back
+    const card = document.createElement('p');
+    card.className = 'embed-unavailable';
+    card.textContent = `FIG. ${num} IS TEMPORARILY UNAVAILABLE — ITS DATA DID NOT LOAD.`;
+    shell.appendChild(card);
+  }
+
+  const foot = document.createElement('footer');
+  foot.className = 'embed-foot';
+  foot.innerHTML = `FROM <a href="https://second-corridor.vercel.app/f/${num}" rel="noopener" target="_blank" aria-label="The Second Corridor — opens the full site in a new tab">THE SECOND CORRIDOR</a> · EVERY NUMBER CITED · ESTIMATES LABELED`;
+  shell.appendChild(foot);
+  document.body.insertBefore(shell, document.body.firstChild);
+
+  // in-page anchors have no targets here — point them at the full site.
+  // Some surfaces (era readout, node plate, responsive rebuilds) regenerate
+  // relative anchors AFTER this runs, so a delegated handler is the real
+  // mechanism; the one-shot rewrite below covers hover/status-bar affordance
+  // for everything present now.
+  const rewrite = (a) => {
+    a.setAttribute('href', `https://second-corridor.vercel.app/${a.getAttribute('href')}`);
+    a.setAttribute('target', '_blank');
+    a.setAttribute('rel', 'noopener');
+    a.setAttribute('aria-label', `${a.textContent.trim()} — opens the full site in a new tab`);
+  };
+  shell.querySelectorAll('a[href^="#"]').forEach(rewrite);
+  shell.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a || !shell.contains(a)) return;
+    e.preventDefault(); // never push hash entries onto the HOST's history
+    window.open(`https://second-corridor.vercel.app/${a.getAttribute('href')}`, '_blank', 'noopener');
+  });
+
+  // height handshake for host iframes
+  if (window.parent !== window) {
+    const post = () =>
+      window.parent.postMessage(
+        { type: 'second-corridor:height', height: document.documentElement.scrollHeight },
+        '*'
+      );
+    new ResizeObserver(post).observe(shell);
+    window.addEventListener('load', post);
+    post();
+  }
+  return true;
 }
 
 /* ---------------- S50≡R24: copy-link per plate ----------------
@@ -770,6 +995,8 @@ async function boot() {
   buildLedger();
   buildDials();
   buildEra();
+  buildToast(); // S21
+  buildTocRail(); // D49
 
   const site = responsiveMount(document.getElementById('site-panel'), (w) =>
     renderSite(document.getElementById('site-panel'), w)
@@ -962,13 +1189,17 @@ async function boot() {
     )} · DATA: ${[...new Set(vintages)].join(' · ')}`;
   });
 
+  // R28: embed hosts get one plate and an attribution footer — and none of
+  // the page chrome below (intro, nudge, tour, deep-link scroll)
+  const embedded = setupEmbed();
+
   // S3: initial year — deep link wins (captured before the S43 view/p parse
   // could rewrite the hash); otherwise land the reader in the present
   // (decision #7). S4: when the intro will run, boot at 2022 and let its
   // final beat scrub to today.
   const todayYear = Math.floor(TODAY + 1e-6);
   const introWillRun =
-    !motion.reduced && !new URLSearchParams(location.search).has('nointro');
+    !motion.reduced && !embedded && !new URLSearchParams(location.search).has('nointro');
   if (initial !== null) {
     setYear(initial, { updateHash: false });
     writeHash(); // settle the displayed hash to the full applied state
@@ -998,9 +1229,29 @@ async function boot() {
     if (rows && summary) summary.textContent = `Open the data table · ${rows} rows`;
   });
 
+  // S15: the guided tour — author-driven first pass, lazy like the poster.
+  // The button disables while a tour runs (belt) and runTour itself is a
+  // singleton (braces) — no stacked dialogs from a double-click.
+  const tourBtn = document.getElementById('tour');
+  tourBtn?.addEventListener('click', async () => {
+    if (tourBtn.disabled) return;
+    tourBtn.disabled = true;
+    const { runTour } = await import('./tour.js');
+    runTour({
+      glideTo,
+      setYear: (y) => setYear(y),
+      stopPlay,
+      cancelGlide,
+      motion,
+      todayYear,
+      invoker: tourBtn,
+      onEnd: () => (tourBtn.disabled = false),
+    });
+  });
+
   // S6: one-shot scrubber invitation after the opening settles — the most
   // important interaction on the page finally gets an invitation
-  if (!localStorage.getItem('sc:nudged') && !motion.reduced) {
+  if (!localStorage.getItem('sc:nudged') && !motion.reduced && !embedded) {
     setTimeout(() => {
       const track = document.querySelector('.scrubber-track');
       if (!track || state.playing) return;
@@ -1016,6 +1267,8 @@ async function boot() {
       localStorage.setItem('sc:nudged', '1');
     }, introWillRun ? 4200 : 1400);
   }
+
+  if (embedded) return; // R28: an embed host needs no opening animation
 
   runIntro({
     mapInstance: map.instance,

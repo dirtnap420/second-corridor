@@ -5,6 +5,7 @@
 // F9: scoped imports — no meta-package guesswork for the bundler
 import { scaleLinear } from 'd3-scale';
 import { area as d3area, line as d3line } from 'd3-shape';
+import { onTick } from './ticker.js';
 import {
   YEAR_MIN,
   YEAR_MAX,
@@ -19,6 +20,7 @@ import {
 } from './data.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
+let wipeSeq = 0; // S40: unique clipPath ids across responsive re-mounts
 
 function srcMarks(keys) {
   return [...new Set(keys.map((k) => cite(k)).filter(Boolean))].map((n) => ` [${n}]`).join('');
@@ -120,7 +122,7 @@ export function renderChart(container, width, qcew = null, commitYear = null) {
   `);
 
   /* series: perm + supply stacked; constr band overlaid at its cited values */
-  put(`
+  const gSeries = put(`
     <path d="${areaGen(() => 0, permAt)}" fill="var(--copper)" opacity="0.9"></path>
     <path d="${areaGen(permAt, (d) => permAt(d) + supplyAt(d))}" fill="var(--violet)" opacity="0.5"></path>
     <path d="${areaGen(constrLowAt, constrHighAt)}" fill="url(#hatch)"></path>
@@ -132,6 +134,7 @@ export function renderChart(container, width, qcew = null, commitYear = null) {
      thesis image: 52,000 promised against hundreds measured, one frame, one
      scale. The flatness IS the statement (spike decision: floor-line, no
      inset); the callout carries what the pixels can't. */
+  let gMeasured = null;
   const onoSeries = qcew?.corridor
     ?.find((c) => c.fips === '36067')
     ?.series.filter((s) => s.year >= YEAR_MIN && typeof s.semi === 'number');
@@ -144,11 +147,42 @@ export function renderChart(container, width, qcew = null, commitYear = null) {
     const lx = x(last.year);
     const ly = yJ(last.semi);
     const calloutY = ly - (narrow ? 34 : 44);
-    put(`
+    gMeasured = put(`
       <path d="${d}" fill="none" stroke="var(--ink)" stroke-width="2"></path>
       <line x1="${lx}" y1="${ly - 3}" x2="${lx}" y2="${calloutY + 4}" stroke="var(--hairline)" stroke-width="1"></line>
       <text class="chart-label" x="${Math.min(lx, W - M.r - 10)}" y="${calloutY}" text-anchor="${narrow ? 'middle' : 'start'}" style="fill:var(--ink);font-weight:500">ONONDAGA NAICS-3344, MEASURED — ANNUAL · ${last.semi.toLocaleString('en-US')} AT ${last.year}${nQ ? ` [${nQ}]` : ''}</text>
     `);
+  }
+
+  /* S40: pen-draw on first reveal — a left-to-right clip wipe over the
+     series (areas can't dash-draw), consistent with the plotter identity.
+     Reduced motion renders static; the clip rect starts FULL so print and
+     captures can never see a half-drawn chart. One shot per mount. */
+  if (
+    !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
+    'IntersectionObserver' in window
+  ) {
+    const clipId = `s40-wipe-${++wipeSeq}`;
+    svg.querySelector('defs').innerHTML += `<clipPath id="${clipId}"><rect x="0" y="0" width="${W}" height="${H}"></rect></clipPath>`;
+    const clipRect = svg.querySelector(`#${clipId} rect`);
+    gSeries.setAttribute('clip-path', `url(#${clipId})`);
+    if (gMeasured) gMeasured.setAttribute('clip-path', `url(#${clipId})`);
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0].isIntersecting) return;
+        io.disconnect();
+        const t0 = performance.now();
+        const DUR = 700;
+        clipRect.setAttribute('width', 0);
+        const unsub = onTick((now) => {
+          const k = Math.min(1, (now - t0) / DUR);
+          clipRect.setAttribute('width', (W * k).toFixed(1));
+          if (k >= 1) unsub();
+        });
+      },
+      { threshold: 0.3 }
+    );
+    io.observe(svg);
   }
 
   /* D23: direct end-labels in the right gutter replace the key at wide
