@@ -110,6 +110,11 @@ function renderOews(data) {
   show('oews-plate');
   setVintage('oews-vintage', prov);
   const panel = document.getElementById('oews-panel');
+  // the wage table can overflow narrow plates and scrolls inside the panel —
+  // a scrollable region needs keyboard access (axe: scrollable-region-focusable)
+  panel.setAttribute('tabindex', '0');
+  panel.setAttribute('role', 'region');
+  panel.setAttribute('aria-label', 'Wages table, corridor metros vs national — scrollable');
   const n = cite('oews-data');
 
   const cell = (d) => {

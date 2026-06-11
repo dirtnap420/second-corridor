@@ -255,11 +255,15 @@ h2 {
 }
 .plate-body {
   padding: 14px;
-  /* mobile overflow sweep (Wave 2): a table wider than the plate (OEWS wages,
-     the numbers tables) scrolls inside it — the page never scrolls sideways */
-  overflow-x: auto;
 }
-details.numbers {
+/* mobile overflow sweep (Wave 2): a table wider than the plate (OEWS wages,
+   the numbers tables) scrolls inside its container — the page never scrolls
+   sideways. Scoped to the table-bearing containers only: a blanket
+   .plate-body rule created scrollable regions without keyboard access (axe).
+   details.numbers is keyboard-reachable via its summary; #oews-panel gets
+   tabindex in renderOews. */
+details.numbers,
+#oews-panel {
   overflow-x: auto;
 }
 .divider {
