@@ -691,6 +691,14 @@ async function boot() {
   const dates = provs.map((d) => d.provenance.retrievedAt).sort();
   if (dates.length) vintageEl.textContent = dates[dates.length - 1];
 
+  // S7: expectations line — readers commit when they can size the
+  // commitment. Plates counted live; freshness from provenance, never markup.
+  const mastheadVintage = document.getElementById('masthead-vintage');
+  if (mastheadVintage && dates.length) {
+    const plateCount = document.querySelectorAll('.plate').length;
+    mastheadVintage.textContent = `${plateCount} plates · ~9 min · refreshed ${dates[dates.length - 1]}`;
+  }
+
   // print brief header: frozen scrub year + all data vintages
   const printHeader = document.getElementById('print-header');
   const vintages = provs
@@ -704,8 +712,15 @@ async function boot() {
 
   // S3: initial year — deep link wins; otherwise land the reader in the
   // present (decision #7). History sits behind the cursor, promise ahead.
+  // S4: when the intro will run, boot at 2022 and let its final beat scrub
+  // to today — the opening animation ends where the reader begins.
   const initial = readHash();
-  setYear(initial !== null ? initial : Math.floor(TODAY + 1e-6), { updateHash: false });
+  const todayYear = Math.floor(TODAY + 1e-6);
+  const introWillRun =
+    !motion.reduced && !new URLSearchParams(location.search).has('nointro');
+  if (initial !== null) setYear(initial, { updateHash: false });
+  else if (introWillRun) setYear(YEAR_MIN, { updateHash: false });
+  else setYear(todayYear, { updateHash: false });
 
   // poster export — dynamically imported on use, never in the main bundle
   document.getElementById('export-poster').addEventListener('click', async () => {
@@ -714,9 +729,23 @@ async function boot() {
   });
 
   // the plotter opening — draw-over of the rendered DOM; skipped by
-  // ?nointro, reduced motion, or any input
+  // ?nointro, reduced motion, or any input. S4: on natural completion the
+  // final beat glides 2022 → today (deep links and interrupts skip it).
   markStage('boot:intro-start');
-  runIntro({ mapInstance: map.instance, motion });
+  runIntro({
+    mapInstance: map.instance,
+    motion,
+    // natural end: glide to today. Interrupt (usually just scrolling): snap
+    // to today unless the reader already took the timeline somewhere.
+    finale:
+      initial === null && introWillRun
+        ? (mode) => {
+            if (mode === 'natural') glideTo(todayYear);
+            else if (Math.floor(state.year) === YEAR_MIN && !state.playing)
+              setYear(todayYear, { updateHash: false });
+          }
+        : null,
+  });
 }
 
 boot();

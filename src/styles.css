@@ -87,6 +87,14 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
+/* D37: kill widows — progressive enhancement, no fallback needed */
+h1,
+h2 {
+  text-wrap: balance;
+}
+.body-copy {
+  text-wrap: pretty;
+}
 svg {
   display: block;
 }
@@ -298,6 +306,72 @@ details.numbers,
 .micro-tabs {
   display: inline-flex;
   border: 1px solid var(--ink);
+}
+/* D48: keyboard users skip the masthead chrome */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 10;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 10px 14px;
+}
+.skip-link:focus {
+  left: 12px;
+  top: 12px;
+}
+/* S2: the corridor in five numbers — inverted pyramid, each chip a door */
+.five-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 14px 0 4px;
+}
+.fn-item {
+  white-space: nowrap;
+}
+.fn-chip {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: var(--ls-micro);
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  padding: 6px 10px;
+  text-decoration: none;
+}
+.fn-chip b {
+  font-weight: 500;
+  color: var(--copper-text);
+}
+.fn-chip:hover {
+  background: var(--silicon);
+}
+/* S5: the act structure, visible upfront (martini-glass shape) */
+.act-toc {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 10px 0 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.act-toc a {
+  color: var(--muted);
+  text-decoration: none;
+}
+.act-toc a:hover {
+  color: var(--copper-text);
+}
+.act-toc b {
+  font-weight: 500;
+  color: var(--ink);
 }
 /* D19: Play → Pause → Replay relabeling must not resize the grid column —
    sized to the widest label ("Replay" measures 84.4px in the btn font) */
