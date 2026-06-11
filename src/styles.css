@@ -436,7 +436,8 @@ details.numbers td,
 }
 .node-deeper a {
   color: var(--copper-text);
-  text-decoration: none;
+  text-decoration: underline; /* axe: links in text blocks need more than color */
+  text-underline-offset: 2px;
   padding: 4px 2px; /* touch target */
 }
 /* S6: the one-shot scrubber invitation */
@@ -634,7 +635,8 @@ input[type='range'].scrub.nudge::-webkit-slider-thumb {
    satisfies the touch-target rule with a box axe can actually measure, and
    the size never changes when the mark text fills in after data loads (a
    flow-affecting fill rewrapped the masthead: measured CLS 0.128) */
-.fn-item .cite {
+.fn-item .cite,
+.dial-label .cite {
   display: inline-flex;
   align-items: center;
   justify-content: center;
