@@ -5,6 +5,7 @@ import {
   YEAR_MIN,
   YEAR_MAX,
   TODAY,
+  NODES,
   MILESTONES,
   INSTALLED_BASE,
   SOURCE_LIST,
@@ -621,7 +622,8 @@ async function boot() {
   bindCiteMarks();
   buildSources();
 
-  const uiState = { particles: 'ambient', view: 'map' };
+  // D13: selected before the map mounts so the ring renders with it
+  const uiState = { particles: 'ambient', view: 'map', selected: 'clay' };
   let flowInfo = null;
   const flowsLegend = document.getElementById('flows-legend');
   const mapOpts = {
@@ -643,6 +645,11 @@ async function boot() {
   onYear((y) => map.update(y));
   stageEl.style.height = ''; // F20 reservation done — the SVG owns the height now
   markStage('boot:map-mounted');
+
+  // D13: the empty SELECT A NODE state was most visitors' first impression —
+  // open on the hero subject instead (the empty state remains the fallback)
+  const clayNode = NODES.find((n) => n.id === 'clay');
+  if (clayNode) showNodePlate(clayNode);
 
   function updateFlowsLegend() {
     if (uiState.particles === 'flows' && uiState.view === 'map' && flowInfo) {

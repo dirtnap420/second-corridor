@@ -636,6 +636,25 @@ input[type='range'].scrub:focus-visible::-webkit-slider-thumb {
 .node-marker.active rect.mark {
   fill: var(--copper);
 }
+/* D14: the five squares read as clickable */
+.node-marker:hover rect.mark {
+  fill: var(--silicon);
+  stroke-width: 1.5;
+}
+.node-marker.active:hover rect.mark {
+  fill: var(--copper);
+  stroke-width: 1.5;
+}
+/* D15: persistent selection ring — offset copper outline, distinct from the
+   year-driven active fill */
+.node-marker .sel-ring {
+  fill: none;
+  stroke: none;
+}
+.node-marker.selected .sel-ring {
+  stroke: var(--copper);
+  stroke-width: 1.25;
+}
 .node-marker.hero text {
   font-weight: 500;
 }
@@ -645,6 +664,10 @@ input[type='range'].scrub:focus-visible::-webkit-slider-thumb {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   fill: var(--ink);
+  /* D16: ground-colored halo keeps RIT/CLAY crisp where the trace crosses */
+  stroke: var(--silicon);
+  stroke-width: 3px;
+  paint-order: stroke;
 }
 .node-marker:focus-visible {
   outline: none;
