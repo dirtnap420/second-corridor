@@ -215,9 +215,11 @@ objects inside `public/data/*.json` and in the on-page Sources list.
     dropped (the announcement date is cleanly cited — only the data is
     confidential).
 20. Copper on silicon (~4.0:1) is below WCAG AA's 4.5:1 for the small mono
-    eyebrows and citation marks. The tokens are locked and Lighthouse
+    eyebrows and citation marks. ~~The tokens are locked and Lighthouse
     accessibility holds at 97 (≥95 gate), so the signature stays; noted for
-    the author.
+    the author.~~ **Resolved in Wave 2 (D42):** text-only copper now uses
+    `--copper-text` (#9c4a22, ≥4.9:1); marks, fills, and large type keep
+    `--copper`. The axe gate runs with an empty allowlist.
 21. Sections 07–11 shipped as one commit rather than five — all five data
     sources landed simultaneously, so the per-section independence the spec
     wanted (a blocked source stalls one panel, not the phase) was satisfied

@@ -55,6 +55,9 @@
   --ink: #14161d;
   --muted: #5b5f6f;
   --copper: #b5562a;
+  /* D42: text-only copper — #b5562a on silicon is ~4.1:1, below AA for small
+     text. Marks, fills, and large type keep --copper. */
+  --copper-text: #9c4a22;
   --violet: #565880;
   --green: #3e7048;
   --hairline: #d4d7e0;
@@ -102,7 +105,7 @@ a {
   text-underline-offset: 2px;
 }
 a:hover {
-  color: var(--copper);
+  color: var(--copper-text);
 }
 
 /* visible focus everywhere */
@@ -181,7 +184,7 @@ section.sheet {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: var(--ls-micro);
-  color: var(--copper);
+  color: var(--copper-text);
   margin-bottom: 14px;
 }
 h1,
@@ -220,7 +223,7 @@ h2 {
   font-family: var(--font-mono);
   font-size: 0.72em;
   vertical-align: super;
-  color: var(--copper);
+  color: var(--copper-text);
   text-decoration: none;
   margin-left: 1px;
 }
@@ -676,7 +679,7 @@ details.numbers summary {
 }
 details.numbers summary::before {
   content: '+ ';
-  color: var(--copper);
+  color: var(--copper-text);
   margin-right: 6px;
 }
 details.numbers[open] summary::before {
@@ -790,7 +793,7 @@ header.masthead {
   left: 0;
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--copper);
+  color: var(--copper-text);
 }
 .sources .retrieved {
   font-family: var(--font-mono);
