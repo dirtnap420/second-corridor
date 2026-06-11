@@ -91,12 +91,35 @@ export function renderCapitalSankey(container, width) {
     fedrd: 'var(--violet)',
   };
 
+  /* S25: pure arithmetic on the plate's cited values — the sentence
+     everyone will quote. Recomputed every render, never typed. */
+  if (!document.getElementById('capital-takeaway')) {
+    const priv = def.links.filter((l) => l.source === 'micron').reduce((a, l) => a + l.value, 0);
+    const pub = def.links.filter((l) => l.source !== 'micron').reduce((a, l) => a + l.value, 0);
+    if (priv > 0 && pub > 0) {
+      const ratio = Math.round(priv / pub);
+      const marks = ['micron-100b', 'green-chips-5_5b', 'chips-direct-8k', 'euv-825m']
+        .map((k) => cite(k))
+        .filter(Boolean)
+        .map((n) => `<a class="cite" href="#src-${n}">[${n}]</a>`)
+        .join('');
+      const p = document.createElement('p');
+      p.className = 'plate-takeaway';
+      p.id = 'capital-takeaway';
+      p.innerHTML = `MICRON'S PRIVATE CAPITAL IS ${ratio}× ALL PUBLIC MONEY ON THIS PLATE COMBINED. ${marks}`;
+      container.before(p);
+    }
+  }
+
   let html = '';
   for (const l of graph.links) {
     const wpx = Math.max(l.width, 1.25); // $65M at true scale is sub-pixel; floor noted on plate
+    // D26: federal R&D gets its own identity — chipsdirect and fedrd were
+    // both solid violet; the R&D band is dashed
+    const dash = l.source.id === 'fedrd' ? ' stroke-dasharray="7 4"' : '';
     html += `<path d="${sankeyLinkHorizontal()(l)}" fill="none" stroke="${
       colors[l.source.id] || 'var(--muted)'
-    }" stroke-width="${wpx}" opacity="0.62"></path>`;
+    }" stroke-width="${wpx}" opacity="0.62"${dash}></path>`;
   }
   const wrapN = narrow ? 15 : 24;
   // de-collide labels per column: greedy push-down with min spacing
@@ -135,6 +158,49 @@ export function renderCapitalSankey(container, width) {
   const g = document.createElementNS(SVG_NS, 'g');
   g.innerHTML = html;
   svg.appendChild(g);
+
+  /* D25: ×40 detail strip — the $100B band crushes the sub-$2B flows to the
+     1.25px floor the plate already apologizes for. True relative scale,
+     magnification stated, honesty preserved. */
+  {
+    const small = graph.links.filter((l) => l.value < 2);
+    if (small.length) {
+      const big = graph.links.find((l) => l.value >= 50);
+      const pxPerB = big ? big.width / big.value : 2;
+      const MAG = 40;
+      const rowH = narrow ? 34 : 22;
+      const dh = 26 + small.length * rowH;
+      const dsvg = makeSvg(
+        container,
+        W,
+        dh,
+        'Detail: sub-$2B capital flows at 40× magnification',
+        'The flows the main plate draws at its 1.25-pixel floor, redrawn at forty times the main scale.'
+      );
+      let dhtml = `<text x="8" y="14" class="sankey-note">DETAIL ×${MAG} — FLOWS UNDER $2B, SAME DATA, MAGNIFIED SCALE</text>`;
+      small
+        .sort((a, b) => b.value - a.value)
+        .forEach((l, i) => {
+          const y = 24 + i * rowH;
+          const bw = Math.max(1, l.value * pxPerB * MAG);
+          const n = cite(l.src);
+          const dash = l.source.id === 'fedrd' ? ' stroke-dasharray="7 4"' : '';
+          const label = `${l.source.label} → ${l.target.label} · ${fmtB(l.value)}${n ? ` [${n}]` : ''}`;
+          if (narrow) {
+            // label above its bar — beside-the-bar clips a 330px viewBox
+            dhtml += `
+              <text x="8" y="${y + 8}" class="sankey-label">${label}</text>
+              <line x1="8" y1="${y + 18}" x2="${8 + bw}" y2="${y + 18}" stroke="${colors[l.source.id] || 'var(--muted)'}" stroke-width="10" opacity="0.62"${dash}></line>`;
+          } else {
+            dhtml += `
+              <line x1="196" y1="${y + 7}" x2="${196 + bw}" y2="${y + 7}" stroke="${colors[l.source.id] || 'var(--muted)'}" stroke-width="10" opacity="0.62"${dash}></line>
+              <text x="${196 + bw + 8}" y="${y + 11}" class="sankey-label">${label}</text>`;
+          }
+        });
+      dsvg.innerHTML += dhtml;
+      dsvg.style.marginTop = '6px';
+    }
+  }
   return {};
 }
 
@@ -206,20 +272,24 @@ export function renderTalentSankey(container, width) {
 
   let html = '';
   for (const l of graph.links) {
+    const mid = (l.source.depth === 1 ? l.source : l.target).id;
     html += `<path d="${sankeyLinkHorizontal()(l)}" fill="none" stroke="var(--ink)" stroke-width="${Math.max(
       l.width,
       1
-    )}" opacity="0.14"></path>`;
+    )}" opacity="0.14" data-mid="${mid}" style="pointer-events:stroke"></path>`;
   }
   const wrapN = narrow ? 13 : 22;
   for (const n of graph.nodes) {
     const isMid = n.depth === 1;
-    html += `<rect x="${n.x0}" y="${n.y0}" width="${n.x1 - n.x0}" height="${
+    // D27: the copper mid-column is the figure's argument — programs render
+    // wider so routes read as passing THROUGH them
+    const pad = isMid ? 2 : 0;
+    html += `<rect x="${n.x0 - pad}" y="${n.y0}" width="${n.x1 - n.x0 + pad * 2}" height="${
       n.y1 - n.y0
     }" fill="${isMid ? 'var(--copper)' : 'var(--ink)'}"></rect>`;
     const label = `${n.label}${n.src ? mark(n.src) : ''}`;
     if (isMid) {
-      html += wrap(label, narrow ? 18 : 30, (n.x0 + n.x1) / 2, 'middle', n.y0 - 12, 'sankey-label');
+      html += wrap(label, narrow ? 18 : 30, (n.x0 + n.x1) / 2, 'middle', n.y0 - 12, 'sankey-label sankey-label--mid');
     } else {
       const left = n.depth === 0;
       const lx = left ? n.x0 - 8 : n.x1 + 8;
@@ -229,6 +299,28 @@ export function renderTalentSankey(container, width) {
   const g = document.createElementNS(SVG_NS, 'g');
   g.innerHTML = html;
   svg.appendChild(g);
+
+  /* S38: progressive disclosure — hovering a ribbon reveals the cited
+     program fact; skimmers stay uncluttered */
+  const FACTS = {
+    coops: () => `RIT: 48 REQUIRED CO-OP WEEKS, FOUR BLOCKS${mark('rit-coop-48')}`,
+    cleanroom: () => `OCC: $15M MICRON CLEANROOM SIMULATION LAB — $5M EACH FROM MICRON, ONONDAGA COUNTY, NYS/SUNY${mark('occ-micron')}`,
+    certs: () => `EMERGE-MICRO: NSF AWARD TO RIT + MCC + FLCC${mark('emerge-micro-2024')}`,
+    apprent: () => `EMERGE-MICRO PATHWAYS: APPRENTICESHIPS & RETRAINING${mark('emerge-micro-2024')}`,
+  };
+  const IDLE = 'HOVER A RIBBON FOR ITS CITED PROGRAM FACT';
+  const detail = document.createElement('p');
+  detail.className = 'method-note ribbon-detail';
+  detail.textContent = IDLE;
+  container.appendChild(detail);
+  svg.addEventListener('pointerover', (e) => {
+    const t = e.target.closest ? e.target.closest('[data-mid]') : null;
+    const f = t && FACTS[t.dataset.mid];
+    if (f) detail.textContent = f();
+  });
+  svg.addEventListener('pointerleave', () => {
+    detail.textContent = IDLE;
+  });
   return {};
 }
 

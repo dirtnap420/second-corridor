@@ -310,6 +310,181 @@ details.numbers,
   display: inline-flex;
   border: 1px solid var(--ink);
 }
+/* S35: the ~50,000's arithmetic as chips */
+.sum-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: var(--ls-micro);
+  text-transform: uppercase;
+}
+.sum-chip {
+  border: 1px solid var(--hairline);
+  background: var(--paper);
+  padding: 4px 8px;
+}
+.sum-op {
+  color: var(--copper-text);
+  font-weight: 500;
+}
+/* S38: the ribbon-detail line under the talent lattice */
+.ribbon-detail {
+  padding: 8px 0 0;
+  min-height: 2.6em;
+}
+/* D38: eyebrow rules — technical-drawing section rhythm */
+section .eyebrow,
+.part-pivot .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+section .eyebrow::after,
+.part-pivot .eyebrow::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--hairline);
+}
+/* D39: brand selection color */
+::selection {
+  background: var(--copper);
+  color: var(--paper);
+}
+/* D40: instrument scrollbars, quiet */
+.ledger ol,
+details.numbers,
+#oews-panel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted) var(--paper);
+}
+/* D41: tabular numerals wherever values tick */
+.dial-value,
+.scrubber-year,
+.era-readout,
+details.numbers td,
+.verdicts,
+.watch-list {
+  font-variant-numeric: tabular-nums;
+}
+/* D44: registration marks on the main plate — plotter-sheet corners */
+.plate--main {
+  position: relative;
+}
+.plate--main::before,
+.plate--main::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+.plate--main::before {
+  top: -8px;
+  left: -8px;
+  border-top: 1px solid var(--ink);
+  border-left: 1px solid var(--ink);
+}
+.plate--main::after {
+  bottom: -8px;
+  right: -8px;
+  border-bottom: 1px solid var(--ink);
+  border-right: 1px solid var(--ink);
+}
+/* S29: the wafer metaphor, taught once */
+.dial-note {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-top: 4px;
+  max-width: 150px;
+}
+/* S37: dial labels are doors */
+.dial-link {
+  color: inherit;
+  text-decoration: none;
+}
+.dial-link:hover {
+  color: var(--copper-text);
+}
+/* D21: the ledger reads as interactive */
+.ledger li:not(.ledger-today) {
+  cursor: pointer;
+}
+.ledger li:not(.ledger-today):hover {
+  background: var(--paper);
+}
+.ledger-more {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  border-top: 1px solid var(--hairline);
+  padding: 5px 14px;
+}
+/* S39: the node plate's go-deeper row */
+.node-deeper {
+  margin-top: 8px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.node-deeper a {
+  color: var(--copper-text);
+  text-decoration: underline; /* axe: links in text blocks need more than color */
+  text-underline-offset: 2px;
+  padding: 4px 2px; /* touch target */
+}
+/* S6: the one-shot scrubber invitation */
+.drag-nudge {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--paper);
+  background: var(--copper);
+  padding: 2px 7px;
+  animation: nudge-fade 2.2s linear forwards;
+}
+input[type='range'].scrub.nudge::-webkit-slider-thumb {
+  animation: nudge-pulse 0.7s ease-in-out 2;
+}
+@keyframes nudge-fade {
+  0%, 80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes nudge-pulse {
+  50% { transform: translateX(6px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drag-nudge,
+  input[type='range'].scrub.nudge::-webkit-slider-thumb {
+    animation: none;
+  }
+}
+/* D27: program labels carry the spine's weight */
+.sankey-label--mid {
+  font-weight: 500;
+}
+/* D28: the grid's note cell sits quiet */
+.spec-cell--note {
+  display: flex;
+  align-items: flex-end;
+}
+.spec-cell--note .label {
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 /* S8: epistemic-status stamps — the promise-vs-measurement thread */
 .plate-stamp {
   display: inline-block;
@@ -460,7 +635,8 @@ details.numbers,
    satisfies the touch-target rule with a box axe can actually measure, and
    the size never changes when the mark text fills in after data loads (a
    flow-affecting fill rewrapped the masthead: measured CLS 0.128) */
-.fn-item .cite {
+.fn-item .cite,
+.dial-label .cite {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1046,9 +1222,14 @@ details.numbers td:first-child {
 }
 .spec-cell .big {
   font-family: var(--font-mono);
-  font-size: 28px;
+  font-size: 33px; /* D29: bigger, steadier numerals */
   font-weight: 500;
   line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.spec-cell .big .cite {
+  top: -1.1em; /* align marks against the cap height, not the baseline drift */
+  font-size: 11px;
 }
 .spec-cell .label {
   font-family: var(--font-mono);

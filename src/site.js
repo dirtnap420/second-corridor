@@ -62,7 +62,7 @@ export function renderSite(container, width) {
   const gPad = document.createElementNS(SVG_NS, 'g');
   gPad.style.transition = 'opacity 450ms linear';
   gPad.innerHTML = `<path d="${padPath}" fill="var(--silicon)" stroke="var(--hairline)" stroke-width="1"></path>
-    <text x="10" y="16" class="chart-label">WHITE PINE SITE — SITEWORK ${SITEWORK}</text>`;
+    <text x="10" y="16" class="chart-label">DETAIL — CLAY NODE · WHITE PINE SITE — SITEWORK ${SITEWORK}</text>`;
   gPad.style.opacity = '0';
   svg.appendChild(gPad);
 

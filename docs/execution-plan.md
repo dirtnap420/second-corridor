@@ -247,49 +247,49 @@ all sign-off wordings approved; fresh deploy.
 ## Wave 5 — annotation & engagement (~2 sessions)
 
 Prerequisite first:
-- [ ] F37 — shared rAF conductor (before any new motion below)
+- [x] F37 — shared rAF conductor (before any new motion below)
 
 Figure annotation (`chart.js`, `sankey.js`, `live.js`, `map.js`):
-- [ ] S23 — plan-vs-measured overlay on Fig 02 *[sign-off]*
-- [ ] D23 — Fig 02 end-labels replace legend
-- [ ] D24≡S24 — hover-scrub on Fig 02 (one implementation) *[sign-off on annotation]*
-- [ ] S25 — Fig 03 8× takeaway
-- [ ] D25 — Fig 03 small-flow inset
-- [ ] D26 — Fig 03 fedrd identity
-- [ ] D27 — Fig 04 program spine emphasis
-- [ ] S26 — Fig 07 Monroe payoff
-- [ ] S27 — Fig 10a series-high stamp *[sign-off]*
-- [ ] S28 — Fig 11 stakes arithmetic
-- [ ] S30 — Fig 06c trend takeaway *[sign-off]*
-- [ ] S29 — wafer-dial legend
-- [ ] D17 — map scale bar + north arrow
-- [ ] D20 — milestone tick tooltips
-- [ ] D21 — ledger affordances
-- [ ] D22 — site panel ↔ Clay linkage
-- [ ] D28 — Fig 05 grid balance
-- [ ] D29 — spec-cell numerals
-- [ ] D30 — QCEW suppressed compression
-- [ ] D31 — QCEW zero-state
-- [ ] D32 — Fig 06c totals + width
-- [ ] D33 — Fig 07 self-commute bar
-- [ ] D34 — Fig 09 data-edge tick
-- [ ] D36 — Fig 11 legend row
+- [x] S23 — plan-vs-measured overlay on Fig 02 *[sign-off]*
+- [x] D23 — Fig 02 end-labels replace legend
+- [x] D24≡S24 — hover-scrub on Fig 02 (one implementation) *[sign-off on annotation]*
+- [x] S25 — Fig 03 8× takeaway
+- [x] D25 — Fig 03 small-flow inset
+- [x] D26 — Fig 03 fedrd identity
+- [x] D27 — Fig 04 program spine emphasis
+- [x] S26 — Fig 07 Monroe payoff
+- [x] S27 — Fig 10a series-high stamp *[sign-off]*
+- [x] S28 — Fig 11 stakes arithmetic
+- [x] S30 — Fig 06c trend takeaway *[sign-off]*
+- [x] S29 — wafer-dial legend
+- [x] D17 — map scale bar + north arrow
+- [x] D20 — milestone tick tooltips
+- [x] D21 — ledger affordances
+- [x] D22 — site panel ↔ Clay linkage
+- [x] D28 — Fig 05 grid balance
+- [x] D29 — spec-cell numerals
+- [x] D30 — QCEW suppressed compression
+- [x] D31 — QCEW zero-state
+- [x] D32 — Fig 06c totals + width
+- [x] D33 — Fig 07 self-commute bar
+- [x] D34 — Fig 09 data-edge tick
+- [x] D36 — Fig 11 legend row
 
 Humanizing & links:
-- [ ] S31 — internal MW/MGD ratios
-- [ ] S32 — wage delta column
-- [ ] S33 — $100B internal anchor *[sign-off]*
-- [ ] S34 — particles = commuters legend
-- [ ] S35 — 50,000 decomposition chips
-- [ ] S37 — instrument ↔ section cross-links
-- [ ] S38 — sankey ribbon detail
-- [ ] S39 — node-plate go-deeper links
-- [ ] S42 — disclosure rename + row counts
-- [ ] S43 — full hash state (`view`/`particles`)
-- [ ] S6 — first-visit scrubber nudge
+- [x] S31 — internal MW/MGD ratios
+- [x] S32 — wage delta column
+- [x] S33 — $100B internal anchor *[sign-off]*
+- [x] S34 — particles = commuters legend
+- [x] S35 — 50,000 decomposition chips
+- [x] S37 — instrument ↔ section cross-links
+- [x] S38 — sankey ribbon detail
+- [x] S39 — node-plate go-deeper links
+- [x] S42 — disclosure rename + row counts
+- [x] S43 — full hash state (`view`/`particles`)
+- [x] S6 — first-visit scrubber nudge
 
 CSS polish batch:
-- [ ] D38 — eyebrow rules · D39 — ::selection · D40 — thin scrollbars ·
+- [x] D38 — eyebrow rules · D39 — ::selection · D40 — thin scrollbars ·
       D41 — tabular numerals · D44 — registration marks
 
 **Exit:** full battery + perf trace (instrument touched heavily); deploy.
@@ -593,6 +593,36 @@ scope on the GCM token before pushing `.github/workflows/`.
   PR head and again on the main merge commit (the no-op proof); production
   deployed and verified. GCM token confirmed to carry `workflow` scope
   (Wave 3's open check, answered early).
+
+**Wave 5 progress (2026-06-11, branch `wave-5-annotation`):**
+- All ~35 boxes landed (S26/S27 were substantially closed by Wave 4's
+  computed takeaways; Wave 5 added the remaining halves). Notes:
+- F37 conductor: play, glide, morph, particles share one rAF. The preview
+  widget's reduced-motion emulation initially masqueraded as a particle
+  regression — the engine is OFF by design under reduced motion; verified
+  with a clean Playwright run instead. Beware the preview widget for
+  motion checks.
+- S23 ships the spike's floor-line: the measured series at true scale +
+  callout; Fig 02 now mounts post-data to receive QCEW. D24's click
+  commits the hovered year through glideTo — charts as controllers.
+- S34 reworded to COMMUTES (not the plan's COMMUTERS): LODES JT00 counts
+  jobs, multiple jobholders count twice — Decision 16's honesty rule
+  outranks the template wording here too.
+- S43 deep links: view/p parse initially clobbered the year slot (writeHash
+  fired before the year applied) — year captured first now; round-trip
+  verified both directions.
+- Two same-wave axe catches: S39's go-deeper links were color-only in a
+  text block (underlined now); dial-label cites needed the fixed 24×24
+  treatment at mobile. End state: axe zero findings, Lighthouse a11y 1.0,
+  CLS 0.003, both perf traces clean (p95 16.8ms desktop / 33.3ms throttled).
+- **Wave 3's dispatch proof CLOSED:** third run green end-to-end — full
+  refresh, validation, Wayback step, FAIN check against live USAspending,
+  gates green on the runner, and the pipeline opened its own PR (#5,
+  data-refresh + gates-green labels). Two infra fixes were needed along the
+  way: existence-checked git adds in the PR step, and the repo setting
+  "Allow GitHub Actions to create and approve pull requests" (default off;
+  enabled via API). PR #5 carries archives.json which Wave 5 also ships —
+  close #5 as superseded after this merge; the next weekly run diffs clean.
 
 **Wave 4 progress (2026-06-11, branch `wave-4-story`):**
 - All 30 boxes landed; approved copy-deck wording throughout. Notes:

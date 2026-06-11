@@ -26,6 +26,7 @@ import {
   buildTalentNumbers,
 } from './sankey.js';
 import { responsiveMount } from './responsive.js';
+import { onTick } from './ticker.js';
 import { initLive } from './live.js';
 import { renderSite } from './site.js';
 import { runIntro } from './intro.js';
@@ -57,17 +58,24 @@ const readout = document.getElementById('year-readout');
 const playBtn = document.getElementById('play');
 
 let hashGuard = false;
+// S43: deep links carry the full instrument state — non-default view and
+// particle layer ride alongside the year (boot sets the writer)
+let hashExtras = () => '';
+export function setHashExtras(fn) {
+  hashExtras = fn;
+}
+function writeHash() {
+  hashGuard = true;
+  history.replaceState(null, '', `#y=${Math.floor(state.year + 1e-6)}${hashExtras()}`);
+  hashGuard = false;
+}
 function setYear(y, { updateHash = true } = {}) {
   const clamped = Math.min(YEAR_MAX, Math.max(YEAR_MIN, y));
   state.year = clamped;
   const display = Math.floor(clamped + 1e-6);
   if (Number(slider.value) !== display) slider.value = display;
   if (readout.textContent !== String(display)) readout.textContent = String(display);
-  if (updateHash && !state.playing) {
-    hashGuard = true;
-    history.replaceState(null, '', `#y=${display}`);
-    hashGuard = false;
-  }
+  if (updateHash && !state.playing) writeHash();
   notify();
 }
 
@@ -76,10 +84,10 @@ function setYear(y, { updateHash = true } = {}) {
    intervening years so every surface scrubs through them coherently.
    Keyboard steps and drag increments stay 1:1. */
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
-let glideRaf = null;
+let glideUnsub = null; // F37: glide rides the shared ticker
 function cancelGlide() {
-  if (glideRaf) cancelAnimationFrame(glideRaf);
-  glideRaf = null;
+  if (glideUnsub) glideUnsub();
+  glideUnsub = null;
   state.gliding = false;
 }
 function glideTo(target) {
@@ -92,17 +100,11 @@ function glideTo(target) {
   const dur = Math.min(950, 320 + Math.abs(target - from) * 26);
   const t0 = performance.now();
   state.gliding = true;
-  const step = (now) => {
+  glideUnsub = onTick((now) => {
     const k = Math.min(1, (now - t0) / dur);
     setYear(from + (target - from) * easeOutCubic(k), { updateHash: k === 1 });
-    if (k < 1) {
-      glideRaf = requestAnimationFrame(step);
-    } else {
-      glideRaf = null;
-      state.gliding = false;
-    }
-  };
-  glideRaf = requestAnimationFrame(step);
+    if (k >= 1) cancelGlide();
+  });
 }
 
 slider.addEventListener('input', () => {
@@ -136,7 +138,7 @@ window.addEventListener('hashchange', () => {
 
 /* ---------------- play ---------------- */
 const PLAY_YEARS_PER_SEC = 1.8;
-let rafId = null;
+let playUnsub = null; // F37: play rides the shared ticker
 let lastT = null;
 
 function stepPlay(t) {
@@ -153,7 +155,6 @@ function stepPlay(t) {
     return;
   }
   setYear(next, { updateHash: false });
-  rafId = requestAnimationFrame(stepPlay);
 }
 
 // reduced motion: discrete one-year steps instead of continuous tween
@@ -183,7 +184,7 @@ function startPlay() {
     discreteTimer = setTimeout(stepDiscrete, 700);
   } else {
     lastT = null;
-    rafId = requestAnimationFrame(stepPlay);
+    playUnsub = onTick(stepPlay);
   }
 }
 function stopPlay() {
@@ -191,9 +192,9 @@ function stopPlay() {
   state.playing = false;
   playBtn.setAttribute('aria-pressed', 'false');
   playBtn.textContent = state.year >= YEAR_MAX ? 'Replay' : 'Play';
-  if (rafId) cancelAnimationFrame(rafId);
+  if (playUnsub) playUnsub();
   if (discreteTimer) clearTimeout(discreteTimer);
-  rafId = null;
+  playUnsub = null;
   discreteTimer = null;
   setYear(state.year); // settle hash
   // D50: re-arm the live region, then re-set the text so the final year
@@ -212,11 +213,20 @@ const pctOf = (y) => ((y - YEAR_MIN) / (YEAR_MAX - YEAR_MIN)) * 100;
 
 function buildTicks() {
   const wrap = document.getElementById('scrub-ticks');
-  const ms = new Set(MILESTONES.map((m) => m.year));
+  const byYear = new Map();
+  for (const m of MILESTONES) {
+    if (!m.src.some((s) => cite(s))) continue;
+    byYear.set(m.year, [...(byYear.get(m.year) || []), m.label]);
+  }
   let html = '';
   for (let y = YEAR_MIN; y <= YEAR_MAX; y++) {
-    const cls = ms.has(y) ? 'tick tick--milestone' : 'tick';
-    html += `<span class="${cls}" style="left:${pctOf(y)}%"></span>`;
+    if (byYear.has(y)) {
+      // D20: the copper ticks explain themselves on hover
+      const title = `${y} — ${byYear.get(y).join(' · ')}`;
+      html += `<span class="tick tick--milestone" style="left:${pctOf(y)}%;pointer-events:auto" title="${title.replace(/"/g, '&quot;')}"></span>`;
+    } else {
+      html += `<span class="tick" style="left:${pctOf(y)}%"></span>`;
+    }
   }
   // S16: the TODAY tick — everything left of it happened, everything right
   // of it is promise. Computed, never hard-coded.
@@ -281,6 +291,12 @@ function buildLedger() {
     ol.appendChild(li);
   }
   wrap.appendChild(ol);
+  // D21: the list scrolls inside 280px with no cue
+  const more = document.createElement('div');
+  more.className = 'ledger-more';
+  more.setAttribute('aria-hidden', 'true');
+  more.textContent = `▼ ${ol.children.length - 1} MILESTONES · LIST SCROLLS · CLICK A ROW TO GLIDE`;
+  wrap.appendChild(more);
   onYear((year) => {
     const y = Math.floor(year + 1e-6);
     let current = null;
@@ -314,14 +330,16 @@ function buildLedger() {
 const fmtB = (v) => `$${v.toFixed(1)}B`;
 const fmtJobs = (v) => Math.round(v).toLocaleString('en-US');
 
-function makeDial({ label, srcKeys, max, format, id }) {
+function makeDial({ label, srcKeys, max, format, id, deepLink = null }) {
   const div = document.createElement('div');
   div.className = 'dial';
   const marks = [...new Set(srcKeys.map((s) => cite(s)).filter(Boolean))]
     .map((n) => `<a class="cite" href="#src-${n}">[${n}]</a>`)
     .join('');
+  // S37: the dial names link to the sections that explain them
+  const labelHtml = deepLink ? `<a class="dial-link" href="${deepLink}">${label}</a>` : label;
   div.innerHTML = `
-    <div class="dial-label">${label}${marks}</div>
+    <div class="dial-label">${labelHtml}${marks}</div>
     <svg width="110" height="62" viewBox="0 0 110 62" role="img" aria-hidden="true">
       <g class="dial-ticks"></g>
       <line class="dial-needle" x1="55" y1="56" x2="55" y2="14" stroke="var(--copper)" stroke-width="2"></line>
@@ -417,7 +435,8 @@ function makeWaferDial({ label, srcKeys }) {
       <circle cx="${CX}" cy="${CY}" r="${R}" fill="var(--paper)" stroke="var(--ink)" stroke-width="1"></circle>
       <g clip-path="url(#wafer-clip)">${dice}</g>
     </svg>
-    <div class="dial-value" id="dial-perm" style="font-size:13px">—</div>`;
+    <div class="dial-value" id="dial-perm" style="font-size:13px">—</div>
+    <div class="dial-note">EACH DIE = ${DIE_VALUE} JOBS · EDGE DICE NEVER FILL — LIKE REAL WAFERS, THE EDGE DOESN'T YIELD</div>`;
   const dieEls = div.querySelectorAll('.wdie');
   const valueEl = div.querySelector('.dial-value');
   let lastFilled = -1;
@@ -443,7 +462,7 @@ function makeWaferDial({ label, srcKeys }) {
         }
         lastFilled = filled;
       }
-      valueEl.textContent = `YIELD: ${fmtJobs(v)} / 9,000 · 1 DIE = ${DIE_VALUE} JOBS`;
+      valueEl.textContent = `YIELD: ${fmtJobs(v)} / 9,000`; // the metaphor line below carries the key (S29)
     },
   };
 }
@@ -479,6 +498,7 @@ function buildDials() {
     max: 100,
     format: fmtB,
     id: 'dial-invest',
+    deepLink: '#s02',
   });
   const dConstr = makeDial({
     label: 'Construction workforce',
@@ -486,6 +506,7 @@ function buildDials() {
     max: 4000,
     format: fmtJobs,
     id: 'dial-constr',
+    deepLink: '#s02',
   });
   const dPerm = makeWaferDial({
     label: 'Permanent jobs',
@@ -548,12 +569,31 @@ function buildInstalledBase() {
       <div class="label">${item.label}</div>`;
     grid.appendChild(cell);
   }
+  // D28: an odd count leaves a hole in the 4-col grid — the last cell
+  // becomes a typeset source line instead of dead space
+  if (grid.children.length % 4 !== 0) {
+    const note = document.createElement('div');
+    note.className = 'spec-cell spec-cell--note';
+    note.innerHTML = `<div class="label">All figures: state &amp; institutional record — sources in each cell</div>`;
+    grid.appendChild(note);
+  }
 }
 
 /* ---------------- node plate ---------------- */
+// S39: the map becomes a hub, not a dead end — each node lists its figures
+const NODE_FIGURES = {
+  clay: [['02', '#s02'], ['08', '#s08'], ['11', '#s11']],
+  rit: [['04', '#s04'], ['06', '#s06']],
+  albany: [['03', '#s03'], ['08', '#s08']],
+  stamp: [['05', '#s05']],
+  marcy: [['06', '#s06']],
+};
 function showNodePlate(node) {
   const plate = document.getElementById('node-plate');
   const n = cite(node.src);
+  const figs = (NODE_FIGURES[node.id] || [])
+    .map(([t, h]) => `<a href="${h}">${t}</a>`)
+    .join(' · ');
   plate.innerHTML = `
     <dl>
       <dt>Node</dt><dd>${node.name} — ${node.full}${
@@ -562,7 +602,8 @@ function showNodePlate(node) {
       <dt>County</dt><dd>${node.countyName} (${node.county})</dd>
       <dt>Active from</dt><dd>${node.activeFrom}</dd>
     </dl>
-    <div style="margin-top:6px">${node.plate}</div>`;
+    <div style="margin-top:6px">${node.plate}</div>
+    ${figs ? `<div class="node-deeper">GO DEEPER → ${figs}</div>` : ''}`;
 }
 
 /* ---------------- boot ---------------- */
@@ -607,12 +648,6 @@ async function boot() {
   );
   onYear((y) => site.update(y));
 
-  const chart = responsiveMount(document.getElementById('buildout-chart'), (w) =>
-    renderChart(document.getElementById('buildout-chart'), w)
-  );
-  onYear((y) => chart.update(y));
-  buildChartNumbers(document.getElementById('buildout-numbers'));
-
   responsiveMount(document.getElementById('capital-sankey'), (w) =>
     renderCapitalSankey(document.getElementById('capital-sankey'), w)
   );
@@ -630,6 +665,14 @@ async function boot() {
   // citation steps — only now is the source registry complete
   bindCiteMarks();
   buildSources();
+
+  // Fig 02 mounts after data so the measured QCEW overlay (S23) draws with
+  // the derived series — promise and meter in one frame
+  const chart = responsiveMount(document.getElementById('buildout-chart'), (w) =>
+    renderChart(document.getElementById('buildout-chart'), w, live.qcew, glideTo)
+  );
+  onYear((y) => chart.update(y));
+  buildChartNumbers(document.getElementById('buildout-numbers'));
 
   // D13: selected before the map mounts so the ring renders with it
   const uiState = { particles: 'ambient', view: 'map', selected: 'clay' };
@@ -662,7 +705,10 @@ async function boot() {
 
   function updateFlowsLegend() {
     if (uiState.particles === 'flows' && uiState.view === 'map' && flowInfo) {
-      flowsLegend.textContent = `1 PARTICLE = ${flowInfo.jobsPerParticle.toLocaleString('en-US')} JOBS · LODES ${flowInfo.vintage.match(/\d{4}/)[0]} · ALL-INDUSTRY COMMUTING`;
+      // S34: human noun, honest method — LODES JT00 counts jobs (multiple
+      // jobholders count twice), so these are COMMUTES, not commuters
+      // (README Decision 16 stands)
+      flowsLegend.textContent = `EACH STREAK ≈ ${flowInfo.jobsPerParticle.toLocaleString('en-US')} COMMUTES · LODES ${flowInfo.vintage.match(/\d{4}/)[0]} · ALL-INDUSTRY`;
       flowsLegend.hidden = false;
     } else {
       flowsLegend.hidden = true;
@@ -677,6 +723,7 @@ async function boot() {
     tabFlows.setAttribute('aria-pressed', String(mode === 'flows'));
     if (map.instance && map.instance.setParticleMode) map.instance.setParticleMode(mode);
     updateFlowsLegend();
+    writeHash(); // S43
   }
   tabAmbient.addEventListener('click', () => setParticles('ambient'));
   tabFlows.addEventListener('click', () => setParticles('flows'));
@@ -695,9 +742,39 @@ async function boot() {
     // flows are geography-bound: unavailable in the section view
     tabFlows.disabled = v === 'section' || !live.lodes;
     updateFlowsLegend();
+    writeHash(); // S43
   }
   tabMap.addEventListener('click', () => setView('map'));
   tabSection.addEventListener('click', () => setView('section'));
+
+  // S43: the hash carries the full instrument state — deep links land on
+  // exactly the configuration the sharer was looking at.
+  // Capture the deep-linked year FIRST: applying view/p below writes the
+  // hash, and the year slot would be clobbered with the boot default.
+  const initial = readHash();
+  setHashExtras(() => {
+    let extra = '';
+    if (uiState.view !== 'map') extra += `&view=${uiState.view}`;
+    if (uiState.particles !== 'ambient') extra += `&p=${uiState.particles}`;
+    return extra;
+  });
+  {
+    const h = Object.fromEntries(
+      location.hash
+        .slice(1)
+        .split('&')
+        .filter(Boolean)
+        .map((kv) => kv.split('='))
+    );
+    if (h.view === 'section') setView('section');
+    if (h.p === 'flows' && live.lodes) setParticles('flows');
+  }
+
+  // S37: Fig 07's caption links back up into the flows view
+  document.getElementById('flows-link')?.addEventListener('click', () => {
+    setView('map');
+    setParticles('flows');
+  });
 
   // colophon vintage: latest retrievedAt across all provenance objects
   const vintageEl = document.getElementById('colophon-vintage');
@@ -726,16 +803,17 @@ async function boot() {
     )} · DATA: ${[...new Set(vintages)].join(' · ')}`;
   });
 
-  // S3: initial year — deep link wins; otherwise land the reader in the
-  // present (decision #7). History sits behind the cursor, promise ahead.
-  // S4: when the intro will run, boot at 2022 and let its final beat scrub
-  // to today — the opening animation ends where the reader begins.
-  const initial = readHash();
+  // S3: initial year — deep link wins (captured before the S43 view/p parse
+  // could rewrite the hash); otherwise land the reader in the present
+  // (decision #7). S4: when the intro will run, boot at 2022 and let its
+  // final beat scrub to today.
   const todayYear = Math.floor(TODAY + 1e-6);
   const introWillRun =
     !motion.reduced && !new URLSearchParams(location.search).has('nointro');
-  if (initial !== null) setYear(initial, { updateHash: false });
-  else if (introWillRun) setYear(YEAR_MIN, { updateHash: false });
+  if (initial !== null) {
+    setYear(initial, { updateHash: false });
+    writeHash(); // settle the displayed hash to the full applied state
+  } else if (introWillRun) setYear(YEAR_MIN, { updateHash: false });
   else setYear(todayYear, { updateHash: false });
 
   // poster export — dynamically imported on use, never in the main bundle
@@ -748,6 +826,32 @@ async function boot() {
   // ?nointro, reduced motion, or any input. S4: on natural completion the
   // final beat glides 2022 → today (deep links and interrupts skip it).
   markStage('boot:intro-start');
+  // S42: name the disclosure and its size — open rates follow
+  document.querySelectorAll('details.numbers').forEach((d) => {
+    const rows = d.querySelectorAll('tbody tr').length;
+    const summary = d.querySelector('summary');
+    if (rows && summary) summary.textContent = `Open the data table · ${rows} rows`;
+  });
+
+  // S6: one-shot scrubber invitation after the opening settles — the most
+  // important interaction on the page finally gets an invitation
+  if (!localStorage.getItem('sc:nudged') && !motion.reduced) {
+    setTimeout(() => {
+      const track = document.querySelector('.scrubber-track');
+      if (!track || state.playing) return;
+      const tag = document.createElement('span');
+      tag.className = 'drag-nudge';
+      tag.textContent = 'DRAG';
+      track.appendChild(tag);
+      slider.classList.add('nudge');
+      setTimeout(() => {
+        tag.remove();
+        slider.classList.remove('nudge');
+      }, 2200);
+      localStorage.setItem('sc:nudged', '1');
+    }, introWillRun ? 4200 : 1400);
+  }
+
   runIntro({
     mapInstance: map.instance,
     motion,

@@ -11,6 +11,8 @@ import { feature, mesh, merge } from 'topojson-client';
 import { NODES, YEAR_MIN, YEAR_MAX, investAt } from './data.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
+import { onTick } from './ticker.js';
+
 const EARTH_MI = 3958.8;
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
@@ -55,6 +57,29 @@ export function renderMap(container, topo, opts, width) {
     <path class="county" d="${path(stateShape)}"></path>
     <path class="county-mesh" d="${path(interior)}" fill="none" stroke="var(--hairline)" stroke-width="0.6"></path>
     <path class="state-outline" d="${path(stateShape)}"></path>`;
+  // D17: map furniture in the dead lower-left corner — a mono scale bar and
+  // north arrow, on-register for a field instrument. Lives in gGeo so it
+  // dims with the geography in section view.
+  {
+    const latMid = 42.2;
+    const dLon = 50 / (Math.cos((latMid * Math.PI) / 180) * 69.172); // 50 mi in degrees lon
+    const p1 = projection([-78.6, latMid]);
+    const p2 = projection([-78.6 + dLon, latMid]);
+    const barPx = Math.abs(p2[0] - p1[0]);
+    const bx = 14;
+    const by = H - 16;
+    gGeo.innerHTML += `
+      <g class="map-furniture" aria-hidden="true">
+        <line x1="${bx}" y1="${by}" x2="${bx + barPx}" y2="${by}" stroke="var(--ink)" stroke-width="1"></line>
+        <line x1="${bx}" y1="${by - 4}" x2="${bx}" y2="${by + 4}" stroke="var(--ink)" stroke-width="1"></line>
+        <line x1="${bx + barPx / 2}" y1="${by - 3}" x2="${bx + barPx / 2}" y2="${by + 3}" stroke="var(--ink)" stroke-width="1"></line>
+        <line x1="${bx + barPx}" y1="${by - 4}" x2="${bx + barPx}" y2="${by + 4}" stroke="var(--ink)" stroke-width="1"></line>
+        <text x="${bx}" y="${by - 8}" class="chart-label">0</text>
+        <text x="${bx + barPx}" y="${by - 8}" text-anchor="end" class="chart-label">50 MI</text>
+        <path d="M${bx + 6},${by - 34} l4,10 l-4,-3 l-4,3 Z" fill="var(--ink)"></path>
+        <text x="${bx + 14}" y="${by - 26}" class="chart-label">N</text>
+      </g>`;
+  }
   svg.appendChild(gGeo);
 
   /* ---------- node geometry: map + section positions ---------- */
@@ -533,17 +558,21 @@ export function renderMap(container, topo, opts, width) {
       }
     }
     ctx.globalAlpha = 1;
-    requestAnimationFrame(frame);
   }
 
+  let unsubFrame = null; // F37: the engine rides the shared ticker
   function startEngine() {
     if (running || motion.reduced || !visible || !onscreen || destroyed) return;
     running = true;
     lastFrame = null;
-    requestAnimationFrame(frame);
+    unsubFrame = onTick(frame);
   }
   function stopEngine() {
     running = false;
+    if (unsubFrame) {
+      unsubFrame();
+      unsubFrame = null;
+    }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
   function evalEngine() {
@@ -603,7 +632,10 @@ export function renderMap(container, topo, opts, width) {
     gGeo.style.opacity = toSection ? '0.13' : '1';
     gSection.style.opacity = toSection ? '1' : '0';
 
-    if (morphRaf) cancelAnimationFrame(morphRaf);
+    if (morphRaf) {
+      morphRaf();
+      morphRaf = null;
+    }
     const from = samplePathCurrent();
     const to = toSection ? sectionSamples : mapSamples;
     if (!dur) {
@@ -614,7 +646,8 @@ export function renderMap(container, topo, opts, width) {
     } else {
       morphing = true;
       const t0 = performance.now();
-      const step = (now) => {
+      // F37: rides the shared ticker; morphRaf is now the unsubscribe fn
+      morphRaf = onTick((now) => {
         const k = easeInOut(Math.min(1, (now - t0) / dur));
         const pts2 = from.map((p, i) => [p[0] + (to[i][0] - p[0]) * k, p[1] + (to[i][1] - p[1]) * k]);
         const d = toD(pts2);
@@ -624,10 +657,12 @@ export function renderMap(container, topo, opts, width) {
         traceFill.style.strokeDasharray = `${traceLen}`;
         traceFill.style.strokeDashoffset = `${traceLen * (1 - traceProgress(currentYear))}`;
         placeTip(traceProgress(currentYear));
-        if ((now - t0) / dur < 1) morphRaf = requestAnimationFrame(step);
-        else finishMorph();
-      };
-      morphRaf = requestAnimationFrame(step);
+        if ((now - t0) / dur >= 1) {
+          morphRaf();
+          morphRaf = null;
+          finishMorph();
+        }
+      });
     }
 
     function finishMorph() {
@@ -689,7 +724,10 @@ export function renderMap(container, topo, opts, width) {
   function destroy() {
     destroyed = true;
     stopEngine();
-    if (morphRaf) cancelAnimationFrame(morphRaf);
+    if (morphRaf) {
+      morphRaf(); // unsubscribe from the ticker
+      morphRaf = null;
+    }
     document.removeEventListener('visibilitychange', onVis);
     io.disconnect();
   }
