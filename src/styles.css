@@ -518,6 +518,7 @@ input[type='range'].scrub:focus-visible::-webkit-slider-thumb {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 10px;
+  margin-right: 6px; /* D8: dt/dd are inline — without this the plate ran "NODECLAY" */
 }
 .node-plate dd {
   display: inline;

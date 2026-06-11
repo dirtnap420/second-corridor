@@ -110,9 +110,15 @@ export function renderSite(container, width) {
     return { f, u0, g, footprint, front, side, top, leader, label, lastState: '' };
   });
 
-  /* panel label */
+  /* panel label — D2: below 560px the end-anchored line overprinted the
+     WHITE PINE caption at y=16; narrow widths stack it left-aligned below */
   const lbl = document.createElementNS(SVG_NS, 'g');
-  lbl.innerHTML = `<text x="${W - 10}" y="16" text-anchor="end" class="chart-label">DIAGRAMMATIC · SEQUENCE PER FEIS [${cite('fab1-2028-fab2')}] &amp; MILESTONES [${cite('groundbreaking-2026')}]</text>`;
+  const seqLine = `SEQUENCE PER FEIS [${cite('fab1-2028-fab2')}] &amp; MILESTONES [${cite('groundbreaking-2026')}]`;
+  lbl.innerHTML =
+    W < 560
+      ? `<text x="10" y="30" class="chart-label">DIAGRAMMATIC</text>
+         <text x="10" y="44" class="chart-label">${seqLine}</text>`
+      : `<text x="${W - 10}" y="16" text-anchor="end" class="chart-label">DIAGRAMMATIC · ${seqLine}</text>`;
   svg.appendChild(lbl);
 
   function faceD(u0, hNow) {

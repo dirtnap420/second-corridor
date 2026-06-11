@@ -502,8 +502,10 @@ function renderBps(data) {
       events += `<line x1="${xOf(2022)}" y1="10" x2="${xOf(2022)}" y2="${16 + plotH}" stroke="var(--copper)" stroke-width="1"></line>
       <text x="${xOf(2022)}" y="8" text-anchor="middle" class="chart-label" style="fill:var(--copper)">ANN.</text>`;
     const gx = xOf(years[years.length - 1]) + bw + 3;
+    // D35: end-anchored just left of the hairline — middle-anchored at the
+    // panel's right edge it clipped in every panel
     events += `<line x1="${gx}" y1="10" x2="${gx}" y2="${16 + plotH}" stroke="var(--copper)" stroke-width="1" stroke-dasharray="2 3"></line>
-      <text x="${gx}" y="8" text-anchor="middle" class="chart-label" style="fill:var(--copper)">GB. '26</text>`;
+      <text x="${gx - 3}" y="8" text-anchor="end" class="chart-label" style="fill:var(--copper)">GB. '26</text>`;
 
     const fig = document.createElement('figure');
     fig.style.cssText = 'margin:0';
