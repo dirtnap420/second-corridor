@@ -328,7 +328,7 @@ function renderSpending(data) {
       <div style="display:grid;grid-template-columns:110px 1fr 150px;gap:8px;align-items:center;margin-top:8px">
         <span style="color:var(--muted)">ANNOUNCED</span>
         <span aria-hidden="true" style="display:block;height:10px;width:100%;background:var(--copper)"></span>
-        <span style="text-align:right">$6.165B <a class="cite" href="#sources">[${nNIST}]</a><a class="cite" href="#sources">[${n8K}]</a></span>
+        <span style="text-align:right">$6.165B <a class="cite" href="#src-${nNIST}">[${nNIST}]</a><a class="cite" href="#src-${n8K}">[${n8K}]</a></span>
       </div>
       <div style="display:grid;grid-template-columns:110px 1fr 150px;gap:8px;align-items:center;margin-top:4px">
         <span style="color:var(--muted)">OBLIGATED</span>
@@ -354,12 +354,12 @@ function renderSpending(data) {
       <div style="display:grid;grid-template-columns:110px 1fr 150px;gap:8px;align-items:center;margin-top:8px">
         <span style="color:var(--muted)">ANNOUNCED</span>
         ${bar(ann, ann, 'var(--copper)')}
-        <span style="text-align:right">$999,997 <a class="cite" href="#sources">[${nNSF}]</a></span>
+        <span style="text-align:right">$999,997 <a class="cite" href="#src-${nNSF}">[${nNSF}]</a></span>
       </div>
       <div style="display:grid;grid-template-columns:110px 1fr 150px;gap:8px;align-items:center;margin-top:4px">
         <span style="color:var(--muted)">OBLIGATED</span>
         ${bar(nsf.obligated, ann, 'var(--violet)')}
-        <span style="text-align:right">${fmtUSD(nsf.obligated)} <a class="cite" href="#sources">[${nUSA}]</a></span>
+        <span style="text-align:right">${fmtUSD(nsf.obligated)} <a class="cite" href="#src-${nUSA}">[${nUSA}]</a></span>
       </div>
       <div style="display:grid;grid-template-columns:110px 1fr 150px;gap:8px;align-items:center;margin-top:4px">
         <span style="color:var(--muted)">OUTLAID</span>

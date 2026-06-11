@@ -271,7 +271,7 @@ function buildLedger() {
     const li = document.createElement('li');
     li.dataset.year = m.year;
     const marks = [...new Set(m.src.map((s) => cite(s)).filter(Boolean))]
-      .map((n) => `<a class="cite" href="#sources">[${n}]</a>`)
+      .map((n) => `<a class="cite" href="#src-${n}">[${n}]</a>`)
       .join('');
     li.innerHTML = `<span class="yr">${m.year}</span><span>${m.label}${marks}</span>`;
     li.addEventListener('click', () => {
@@ -318,7 +318,7 @@ function makeDial({ label, srcKeys, max, format, id }) {
   const div = document.createElement('div');
   div.className = 'dial';
   const marks = [...new Set(srcKeys.map((s) => cite(s)).filter(Boolean))]
-    .map((n) => `<a class="cite" href="#sources">[${n}]</a>`)
+    .map((n) => `<a class="cite" href="#src-${n}">[${n}]</a>`)
     .join('');
   div.innerHTML = `
     <div class="dial-label">${label}${marks}</div>
@@ -364,7 +364,7 @@ function makeWaferDial({ label, srcKeys }) {
   const div = document.createElement('div');
   div.className = 'dial';
   const marks = [...new Set(srcKeys.map((s) => cite(s)).filter(Boolean))]
-    .map((n) => `<a class="cite" href="#sources">[${n}]</a>`)
+    .map((n) => `<a class="cite" href="#src-${n}">[${n}]</a>`)
     .join('');
   const R = 47;
   const CX = 55;
@@ -508,6 +508,7 @@ function bindCiteMarks() {
     const n = cite(a.dataset.cite);
     if (n) {
       a.textContent = `[${n}]`;
+      a.href = `#src-${n}`; // D9: land on the exact source row, not the list top
     } else {
       a.remove(); // no located citation → mark does not render
     }
@@ -535,7 +536,7 @@ function buildInstalledBase() {
     if (!n) continue; // uncited figures do not render
     const cell = document.createElement('div');
     cell.className = 'spec-cell';
-    cell.innerHTML = `<div class="big">${item.value}<a class="cite" href="#sources">[${n}]</a></div>
+    cell.innerHTML = `<div class="big">${item.value}<a class="cite" href="#src-${n}">[${n}]</a></div>
       <div class="label">${item.label}</div>`;
     grid.appendChild(cell);
   }
@@ -548,7 +549,7 @@ function showNodePlate(node) {
   plate.innerHTML = `
     <dl>
       <dt>Node</dt><dd>${node.name} — ${node.full}${
-        n ? `<a class="cite" href="#sources">[${n}]</a>` : ''
+        n ? `<a class="cite" href="#src-${n}">[${n}]</a>` : ''
       }</dd>
       <dt>County</dt><dd>${node.countyName} (${node.county})</dd>
       <dt>Active from</dt><dd>${node.activeFrom}</dd>

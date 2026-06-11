@@ -225,7 +225,10 @@ h2 {
 .cite {
   font-family: var(--font-mono);
   font-size: 0.72em;
-  vertical-align: super;
+  /* D12: super opened leading gaps in body copy — relative lift instead */
+  vertical-align: baseline;
+  position: relative;
+  top: -0.4em;
   color: var(--copper-text);
   text-decoration: none;
   margin-left: 1px;
@@ -968,6 +971,17 @@ header.masthead {
   padding: 8px 0 8px 46px;
   position: relative;
   border-top: 1px dotted var(--hairline);
+  scroll-margin-top: 24px; /* D11 */
+}
+/* D10: a cite click visibly lands somewhere */
+.sources li:target {
+  background: var(--paper);
+  border-left: 3px solid var(--copper);
+  padding-left: 43px;
+}
+/* D11: anchor jumps don't kiss the viewport edge */
+section.sheet {
+  scroll-margin-top: 24px;
 }
 .sources li::before {
   content: '[' counter(src) ']';
