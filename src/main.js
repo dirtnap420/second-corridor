@@ -462,8 +462,10 @@ function buildEra() {
       el.textContent = '';
       return;
     }
-    // short form: the label up to the first separator
-    const short = current.label.split(/[;—]/)[0].trim();
+    // short form: the label up to the first separator, capped so the
+    // reserved two-line box never overflows
+    let short = current.label.split(/[;—,]/)[0].trim();
+    if (short.length > 26) short = short.slice(0, 25).trimEnd() + '…';
     const n = cite(current.src[0]);
     el.innerHTML = `${short.toUpperCase()}${n ? `<a class="cite" href="#src-${n}">[${n}]</a>` : ''}`;
   });
@@ -512,6 +514,12 @@ function bindCiteMarks() {
     } else {
       a.remove(); // no located citation → mark does not render
     }
+  });
+  // collapse adjacent duplicate marks — two keys can resolve to one source
+  // (generated marks already dedupe via Set)
+  document.querySelectorAll('a.cite + a.cite').forEach((a) => {
+    const prev = a.previousElementSibling;
+    if (prev?.classList.contains('cite') && prev.textContent === a.textContent) a.remove();
   });
 }
 

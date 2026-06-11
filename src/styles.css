@@ -456,6 +456,19 @@ details.numbers,
 .fn-item {
   white-space: nowrap;
 }
+/* standalone cite marks next to chips: fixed 24×24 boxes from first paint —
+   satisfies the touch-target rule with a box axe can actually measure, and
+   the size never changes when the mark text fills in after data loads (a
+   flow-affecting fill rewrapped the masthead: measured CLS 0.128) */
+.fn-item .cite {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  vertical-align: middle;
+  top: 0;
+}
 .fn-chip {
   font-family: var(--font-mono);
   font-size: 12px;
@@ -478,8 +491,7 @@ details.numbers,
 .act-toc {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  margin: 10px 0 12px;
+  margin: 8px 0 10px;
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.04em;
@@ -488,6 +500,7 @@ details.numbers,
 .act-toc a {
   color: var(--muted);
   text-decoration: none;
+  padding: 5px 0; /* 24px touch target; static text, so no reflow cost */
 }
 .act-toc a:hover {
   color: var(--copper-text);
@@ -640,10 +653,12 @@ details.numbers,
   white-space: nowrap;
   padding-left: 4px;
 }
-/* S19: era readout — the operative milestone under the year */
+/* S19: era readout — the operative milestone under the year. Fixed column
+   width + reserved two-line height: era text changes on every milestone the
+   glide crosses, and an auto-sized column would reflow the whole track. */
 .scrubber-year-wrap {
   text-align: right;
-  max-width: 16ch;
+  width: 96px;
 }
 .era-readout {
   font-family: var(--font-mono);
@@ -652,6 +667,7 @@ details.numbers,
   color: var(--muted);
   line-height: 1.4;
   margin-top: 2px;
+  min-height: 26px;
 }
 /* S20: the ledger's TODAY divider — above it the record, below it the schedule */
 .ledger li.ledger-today {

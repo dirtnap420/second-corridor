@@ -117,7 +117,12 @@ jobs:
           git config user.name "Alex"
           git config user.email "aharris128@gmail.com"
           git checkout -B "$BRANCH"
-          git add public/ data-archive/ CHANGELOG-DATA.md
+          # paths exist only on the paths the orchestrator actually took
+          # (e.g. a no-change run can still produce archives.json from the
+          # weekly Wayback step) — add whatever this run produced
+          for p in public data-archive CHANGELOG-DATA.md; do
+            [ -e "$p" ] && git add "$p"
+          done
           git commit -m "Data refresh $STAMP (${{ steps.mode.outputs.mode }})"
           git push -f origin "$BRANCH"
           gh label create data-refresh --color 565880 2>/dev/null || true
@@ -130,7 +135,7 @@ jobs:
             gh pr create --base main --head "$BRANCH" \
               --title "Data refresh $STAMP" \
               --label "$LABELS" \
-              --body "$(printf 'Automated refresh (%s mode). Gates inside this run: **%s** (PRs from GITHUB_TOKEN cannot trigger the ci workflow — anti-recursion).\n\nChanges:\n\n```json\n%s\n```\n\nRun: %s/%s/actions/runs/%s' "${{ steps.mode.outputs.mode }}" "${{ steps.gates.outcome }}" "$(node -e "const c=JSON.parse(require('fs').readFileSync('public/data/changes.json','utf8'));const o={};for(const[k,v]of Object.entries(c.datasets))o[k]={periodsAdded:v.periodsAdded,valuesChangedCount:v.valuesChangedCount,suppressionFlips:v.suppressionFlips.length};console.log(JSON.stringify(o,null,2).slice(0,3000))")" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")"
+              --body "$(printf 'Automated refresh (%s mode). Gates inside this run: **%s** (PRs from GITHUB_TOKEN cannot trigger the ci workflow — anti-recursion).\n\nChanges:\n\n```json\n%s\n```\n\nRun: %s/%s/actions/runs/%s' "${{ steps.mode.outputs.mode }}" "${{ steps.gates.outcome }}" "$(node -e "try{const c=JSON.parse(require('fs').readFileSync('public/data/changes.json','utf8'));const o={};for(const[k,v]of Object.entries(c.datasets))o[k]={periodsAdded:v.periodsAdded,valuesChangedCount:v.valuesChangedCount,suppressionFlips:v.suppressionFlips.length};console.log(JSON.stringify(o,null,2).slice(0,3000))}catch{console.log('(no changes.json this run - e.g. archive-links only; see the file diff)')}")" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")"
           else
             echo "PR for $BRANCH already open — branch updated"
           fi
