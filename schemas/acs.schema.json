@@ -1,0 +1,26 @@
+{
+  "$id": "acs",
+  "type": "object",
+  "required": ["schemaVersion", "provenance", "counties"],
+  "properties": {
+    "schemaVersion": { "$ref": "defs#/definitions/schemaVersion" },
+    "provenance": { "$ref": "defs#/definitions/provenance" },
+    "counties": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "type": "object",
+        "required": ["fips", "name", "pop25", "lessHS", "hs", "someCollege", "baPlus"],
+        "properties": {
+          "fips": { "$ref": "defs#/definitions/fips5" },
+          "name": { "type": "string" },
+          "pop25": { "type": "integer", "minimum": 1 },
+          "lessHS": { "type": "integer", "minimum": 0 },
+          "hs": { "type": "integer", "minimum": 0 },
+          "someCollege": { "type": "integer", "minimum": 0 },
+          "baPlus": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "$id": "lodes",
+  "type": "object",
+  "required": ["schemaVersion", "provenance", "workCounty", "totalJobs", "origins", "otherJobs", "corridorShare"],
+  "properties": {
+    "schemaVersion": { "$ref": "defs#/definitions/schemaVersion" },
+    "provenance": { "$ref": "defs#/definitions/provenance" },
+    "workCounty": { "$ref": "defs#/definitions/fips5" },
+    "totalJobs": { "type": "integer", "minimum": 1 },
+    "otherJobs": { "type": "integer", "minimum": 0 },
+    "corridorShare": { "type": "number", "minimum": 0, "maximum": 1 },
+    "origins": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "type": "object",
+        "required": ["fips", "name", "state", "jobs", "share"],
+        "properties": {
+          "fips": { "$ref": "defs#/definitions/fips5" },
+          "name": { "type": "string" },
+          "state": { "type": "string", "minLength": 2, "maxLength": 2 },
+          "jobs": { "type": "integer", "minimum": 0 },
+          "share": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    }
+  }
+}

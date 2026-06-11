@@ -1,0 +1,25 @@
+{
+  "$id": "nyiso",
+  "type": "object",
+  "required": ["schemaVersion", "provenance", "zone", "annual"],
+  "properties": {
+    "schemaVersion": { "$ref": "defs#/definitions/schemaVersion" },
+    "provenance": { "$ref": "defs#/definitions/provenance" },
+    "zone": { "type": "string", "minLength": 3 },
+    "annual": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["year", "avgMW", "peakMW", "hours"],
+        "properties": {
+          "year": { "type": "integer", "minimum": 2015, "maximum": 2100 },
+          "avgMW": { "type": "number", "minimum": 1 },
+          "peakMW": { "type": "number", "minimum": 1 },
+          "hours": { "type": "integer", "minimum": 1, "maximum": 8784 },
+          "partial": { "const": true }
+        }
+      }
+    }
+  }
+}

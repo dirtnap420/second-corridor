@@ -1,0 +1,52 @@
+{
+  "$id": "ipeds",
+  "type": "object",
+  "required": ["schemaVersion", "provenance", "institutions", "cips", "series"],
+  "properties": {
+    "schemaVersion": { "$ref": "defs#/definitions/schemaVersion" },
+    "provenance": { "$ref": "defs#/definitions/provenance" },
+    "institutions": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["unitid", "name", "short"],
+        "properties": {
+          "unitid": { "type": "integer", "minimum": 100000 },
+          "name": { "type": "string", "minLength": 5 },
+          "short": { "type": "string", "minLength": 2 }
+        }
+      }
+    },
+    "cips": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["code", "title", "total", "byInst"],
+        "properties": {
+          "code": { "type": "string", "pattern": "^\\d{2}\\.\\d{4}$" },
+          "title": { "type": "string" },
+          "total": { "type": "integer", "minimum": 0 },
+          "byInst": { "type": "object" }
+        }
+      }
+    },
+    "series": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "type": "object",
+        "required": ["year", "inst", "cert", "assoc", "bach", "grad"],
+        "properties": {
+          "year": { "type": "integer", "minimum": 2015, "maximum": 2100 },
+          "inst": { "type": "string" },
+          "cert": { "type": "integer", "minimum": 0 },
+          "assoc": { "type": "integer", "minimum": 0 },
+          "bach": { "type": "integer", "minimum": 0 },
+          "grad": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  }
+}

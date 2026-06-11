@@ -1,0 +1,58 @@
+{
+  "$id": "qcew",
+  "type": "object",
+  "required": ["schemaVersion", "provenance", "corridor", "comparators"],
+  "properties": {
+    "schemaVersion": { "$ref": "defs#/definitions/schemaVersion" },
+    "provenance": { "$ref": "defs#/definitions/provenance" },
+    "corridor": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "required": ["fips", "name", "series"],
+        "properties": {
+          "fips": { "$ref": "defs#/definitions/fips5" },
+          "name": { "type": "string", "minLength": 3 },
+          "series": {
+            "type": "array",
+            "minItems": 3,
+            "items": {
+              "type": "object",
+              "required": ["year", "semi", "total"],
+              "properties": {
+                "year": { "type": "integer", "minimum": 2015, "maximum": 2100 },
+                "semi": { "$ref": "defs#/definitions/countCell" },
+                "total": { "type": "integer", "minimum": 1 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "comparators": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "required": ["fips", "name", "months"],
+        "properties": {
+          "fips": { "$ref": "defs#/definitions/fips5" },
+          "name": { "type": "string" },
+          "months": {
+            "type": "array",
+            "minItems": 12,
+            "items": {
+              "type": "object",
+              "required": ["ym", "emp"],
+              "properties": {
+                "ym": { "type": "string", "pattern": "^\\d{4}-\\d{2}$" },
+                "emp": { "$ref": "defs#/definitions/countCell" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
