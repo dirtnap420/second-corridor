@@ -622,3 +622,9 @@ scope on the GCM token before pushing `.github/workflows/`.
   findings), visual baselines regenerated ×2 (post-D42 colors, post-caption
   fix) and verified deterministic, Lighthouse perf 0.99 / **a11y 1.0** / bp
   1.0 / CLS 0.003, shots reviewed at 375/768/1280 — zero clipping/overlap.
+- **WAVE 2 EXIT MET (2026-06-11):** PR #2 merged (3cf4b36) on green CI.
+  **The Vercel Git pipeline is now fully live end-to-end:** the PR got an
+  unblocked preview deployment (the git-email fix resolved attribution), and
+  the merge to main auto-deployed Production — verified serving the Wave 2
+  build. Manual `vercel deploy` is no longer needed; Wave 3's CI deploy
+  story simplifies to "merge the refresh PR".
