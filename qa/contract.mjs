@@ -182,9 +182,16 @@ function reportIssues(issues, label) {
   await textSweep(page, 'real data');
   reportIssues(issues, 'real data');
 
-  /* ---- M4: axe-core gate ---- */
-  await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') });
-  const axe = await page.evaluate(async () => {
+  /* ---- M4: axe-core gate ----
+     On a bypassCSP page: F44's CSP (script-src 'self') rightly blocks the
+     harness's own inline axe injection. Every OTHER page in this test keeps
+     CSP enforced — its violations would land in the console-error checks. */
+  const axePage = await browser.newPage({ viewport: { width: 1280, height: 1400 }, bypassCSP: true });
+  await axePage.goto(`${BASE}/?nointro#y=2030`, { waitUntil: 'networkidle' });
+  await axePage.evaluate(() => document.fonts.ready);
+  await axePage.waitForTimeout(600);
+  await axePage.addScriptTag({ path: require.resolve('axe-core/axe.min.js') });
+  const axe = await axePage.evaluate(async () => {
     const r = await window.axe.run(document, { resultTypes: ['violations'] });
     return r.violations.map((v) => ({
       id: v.id,
@@ -194,6 +201,7 @@ function reportIssues(issues, label) {
       sample: v.nodes[0]?.target?.join(' '),
     }));
   });
+  await axePage.close();
   const seriousPlus = axe.filter((v) => v.impact === 'serious' || v.impact === 'critical');
   const blocked = seriousPlus.filter((v) => !(v.id in AXE_ALLOWLIST));
   const allowed = seriousPlus.filter((v) => v.id in AXE_ALLOWLIST);
@@ -323,9 +331,12 @@ function reportIssues(issues, label) {
     reportIssues(issues, sub);
 
     if (sub === 'methods') {
-      // the richest subpage carries the a11y gate for all three
-      await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') });
-      const axe = await page.evaluate(async () => {
+      // the richest subpage carries the a11y gate for all three — on a
+      // bypassCSP page (the harness's axe injection is inline script)
+      const axePage = await browser.newPage({ viewport: { width: 1280, height: 1400 }, bypassCSP: true });
+      await axePage.goto(`${BASE}/${sub}.html`, { waitUntil: 'networkidle' });
+      await axePage.addScriptTag({ path: require.resolve('axe-core/axe.min.js') });
+      const axe = await axePage.evaluate(async () => {
         const r = await window.axe.run(document, { resultTypes: ['violations'] });
         return r.violations
           .filter((v) => v.impact === 'serious' || v.impact === 'critical')
@@ -333,6 +344,7 @@ function reportIssues(issues, label) {
       });
       if (axe.length) fail(`methods axe: ${axe.join(', ')}`);
       else ok('methods: axe clean');
+      await axePage.close();
     }
     await page.close();
   }

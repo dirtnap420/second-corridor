@@ -1066,13 +1066,23 @@ input[type='range'].scrub:focus-visible::-webkit-slider-thumb {
 .dial svg {
   margin: 6px auto 0;
 }
+/* D45: stacked full-row dials cost ~3 screens of scroll on a phone — keep
+   the 3-across row and drop the gauge SVGs and the wafer key; value + label
+   carry the reading (the cited figures live in the labels' marks) */
 @media (max-width: 640px) {
-  .dials {
-    grid-template-columns: 1fr;
-  }
   .dial {
-    border-left: 0;
-    border-top: 1px dotted var(--hairline);
+    padding: 10px 6px;
+  }
+  .dial svg,
+  .dial-note {
+    display: none;
+  }
+  .dial-value {
+    font-size: 15px;
+    margin-top: 6px;
+  }
+  .dial-label {
+    font-size: 9px;
   }
 }
 

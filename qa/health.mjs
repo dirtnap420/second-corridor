@@ -48,7 +48,22 @@ while (Date.now() < deadline) {
     if (state.sources < 20) throw new Error(`only ${state.sources} sources rendered`);
     // S45 (Wave 6) appended the relative age to the vintage — match the date prefix
     if (!state.vintage || !state.vintage.startsWith(expected)) throw new Error(`colophon vintage ${state.vintage} ≠ expected ${expected} (deploy not live yet?)`);
-    console.log(`healthy: vintage ${state.vintage}, ${state.sources} sources, all plates visible`);
+
+    // F41: compression must not silently regress to gzip-only or raw
+    const enc = await fetch(`${URL_}/`, { headers: { 'Accept-Encoding': 'br' } }).then(
+      (r) => r.headers.get('content-encoding') || 'none'
+    );
+    if (enc !== 'br') throw new Error(`expected brotli on /, got content-encoding: ${enc}`);
+
+    // F43: a missing data file must be a real 404 — SPA-fallback HTML with a
+    // 200 would defeat every r.ok fail-soft check in live.js (the Wave 6
+    // changes.json incident, made permanent as a gate)
+    const miss = await fetch(`${URL_}/data/no-such-file-${Date.now()}.json`);
+    if (miss.status !== 404) throw new Error(`missing data file returned ${miss.status}, expected 404`);
+
+    console.log(
+      `healthy: vintage ${state.vintage}, ${state.sources} sources, all plates visible, brotli on, data 404s real`
+    );
     await browser.close();
     process.exit(0);
   } catch (e) {

@@ -26,6 +26,21 @@ export function renderMap(container, topo, opts, width) {
   /* ---------- projection (noted in README) ---------- */
   const counties = feature(topo, topo.objects.counties);
   const pad = Math.max(10, W * 0.02);
+  // D46: at phone widths the full state leaves the corridor a tiny band in
+  // empty flanks — fit to the corridor's own extent instead (margin anchors
+  // keep node labels and the trace curve inside); full state from ~600px up.
+  // The state outline simply runs off-canvas, a map sheet cropped to its
+  // subject.
+  const fitTarget =
+    W < 600
+      ? {
+          type: 'MultiPoint',
+          coordinates: NODES.map((n) => n.lonlat).concat([
+            [-78.9, 42.45],
+            [-73.3, 43.45],
+          ]),
+        }
+      : counties;
   const projection = geoConicConformal()
     .parallels([40.5, 44.5])
     .rotate([76.5, 0])
@@ -34,7 +49,7 @@ export function renderMap(container, topo, opts, width) {
         [pad, pad],
         [W - pad, H - pad * 2],
       ],
-      counties
+      fitTarget
     );
   const path = geoPath(projection);
 
