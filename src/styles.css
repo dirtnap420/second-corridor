@@ -255,6 +255,12 @@ h2 {
 }
 .plate-body {
   padding: 14px;
+  /* mobile overflow sweep (Wave 2): a table wider than the plate (OEWS wages,
+     the numbers tables) scrolls inside it — the page never scrolls sideways */
+  overflow-x: auto;
+}
+details.numbers {
+  overflow-x: auto;
 }
 .divider {
   border: 0;
