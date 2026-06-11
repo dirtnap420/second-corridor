@@ -116,8 +116,8 @@ export function renderSite(container, width) {
   const seqLine = `SEQUENCE PER FEIS [${cite('fab1-2028-fab2')}] &amp; MILESTONES [${cite('groundbreaking-2026')}]`;
   lbl.innerHTML =
     W < 560
-      ? `<text x="10" y="30" class="chart-label">DIAGRAMMATIC</text>
-         <text x="10" y="44" class="chart-label">${seqLine}</text>`
+      ? `<text x="10" y="${H - 20}" class="chart-label">DIAGRAMMATIC</text>
+         <text x="10" y="${H - 6}" class="chart-label">${seqLine}</text>`
       : `<text x="${W - 10}" y="16" text-anchor="end" class="chart-label">DIAGRAMMATIC · ${seqLine}</text>`;
   svg.appendChild(lbl);
 
