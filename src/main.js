@@ -26,6 +26,7 @@ import {
   buildTalentNumbers,
 } from './sankey.js';
 import { responsiveMount } from './responsive.js';
+import { onTick } from './ticker.js';
 import { initLive } from './live.js';
 import { renderSite } from './site.js';
 import { runIntro } from './intro.js';
@@ -76,10 +77,10 @@ function setYear(y, { updateHash = true } = {}) {
    intervening years so every surface scrubs through them coherently.
    Keyboard steps and drag increments stay 1:1. */
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
-let glideRaf = null;
+let glideUnsub = null; // F37: glide rides the shared ticker
 function cancelGlide() {
-  if (glideRaf) cancelAnimationFrame(glideRaf);
-  glideRaf = null;
+  if (glideUnsub) glideUnsub();
+  glideUnsub = null;
   state.gliding = false;
 }
 function glideTo(target) {
@@ -92,17 +93,11 @@ function glideTo(target) {
   const dur = Math.min(950, 320 + Math.abs(target - from) * 26);
   const t0 = performance.now();
   state.gliding = true;
-  const step = (now) => {
+  glideUnsub = onTick((now) => {
     const k = Math.min(1, (now - t0) / dur);
     setYear(from + (target - from) * easeOutCubic(k), { updateHash: k === 1 });
-    if (k < 1) {
-      glideRaf = requestAnimationFrame(step);
-    } else {
-      glideRaf = null;
-      state.gliding = false;
-    }
-  };
-  glideRaf = requestAnimationFrame(step);
+    if (k >= 1) cancelGlide();
+  });
 }
 
 slider.addEventListener('input', () => {
@@ -136,7 +131,7 @@ window.addEventListener('hashchange', () => {
 
 /* ---------------- play ---------------- */
 const PLAY_YEARS_PER_SEC = 1.8;
-let rafId = null;
+let playUnsub = null; // F37: play rides the shared ticker
 let lastT = null;
 
 function stepPlay(t) {
@@ -153,7 +148,6 @@ function stepPlay(t) {
     return;
   }
   setYear(next, { updateHash: false });
-  rafId = requestAnimationFrame(stepPlay);
 }
 
 // reduced motion: discrete one-year steps instead of continuous tween
@@ -183,7 +177,7 @@ function startPlay() {
     discreteTimer = setTimeout(stepDiscrete, 700);
   } else {
     lastT = null;
-    rafId = requestAnimationFrame(stepPlay);
+    playUnsub = onTick(stepPlay);
   }
 }
 function stopPlay() {
@@ -191,9 +185,9 @@ function stopPlay() {
   state.playing = false;
   playBtn.setAttribute('aria-pressed', 'false');
   playBtn.textContent = state.year >= YEAR_MAX ? 'Replay' : 'Play';
-  if (rafId) cancelAnimationFrame(rafId);
+  if (playUnsub) playUnsub();
   if (discreteTimer) clearTimeout(discreteTimer);
-  rafId = null;
+  playUnsub = null;
   discreteTimer = null;
   setYear(state.year); // settle hash
   // D50: re-arm the live region, then re-set the text so the final year

@@ -11,6 +11,8 @@ import { feature, mesh, merge } from 'topojson-client';
 import { NODES, YEAR_MIN, YEAR_MAX, investAt } from './data.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
+import { onTick } from './ticker.js';
+
 const EARTH_MI = 3958.8;
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
@@ -533,17 +535,21 @@ export function renderMap(container, topo, opts, width) {
       }
     }
     ctx.globalAlpha = 1;
-    requestAnimationFrame(frame);
   }
 
+  let unsubFrame = null; // F37: the engine rides the shared ticker
   function startEngine() {
     if (running || motion.reduced || !visible || !onscreen || destroyed) return;
     running = true;
     lastFrame = null;
-    requestAnimationFrame(frame);
+    unsubFrame = onTick(frame);
   }
   function stopEngine() {
     running = false;
+    if (unsubFrame) {
+      unsubFrame();
+      unsubFrame = null;
+    }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
   function evalEngine() {
@@ -603,7 +609,10 @@ export function renderMap(container, topo, opts, width) {
     gGeo.style.opacity = toSection ? '0.13' : '1';
     gSection.style.opacity = toSection ? '1' : '0';
 
-    if (morphRaf) cancelAnimationFrame(morphRaf);
+    if (morphRaf) {
+      morphRaf();
+      morphRaf = null;
+    }
     const from = samplePathCurrent();
     const to = toSection ? sectionSamples : mapSamples;
     if (!dur) {
@@ -614,7 +623,8 @@ export function renderMap(container, topo, opts, width) {
     } else {
       morphing = true;
       const t0 = performance.now();
-      const step = (now) => {
+      // F37: rides the shared ticker; morphRaf is now the unsubscribe fn
+      morphRaf = onTick((now) => {
         const k = easeInOut(Math.min(1, (now - t0) / dur));
         const pts2 = from.map((p, i) => [p[0] + (to[i][0] - p[0]) * k, p[1] + (to[i][1] - p[1]) * k]);
         const d = toD(pts2);
@@ -624,10 +634,12 @@ export function renderMap(container, topo, opts, width) {
         traceFill.style.strokeDasharray = `${traceLen}`;
         traceFill.style.strokeDashoffset = `${traceLen * (1 - traceProgress(currentYear))}`;
         placeTip(traceProgress(currentYear));
-        if ((now - t0) / dur < 1) morphRaf = requestAnimationFrame(step);
-        else finishMorph();
-      };
-      morphRaf = requestAnimationFrame(step);
+        if ((now - t0) / dur >= 1) {
+          morphRaf();
+          morphRaf = null;
+          finishMorph();
+        }
+      });
     }
 
     function finishMorph() {
@@ -689,7 +701,10 @@ export function renderMap(container, topo, opts, width) {
   function destroy() {
     destroyed = true;
     stopEngine();
-    if (morphRaf) cancelAnimationFrame(morphRaf);
+    if (morphRaf) {
+      morphRaf(); // unsubscribe from the ticker
+      morphRaf = null;
+    }
     document.removeEventListener('visibilitychange', onVis);
     io.disconnect();
   }
