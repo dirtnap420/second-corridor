@@ -38,7 +38,7 @@ CC BY 4.0 (`LICENSE-CONTENT.md`); upstream terms per source in
 | `nyiso.json` | `zone`, `annual[]` `{year, avgMW, peakMW, hours, partial?}` — derived from hourly zone load. |
 | `sources.json` | `sources[]` `{n, keys, title, publisher, url, date, retrieved}` — the citation registry with the site's exact footnote numbering (append-only). |
 | `archives.json` | `archives{url → {archiveUrl, archivedAt}}` — Internet Archive snapshots of every source URL. |
-| `changes.json` | written on refreshes that changed the record: `{generatedAt, newPeriodsOnly, datasets{name → {priorVintage, vintage, periodsAdded, valuesChanged, suppressionFlips, …}}}`. Absent until the first post-launch change. |
+| `changes.json` | the latest refresh diff: `{generatedAt, newPeriodsOnly, datasets{name → {priorVintage, vintage, periodsAdded, valuesChanged, suppressionFlips, …}}}`. `datasets` is empty until the first post-launch change (the launch baseline). |
 
 ## CSV mirrors
 
