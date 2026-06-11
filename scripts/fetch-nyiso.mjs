@@ -12,7 +12,7 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import AdmZip from 'adm-zip';
-import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
+import { RETRIEVED_AT, SCHEMA_VERSION, TERMS } from './lib/run-meta.mjs';
 
 const BASE = 'http://mis.nyiso.com/public/csv/palIntegrated';
 const USER_AGENT =
@@ -227,6 +227,7 @@ const out = {
       'avgMW = mean of hourly "Integrated Load" (MW) for zone CENTRL per calendar year; peakMW = max hourly value; ' +
       'hours = hourly observations counted (DST days have 23/25). partial:true marks the in-progress final year. ' +
       'Timestamps are NYISO local time (EST/EDT).',
+    ...TERMS.nyiso,
   },
   zone: 'CENTRL (Central NY)',
   annual,

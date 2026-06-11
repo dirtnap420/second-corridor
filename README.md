@@ -235,6 +235,26 @@ objects inside `public/data/*.json` and in the on-page Sources list.
     latest available completions year (AY 2021-22) — its bars show the
     pre-Micron baseline, which is the point of the panel.
 
+## License & reuse
+
+- **Code** (src/, scripts/, qa/, build config): [MIT](LICENSE).
+- **Content & derived data** (site copy, `public/data/*.json`, generated CSVs,
+  `data-archive/`): [CC BY 4.0](LICENSE-CONTENT.md) — reuse freely, including
+  commercially, with attribution.
+- **Upstream data** stays under its agencies' own terms — see the per-source
+  [terms ledger](docs/terms-ledger.md). Each published JSON carries `license`
+  and `attribution` in its `provenance` block.
+- The `/data/*.json` files are a documented, stable surface:
+  [data contract](docs/data-contract.md).
+
+## Stable anchors
+
+`#s01`–`#s12`, `#record-gaps`, `#sources`, `#src-N` (source rows), and the
+`#y=YYYY` (+ `&view=` / `&p=`) instrument state are stable, versioned anchors —
+inbound deep links will not be broken. `/f/01`–`/f/12` are per-figure share
+URLs that redirect to the matching section. Documented on the
+[methods page](https://second-corridor.vercel.app/methods#anchors).
+
 ## Colophon
 
 Built by Alex · Alex@ozarkintelligence.com.

@@ -16,7 +16,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
+import { RETRIEVED_AT, SCHEMA_VERSION, TERMS } from './lib/run-meta.mjs';
 
 const BASE_URL = 'https://www2.census.gov/econ/bps/County';
 const USER_AGENT =
@@ -216,6 +216,7 @@ const out = {
       '(reported-only, no imputation for non-responding permit offices) were not. County FIPS codes ' +
       'were verified against the County Name column in each file. BPS county files publish no ' +
       'suppression flags, so no cells are suppressed.',
+    ...TERMS.bps,
   },
   counties: COUNTIES.map(({ fips, name }) => ({ fips, name, series: seriesByFips.get(fips) })),
 };

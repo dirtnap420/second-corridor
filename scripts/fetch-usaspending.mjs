@@ -26,7 +26,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
+import { RETRIEVED_AT, SCHEMA_VERSION, TERMS } from './lib/run-meta.mjs';
 
 const API = 'https://api.usaspending.gov/api/v2';
 const DELAY_MS = 150;
@@ -284,6 +284,7 @@ const out = {
       (chipsFound
         ? 'Micron CHIPS award record(s) found and included.'
         : 'Micron CHIPS direct-funding awards are ABSENT from USAspending (see chipsNotPublished); no numbers were imputed.'),
+    ...TERMS.usaspending,
   },
   awards,
 };

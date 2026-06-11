@@ -9,7 +9,9 @@
   ],
   "retrievedAt": "2026-06-10",
   "vintage": "OEWS May 2025",
-  "notes": "Annual median wage (A_MEDIAN) and employment (TOT_EMP) from oesm25ma/MSA_M2025_dl.xlsx and oesm25nat/national_M2025_dl.xlsx. MSA AREA codes matched by AREA_TITLE: Syracuse, NY = 45060; Rochester, NY = 40380. {suppressed:true} = BLS-nondisclosed estimate ('*' wage / '**' employment); {topcoded:true} = wage at or above the OEWS publication top-code ('#'); {absent:true} = occupation not published for that MSA at all."
+  "notes": "Annual median wage (A_MEDIAN) and employment (TOT_EMP) from oesm25ma/MSA_M2025_dl.xlsx and oesm25nat/national_M2025_dl.xlsx. MSA AREA codes matched by AREA_TITLE: Syracuse, NY = 45060; Rochester, NY = 40380. {suppressed:true} = BLS-nondisclosed estimate ('*' wage / '**' employment); {topcoded:true} = wage at or above the OEWS publication top-code ('#'); {absent:true} = occupation not published for that MSA at all.",
+  "license": "Upstream: public domain (U.S. government work); derived series & aggregation: CC BY 4.0 (The Second Corridor)",
+  "attribution": "U.S. Bureau of Labor Statistics, Occupational Employment and Wage Statistics"
  },
  "areas": {
   "syracuse": {

@@ -42,7 +42,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
+import { RETRIEVED_AT, SCHEMA_VERSION, TERMS } from './lib/run-meta.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const RAW_DIR = path.join(ROOT, 'raw', 'ipeds');
@@ -450,6 +450,7 @@ async function main() {
         '15.0616 Semiconductor Manufacturing Technology/Technician exists in CIP 2020 but none of these institutions reported completions under it through the latest year. ' +
         'FLCC reports no completions in the kept CIPs (its engineering-adjacent awards fall under 14.0101, 15.0101, 15.0404, 15.0805); its rows are true zeros, not suppression. ' +
         'CIP titles verified against the official NCES CIP 2020 list (nces.ed.gov/ipeds/cipcode). IPEDS completions lag about two years.',
+      ...TERMS.ipeds,
     },
     institutions: INSTITUTIONS.map((i) => ({ unitid: i.unitid, name: i.name, short: i.short })),
     cips: KEEP_CIPS.map((c) => {

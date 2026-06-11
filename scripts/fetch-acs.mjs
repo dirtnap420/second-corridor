@@ -30,7 +30,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
+import { RETRIEVED_AT, SCHEMA_VERSION, TERMS } from './lib/run-meta.mjs';
 
 const API_BASE = 'https://api.census.gov/data';
 const SF_BASE = 'https://www2.census.gov/programs-surveys/acs/summary_file';
@@ -471,6 +471,11 @@ const out = {
         ? 'Retrieved via the Census data API with an API key.'
         : 'Retrieved from the keyless ACS Summary File because the Census data API now requires an API key; ' +
           'county names verified against the Census 2020 county codes reference file.'),
+    ...TERMS.acsBase,
+    // the Census API notice is a ToS condition of the API path only
+    attribution:
+      'U.S. Census Bureau, American Community Survey' +
+      (key ? ` — ${TERMS.acsApiNotice}` : ''),
   },
   counties,
 };
