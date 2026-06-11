@@ -542,6 +542,14 @@ function buildInstalledBase() {
       <div class="label">${item.label}</div>`;
     grid.appendChild(cell);
   }
+  // D28: an odd count leaves a hole in the 4-col grid — the last cell
+  // becomes a typeset source line instead of dead space
+  if (grid.children.length % 4 !== 0) {
+    const note = document.createElement('div');
+    note.className = 'spec-cell spec-cell--note';
+    note.innerHTML = `<div class="label">All figures: state &amp; institutional record — sources in each cell</div>`;
+    grid.appendChild(note);
+  }
 }
 
 /* ---------------- node plate ---------------- */

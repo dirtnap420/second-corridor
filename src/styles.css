@@ -310,6 +310,20 @@ details.numbers,
   display: inline-flex;
   border: 1px solid var(--ink);
 }
+/* D27: program labels carry the spine's weight */
+.sankey-label--mid {
+  font-weight: 500;
+}
+/* D28: the grid's note cell sits quiet */
+.spec-cell--note {
+  display: flex;
+  align-items: flex-end;
+}
+.spec-cell--note .label {
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 /* S8: epistemic-status stamps — the promise-vs-measurement thread */
 .plate-stamp {
   display: inline-block;
@@ -1046,9 +1060,14 @@ details.numbers td:first-child {
 }
 .spec-cell .big {
   font-family: var(--font-mono);
-  font-size: 28px;
+  font-size: 33px; /* D29: bigger, steadier numerals */
   font-weight: 500;
   line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.spec-cell .big .cite {
+  top: -1.1em; /* align marks against the cap height, not the baseline drift */
+  font-size: 11px;
 }
 .spec-cell .label {
   font-family: var(--font-mono);
