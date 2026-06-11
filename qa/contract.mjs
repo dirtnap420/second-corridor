@@ -162,10 +162,22 @@ function reportIssues(issues, label) {
   if (w6.copyLinks >= 14 && w6.archived >= 25 && w6.ages >= 8 && w6.next && w6.plateCsvLinks >= 8)
     ok(`wave-6 chrome present (${w6.copyLinks} copy-links, ${w6.archived} archived, ${w6.plateCsvLinks} CSV links, ${w6.rev})`);
 
-  /* F33: content-visibility must never break cite anchor jumps — clicking a
-     mark has to land on (and force-render) the deferred sources section */
+  /* Cite anchor jumps must land on the source row (D9/D11 scroll-margin
+     guard; F33's test, kept after F33 was dropped). The page scrolls
+     SMOOTHLY here (~10k px) — wait for arrival, not a fixed delay: a 400ms
+     wait passed locally and raced the slower CI runner mid-scroll. */
   await page.click('.masthead a.cite');
-  await page.waitForTimeout(400);
+  await page
+    .waitForFunction(
+      () => {
+        const el = document.getElementById(location.hash.slice(1));
+        if (!el) return false;
+        const r = el.getBoundingClientRect();
+        return r.height > 0 && r.top >= 0 && r.top < window.innerHeight;
+      },
+      { timeout: 8000 }
+    )
+    .catch(() => {});
   const anchor = await page.evaluate(() => {
     const id = location.hash.slice(1);
     const el = document.getElementById(id);
@@ -176,7 +188,7 @@ function reportIssues(issues, label) {
       why: `${id} at top=${Math.round(r.top)} h=${Math.round(r.height)}`,
     };
   });
-  if (!anchor.ok) fail(`cite anchor jump broken under content-visibility: ${anchor.why}`);
+  if (!anchor.ok) fail(`cite anchor jump did not land on the source row: ${anchor.why}`);
   else ok(`cite anchor jump lands on the rendered source row (${anchor.why})`);
 
   await textSweep(page, 'real data');
