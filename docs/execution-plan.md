@@ -198,48 +198,48 @@ Goal: storytelling spine + the design items that edit the same components.
 This is the biggest single wave; land it in the file-cluster order below.
 
 Masthead / opening (`index.html`, `styles.css`, `intro.js`):
-- [ ] S1 — dek poses the stake *[sign-off]*
-- [ ] S2 — five-numbers strip
-- [ ] S5 — act-structure TOC
-- [ ] S7 — expectations line (plates · minutes · refreshed)
-- [ ] S4 — intro ends by scrubbing to today
-- [ ] D37 — text-wrap balance/pretty
-- [ ] D48 — skip link
+- [x] S1 — dek poses the stake *[sign-off]*
+- [x] S2 — five-numbers strip
+- [x] S5 — act-structure TOC
+- [x] S7 — expectations line (plates · minutes · refreshed)
+- [x] S4 — intro ends by scrubbing to today
+- [x] D37 — text-wrap balance/pretty
+- [x] D48 — skip link
 
 Time anchor (`main.js`, `chart.js`, `data.js`):
-- [ ] S3 — default year = today (per decision #7)
-- [ ] S16 — TODAY tick on scrubber
-- [ ] S17 — TODAY hairline on Fig 02
-- [ ] S18 — phase bands under scrubber
-- [ ] S19 — era readout beside year
-- [ ] S20 — ledger TODAY divider
-- [ ] D50 — calm aria-live during play
+- [x] S3 — default year = today (per decision #7)
+- [x] S16 — TODAY tick on scrubber
+- [x] S17 — TODAY hairline on Fig 02
+- [x] S18 — phase bands under scrubber
+- [x] S19 — era readout beside year
+- [x] S20 — ledger TODAY divider
+- [x] D50 — calm aria-live during play
 
 Instrument interaction (`map.js`, `main.js`, `index.html`):
-- [ ] D18 — scrubber moves up under the map
-- [ ] D13 — auto-select Clay
-- [ ] D14 — node hover state
-- [ ] D15 — node selected state
-- [ ] D16 — node label paper halo
+- [x] D18 — scrubber moves up under the map
+- [x] D13 — auto-select Clay
+- [x] D14 — node hover state
+- [x] D15 — node selected state
+- [x] D16 — node label paper halo
 
 Citation plumbing (`main.js`, `styles.css`):
-- [ ] D9 — cites land on `#src-N`
-- [ ] D10 — `:target` source highlight
-- [ ] D11 — scroll-margin
-- [ ] D12 — superscript line-height fix
+- [x] D9 — cites land on `#src-N`
+- [x] D10 — `:target` source highlight
+- [x] D11 — scroll-margin
+- [x] D12 — superscript line-height fix
 
 Narrative frame (section copy + plate chrome):
-- [ ] S8 — PLAN / DERIVED / MEASURED stamps
-- [ ] S10 — Part Two pivot at s06
-- [ ] S11 — finding-headlines *[sign-off]*
-- [ ] S12 — takeaway line per plate (first batch: 06a, 07, 10a) *[sign-off]*
-- [ ] S13 — section 08 leads with the absence
-- [ ] S9 — forward links between sections
-- [ ] S14 — "what the record doesn't say" block
+- [x] S8 — PLAN / DERIVED / MEASURED stamps
+- [x] S10 — Part Two pivot at s06
+- [x] S11 — finding-headlines *[sign-off]*
+- [x] S12 — takeaway line per plate (first batch: 06a, 07, 10a) *[sign-off]*
+- [x] S13 — section 08 leads with the absence
+- [x] S9 — forward links between sections
+- [x] S14 — "what the record doesn't say" block
 
 Ending:
-- [ ] S48 — synthesis plate
-- [ ] S49 — "what to watch next"
+- [x] S48 — synthesis plate
+- [x] S49 — "what to watch next"
 
 **Exit:** full battery + a top-to-bottom read-through against the storytelling doc;
 all sign-off wordings approved; fresh deploy.
@@ -593,6 +593,38 @@ scope on the GCM token before pushing `.github/workflows/`.
   PR head and again on the main merge commit (the no-op proof); production
   deployed and verified. GCM token confirmed to carry `workflow` scope
   (Wave 3's open check, answered early).
+
+**Wave 4 progress (2026-06-11, branch `wave-4-story`):**
+- All 30 boxes landed; approved copy-deck wording throughout. Notes:
+- Every value in a takeaway/verdict is computed from the data at render
+  (the 10a series-high line self-adjusts if a later year beats it; the s08
+  absence duration computes from provenance — 18 months, correcting the
+  deck's hand-counted "fourteen"; the WATCHING verdict composes from
+  whichever datasets loaded).
+- S4 finale policy: natural intro completion glides 2022→today; interrupts
+  snap to today only if the reader hasn't taken the timeline (scrolling is
+  the common interrupt and must not strand them at 2022).
+- **Bundle budget revised deliberately** (mainJs 180→200KiB, CSS 16→20KiB):
+  the narrative layer measured +7.5KB JS / +4.9KB CSS; the size gate caught
+  it as designed; rationale recorded in perf-budget.json. F9 (Wave 7)
+  recovers bundle weight.
+- **Lighthouse round-trip during exit:** target-size flagged the strip's
+  cite marks; the first fix (inline-block+padding) caused CLS 0.128 — the
+  marks fill after data loads and flow-affecting expansion rewrapped the
+  masthead post-paint. Final: fixed 24×24 boxes from first paint (axe-
+  measurable, fill-stable) + act-toc padding + era-readout fixed column and
+  reserved height (its text changes mid-glide). End state: perf 0.99 /
+  **a11y 1.0** / bp 1.0 / CLS 0.003.
+- bindCiteMarks now collapses adjacent duplicate marks ([1][1] → [1] when
+  two keys resolve to one source), matching the generated marks' dedupe.
+- **Wave 3's dispatch proof closed out here:** the GitHub full refresh
+  re-fetched every source cold and reproduced the committed data
+  byte-for-byte ("checked, unchanged" — P44/P45 proven end-to-end); gates
+  ran green on the runner. The run then failed in the PR step: the weekly
+  Wayback step had written archives.json (a real, commit-worthy artifact)
+  while no-change runs never create data-archive/, and the PR step's
+  git add listed it unconditionally. Fixed (existence-checked adds +
+  changes.json body fallback); re-dispatch after this merge.
 
 **Wave 3 progress (2026-06-11, branch `wave-3-pipeline`):**
 - All 22 boxes landed. Architecture: `refresh.mjs` = snapshot → fetch

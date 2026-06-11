@@ -28,6 +28,17 @@ export function cite(key) {
 export const YEAR_MIN = 2022;
 export const YEAR_MAX = 2045;
 
+// "Today" on the instrument's fractional year axis, clamped to the domain.
+// The plan/measured divide is temporal — everything left of this happened,
+// everything right of it is promise (S16/S17/S19/S20 all read this).
+export const TODAY = (() => {
+  const now = new Date();
+  const y = now.getUTCFullYear();
+  const start = Date.UTC(y, 0, 1);
+  const frac = (now - start) / (Date.UTC(y + 1, 0, 1) - start);
+  return Math.min(YEAR_MAX, Math.max(YEAR_MIN, y + frac));
+})();
+
 export const NODES = [
   {
     id: 'stamp',

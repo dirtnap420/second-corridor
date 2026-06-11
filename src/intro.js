@@ -5,7 +5,7 @@
 // draw-over of the already-rendered DOM (opacity/transform/stroke only — no
 // layout shift). Total ≤2.5s, linear pen-plotter easings. Skipped by
 // ?nointro, reduced motion, or any input.
-export function runIntro({ mapInstance, motion }) {
+export function runIntro({ mapInstance, motion, finale = null }) {
   if (motion.reduced) return;
   if (new URLSearchParams(location.search).has('nointro')) return;
   if (!mapInstance || !mapInstance.svg) return;
@@ -138,13 +138,17 @@ export function runIntro({ mapInstance, motion }) {
       if (c.dataset.keepDisabled === 'true') return;
       c.disabled = false;
     });
-    window.removeEventListener('pointerdown', finish);
-    window.removeEventListener('keydown', finish);
-    window.removeEventListener('wheel', finish);
+    window.removeEventListener('pointerdown', interruptFinish);
+    window.removeEventListener('keydown', interruptFinish);
+    window.removeEventListener('wheel', interruptFinish);
   }
-  window.addEventListener('pointerdown', finish, { once: true });
-  window.addEventListener('keydown', finish, { once: true });
-  window.addEventListener('wheel', finish, { once: true, passive: true });
+  const interruptFinish = () => {
+    finish();
+    if (finale) finale('interrupt');
+  };
+  window.addEventListener('pointerdown', interruptFinish, { once: true });
+  window.addEventListener('keydown', interruptFinish, { once: true });
+  window.addEventListener('wheel', interruptFinish, { once: true, passive: true });
 
   const at = (ms, fn) => timeouts.push(setTimeout(() => !done && fn(), ms));
 
@@ -213,6 +217,12 @@ export function runIntro({ mapInstance, motion }) {
       li.style.opacity = '1';
     });
   });
-  // 2400ms: controls enable; resting styles restored
-  at(2400, finish);
+  // 2400ms: controls enable; resting styles restored. S4: on natural
+  // completion (not an interrupt) the final beat scrubs 2022 → today —
+  // trace fills, nodes ping, ledger advances, and the opening ends in the
+  // present. Interrupts skip it: the reader has taken the controls.
+  at(2400, () => {
+    finish();
+    if (finale) finale('natural');
+  });
 }

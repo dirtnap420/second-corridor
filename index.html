@@ -73,15 +73,29 @@
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
+    <a class="skip-link" href="#instrument">Skip to the corridor instrument</a>
     <div id="print-header" class="col" aria-hidden="true"></div>
     <header class="masthead col">
       <p class="eyebrow">Field instrument · NY semiconductor buildout · 2022–2045</p>
       <h1>The Second Corridor</h1>
       <p class="body-copy">
-        Tracking New York's semiconductor buildout from public data: investment, jobs, and the
-        talent pipeline between Buffalo and Albany.
+        Up to $100B<a class="cite" data-cite="micron-100b" href="#sources"></a> is promised
+        between Buffalo and Albany. This instrument tracks what the public record shows
+        actually arriving.
       </p>
       <hr class="masthead-rule" />
+      <nav class="five-numbers" aria-label="The corridor in five numbers">
+        <span class="fn-item"><a href="#s03" class="fn-chip"><b>$100B</b> private</a><a class="cite" data-cite="micron-100b" href="#sources"></a></span>
+        <span class="fn-item"><a href="#s03" class="fn-chip"><b>$12.5B</b> public</a><a class="cite" data-cite="green-chips-5_5b" href="#sources"></a><a class="cite" data-cite="chips-direct-8k" href="#sources"></a><a class="cite" data-cite="euv-825m" href="#sources"></a></span>
+        <span class="fn-item"><a href="#s02" class="fn-chip"><b>9,000</b> direct jobs</a><a class="cite" data-cite="micron-9000-direct" href="#sources"></a></span>
+        <span class="fn-item"><a href="#s02" class="fn-chip"><b>~50,000</b> total</a><a class="cite" data-cite="micron-50000-total" href="#sources"></a></span>
+        <span class="fn-item"><a href="#s01" class="fn-chip"><b>232</b>&nbsp;mi</a></span>
+      </nav>
+      <nav class="act-toc" aria-label="Structure">
+        <a href="#s01"><b>I. The plan</b> (01–05) — what was promised, drawn from the record</a>
+        <a href="#s06"><b>II. The measured reality</b> (06–11) — what BLS, Census, and USAspending show today</a>
+        <a href="#sources"><b>III. The record</b> — every source</a>
+      </nav>
       <div class="masthead-sub">
         <span>All figures cited · estimates labeled</span>
         <span>Data: BLS · Census · NSF · USAspending · NYISO</span>
@@ -104,7 +118,7 @@
 
         <div class="plate plate--main" id="instrument">
           <div class="plate-caption plate-caption--top">
-            <span>Fig. 01 — corridor map</span>
+            <span><span class="plate-stamp plate-stamp--record">RECORD</span>Fig. 01 — corridor map</span>
             <span>Conic conformal · NY counties</span>
           </div>
           <div class="instrument-toggles">
@@ -122,13 +136,7 @@
             <div class="map-stage" id="map-stage"></div>
           </div>
           <p class="method-note" id="flows-legend" style="padding: 0 14px 8px" hidden></p>
-          <div id="site-panel" style="border-top: 1px dotted var(--hairline)"></div>
-          <div class="node-plate" id="node-plate">
-            <span class="mono" style="color: var(--muted); font-size: 11px; letter-spacing: 0.08em"
-              >SELECT A NODE FOR ITS DATA PLATE</span
-            >
-          </div>
-          <div class="dials" id="dials"></div>
+          <!-- D18: the scrubber sits directly under the map it drives -->
           <div class="scrubber" id="scrubber-row">
             <button id="play" class="btn" aria-pressed="false">Play</button>
             <div class="scrubber-track">
@@ -144,16 +152,27 @@
                 aria-label="Timeline year"
               />
             </div>
-            <output id="year-readout" class="scrubber-year" aria-live="polite" for="year-slider"
-              >2022</output
+            <div class="scrubber-year-wrap">
+              <output id="year-readout" class="scrubber-year" aria-live="polite" for="year-slider"
+                >2022</output
+              >
+              <div id="era-readout" class="era-readout"></div>
+            </div>
+          </div>
+          <div id="site-panel" style="border-top: 1px dotted var(--hairline)"></div>
+          <div class="node-plate" id="node-plate">
+            <span class="mono" style="color: var(--muted); font-size: 11px; letter-spacing: 0.08em"
+              >SELECT A NODE FOR ITS DATA PLATE</span
             >
           </div>
+          <div class="dials" id="dials"></div>
           <div class="ledger" id="ledger"></div>
           <div class="plate-caption plate-caption--bottom">
             <span>Milestones per cited record</span>
             <span>Node states · trace · particles synced to year</span>
           </div>
         </div>
+        <a class="fwd-link" href="#s02">That is the geography. 02 plots the promise against time →</a>
       </section>
 
       <!-- ============ 02 · THE BUILDOUT ============ -->
@@ -166,7 +185,7 @@
         </p>
         <div class="plate" id="buildout-plate">
           <div class="plate-caption plate-caption--top">
-            <span>Fig. 02 — derived series, 2022–2045</span>
+            <span><span class="plate-stamp plate-stamp--derived">DERIVED</span>Fig. 02 — derived series, 2022–2045</span>
             <span>Interpolated between cited anchors — not a forecast</span>
           </div>
           <div class="plate-body chart-wrap" id="buildout-chart"></div>
@@ -181,6 +200,7 @@
             <summary>View the numbers</summary>
           </details>
         </div>
+        <a class="fwd-link" href="#s03">Those curves are the plan's arithmetic. 03 follows the capital →</a>
       </section>
 
       <!-- ============ 03 · THE CAPITAL STACK ============ -->
@@ -193,7 +213,7 @@
         </p>
         <div class="plate" id="capital-plate">
           <div class="plate-caption plate-caption--top">
-            <span>Fig. 03 — capital stack, $B</span>
+            <span><span class="plate-stamp plate-stamp--record">RECORD</span>Fig. 03 — capital stack, $B</span>
             <span>Band widths to scale</span>
           </div>
           <div class="plate-body chart-wrap" id="capital-sankey"></div>
@@ -211,6 +231,7 @@
             <summary>View the numbers</summary>
           </details>
         </div>
+        <a class="fwd-link" href="#s04">Capital committed. 04 maps the people routes →</a>
       </section>
 
       <!-- ============ 04 · THE TALENT LATTICE ============ -->
@@ -224,7 +245,7 @@
         </p>
         <div class="plate" id="talent-plate">
           <div class="plate-caption plate-caption--top">
-            <span>Fig. 04 — talent pathways</span>
+            <span><span class="plate-stamp plate-stamp--record">RECORD</span>Fig. 04 — talent pathways</span>
             <span>Schools → programs → employers</span>
           </div>
           <div class="plate-body chart-wrap" id="talent-sankey"></div>
@@ -235,6 +256,7 @@
             <summary>View the numbers</summary>
           </details>
         </div>
+        <a class="fwd-link" href="#s06">The lattice exists on paper. 06 measures who is actually moving through it →</a>
       </section>
 
       <!-- ============ 05 · THE INSTALLED BASE ============ -->
@@ -247,25 +269,38 @@
         </p>
         <div class="plate" id="base-plate">
           <div class="plate-caption plate-caption--top">
-            <span>Fig. 05 — installed base</span>
+            <span><span class="plate-stamp plate-stamp--context">CONTEXT</span>Fig. 05 — installed base</span>
             <span>Context plate</span>
           </div>
           <div class="spec-grid" id="installed-base"></div>
         </div>
+        <a class="fwd-link" href="#part-two">That was the starting inventory. What follows is the meter →</a>
       </section>
 
       <!-- ============ 06 · THE CORRIDOR TODAY ============ -->
+      <!-- ============ S10: PART TWO PIVOT — the plan→measured hinge ============ -->
+      <div class="part-pivot col" id="part-two" role="doc-pagebreak" aria-label="Part two">
+        <hr class="pivot-rule" />
+        <p class="eyebrow">Part two — the measured reality</p>
+        <p class="body-copy">
+          Sections 01–05 drew the promise from announcements, agreements, and the environmental
+          record. From here, every number is a measurement from a public statistical agency —
+          and some of the most important ones are missing. The absences render too.
+        </p>
+      </div>
+
       <section class="sheet col" id="s06" aria-labelledby="h06">
         <p class="eyebrow">06 · The corridor today</p>
-        <h2 id="h06">The measured baseline.</h2>
+        <h2 id="h06">Semiconductor employment today: hundreds, not thousands.</h2>
         <p class="body-copy">
-          Sections 01–05 are the published plan. This section is the measured reality — refreshed
-          from BLS and IPEDS with one command.
+          The measured baseline, refreshed from BLS and IPEDS: county semiconductor employment
+          where the agencies publish it<a class="cite" data-cite="qcew-data" href="#sources"></a>,
+          and suppression where they don't.
         </p>
 
         <div class="plate" id="qcew-plate" hidden>
           <div class="plate-caption plate-caption--top">
-            <span>Fig. 06a — semiconductor employment by corridor county</span>
+            <span><span class="plate-stamp plate-stamp--measured">MEASURED</span>Fig. 06a — semiconductor employment by corridor county</span>
             <span id="qcew-vintage"></span>
           </div>
           <div class="plate-body" id="qcew-panel"></div>
@@ -282,7 +317,7 @@
 
         <div class="plate" id="oews-plate" hidden>
           <div class="plate-caption plate-caption--top">
-            <span>Fig. 06b — wages, corridor metros vs national</span>
+            <span><span class="plate-stamp plate-stamp--measured">MEASURED</span>Fig. 06b — wages, corridor metros vs national</span>
             <span id="oews-vintage"></span>
           </div>
           <div class="plate-body" id="oews-panel"></div>
@@ -298,7 +333,7 @@
 
         <div class="plate" id="ipeds-plate" hidden>
           <div class="plate-caption plate-caption--top">
-            <span>Fig. 06c — degrees &amp; certificates feeding the pipeline, by year</span>
+            <span><span class="plate-stamp plate-stamp--measured">MEASURED</span>Fig. 06c — degrees &amp; certificates feeding the pipeline, by year</span>
             <span id="ipeds-vintage"></span>
           </div>
           <div class="plate-body" id="ipeds-panel"></div>
@@ -309,6 +344,7 @@
             <summary>View the numbers</summary>
           </details>
         </div>
+        <a class="fwd-link" href="#s07">That is the baseline the promise lands on. 07 asks who is already in reach →</a>
       </section>
 
       <!-- ============ 07 · THE LABOR SHED ============ -->
@@ -321,7 +357,7 @@
         </p>
         <div class="plate" id="lodes-plate" hidden>
           <div class="plate-caption plate-caption--top">
-            <span>Fig. 07 — top home counties of Onondaga County workers</span>
+            <span><span class="plate-stamp plate-stamp--measured">MEASURED</span>Fig. 07 — top home counties of Onondaga County workers</span>
             <span id="lodes-vintage"></span>
           </div>
           <div class="plate-body" id="lodes-panel"></div>
@@ -335,19 +371,23 @@
             <summary>View the numbers</summary>
           </details>
         </div>
+        <a class="fwd-link" href="#s08">The labor shed exists. 08 follows the federal dollars →</a>
       </section>
 
       <!-- ============ 08 · FOLLOW THE MONEY ============ -->
       <section class="sheet col" id="s08" aria-labelledby="h08">
         <p class="eyebrow">08 · Follow the money</p>
-        <h2 id="h08">Announced, obligated, outlaid.</h2>
+        <h2 id="h08">Announced, obligated, outlaid — and not yet recorded.</h2>
         <p class="body-copy">
-          Federal dollars move in stages. The ledger tracks each stage as USAspending records it —
-          including what is not recorded.
+          The most consequential number in this ledger is the one that is not there. Commerce has
+          published no award record for the Micron funding
+          agreements<span id="absence-duration"></span> — the obligation column is the absence
+          the plate documents<a class="cite" data-cite="chips-direct-8k" href="#sources"></a
+          ><a class="cite" data-cite="usaspending-data" href="#sources"></a>.
         </p>
         <div class="plate" id="spending-plate" hidden>
           <div class="plate-caption plate-caption--top">
-            <span>Fig. 08 — federal award ledger</span>
+            <span><span class="plate-stamp plate-stamp--measured">MEASURED</span>Fig. 08 — federal award ledger</span>
             <span id="spending-vintage"></span>
           </div>
           <div class="plate-body" id="spending-panel"></div>
@@ -366,6 +406,7 @@
             <summary>View the numbers</summary>
           </details>
         </div>
+        <a class="fwd-link" href="#s09">That is the money trail. 09 compares the other corridors →</a>
       </section>
 
       <!-- ============ 09 · THE OTHER CORRIDORS ============ -->
@@ -378,7 +419,7 @@
         </p>
         <div class="plate" id="comp-plate" hidden>
           <div class="plate-caption plate-caption--top">
-            <span>Fig. 09 — NAICS 3344 employment, months since announcement</span>
+            <span><span class="plate-stamp plate-stamp--measured">MEASURED</span>Fig. 09 — NAICS 3344 employment, months since announcement</span>
             <span id="comp-vintage"></span>
           </div>
           <div class="plate-body" id="comp-panel"></div>
@@ -393,6 +434,7 @@
             <summary>View the numbers</summary>
           </details>
         </div>
+        <a class="fwd-link" href="#s10">Same race, different counties. 10 checks the region's absorption →</a>
       </section>
 
       <!-- ============ 10 · CAN THE REGION ABSORB IT ============ -->
@@ -405,7 +447,7 @@
         </p>
         <div class="plate" id="bps-plate" hidden>
           <div class="plate-caption plate-caption--top">
-            <span>Fig. 10a — housing units permitted per year</span>
+            <span><span class="plate-stamp plate-stamp--measured">MEASURED</span>Fig. 10a — housing units permitted per year</span>
             <span id="bps-vintage"></span>
           </div>
           <div class="plate-body" id="bps-panel"></div>
@@ -421,7 +463,7 @@
         </div>
         <div class="plate" id="acs-plate" hidden>
           <div class="plate-caption plate-caption--top">
-            <span>Fig. 10b — educational attainment, population 25+</span>
+            <span><span class="plate-stamp plate-stamp--measured">MEASURED</span>Fig. 10b — educational attainment, population 25+</span>
             <span id="acs-vintage"></span>
           </div>
           <div class="plate-body" id="acs-panel"></div>
@@ -435,6 +477,7 @@
             <summary>View the numbers</summary>
           </details>
         </div>
+        <a class="fwd-link" href="#s11">Housing and degrees, measured. 11 weighs power and water →</a>
       </section>
 
       <!-- ============ 11 · WHAT IT TAKES TO RUN ============ -->
@@ -447,7 +490,7 @@
         </p>
         <div class="plate" id="phys-plate" hidden>
           <div class="plate-caption plate-caption--top">
-            <span>Fig. 11 — physical inputs</span>
+            <span><span class="plate-stamp plate-stamp--measured">MEASURED</span>Fig. 11 — physical inputs</span>
             <span id="phys-vintage"></span>
           </div>
           <div class="plate-body" id="phys-panel"></div>
@@ -461,6 +504,101 @@
             <summary>View the numbers</summary>
           </details>
         </div>
+        <a class="fwd-link" href="#s12">The physical inputs are finite. 12 renders the verdicts →</a>
+      </section>
+
+      <!-- ============ 12 · THE SYNTHESIS (S48 + S49) ============ -->
+      <section class="sheet col" id="s12" aria-labelledby="h12">
+        <p class="eyebrow">12 · The corridor at a glance</p>
+        <h2 id="h12">The verdicts, stamped.</h2>
+        <p class="body-copy">
+          Five lines, each linking back to the plate that earns it. This is what the record
+          supports today — nothing more.
+        </p>
+        <div class="plate" id="synthesis-plate">
+          <div class="plate-caption plate-caption--top">
+            <span><span class="plate-stamp plate-stamp--measured">MEASURED</span>Fig. 12 — synthesis</span>
+            <span id="synthesis-vintage"></span>
+          </div>
+          <ul class="verdicts">
+            <li>
+              <b>Promised</b> up to $100B · 9,000 direct jobs by 2045<a class="cite" data-cite="micron-100b" href="#sources"></a><a class="cite" data-cite="micron-9000-direct" href="#sources"></a>
+              <a class="vlink" href="#s02">→ 02</a>
+            </li>
+            <li>
+              <b>Committed</b> $5.5B state (performance-based) · up to $6.165B federal<a class="cite" data-cite="green-chips-5_5b" href="#sources"></a><a class="cite" data-cite="chips-direct-8k" href="#sources"></a>
+              <a class="vlink" href="#s03">→ 03</a>
+            </li>
+            <li id="verdict-measured" hidden>
+              <b>Measured</b> <span id="v-measured-val"></span><a class="cite" data-cite="qcew-data" href="#sources"></a>
+              <a class="vlink" href="#s06">→ 06</a>
+            </li>
+            <li id="verdict-unrecorded" hidden>
+              <b>Unrecorded</b> no award record on USAspending for the Micron agreements<a class="cite" data-cite="usaspending-data" href="#sources"></a>
+              <a class="vlink" href="#s08">→ 08</a>
+            </li>
+            <li id="verdict-watching" hidden>
+              <b>Watching</b> <span id="v-watching-val"></span>
+              <a class="vlink" href="#s10">→ 10 · 06c · 11</a>
+            </li>
+          </ul>
+          <div class="plate-caption plate-caption--bottom">
+            <span>Verdict lines are restatements of cited figures — no synthesis beyond them</span>
+          </div>
+        </div>
+
+        <h3 class="watch-head">What to watch next</h3>
+        <ul class="watch-list">
+          <li>
+            3,000–4,000 construction workers, 2027<a class="cite" data-cite="constr-3000-4000" href="#sources"></a>
+            → watch the quarterly QCEW refreshes<a class="cite" data-cite="qcew-data" href="#sources"></a>
+          </li>
+          <li>
+            Fab 1 operations, 2030<a class="cite" data-cite="fab1-ops-2030" href="#sources"></a>
+            → watch Onondaga NAICS-3344 employment<a class="cite" data-cite="qcew-data" href="#sources"></a>
+          </li>
+          <li>
+            A Micron award record appearing on USAspending<a class="cite" data-cite="usaspending-data" href="#sources"></a>
+            → the ledger's absence inverts; this tracker checks daily
+          </li>
+        </ul>
+        <a class="fwd-link" href="#record-gaps">First, what the record doesn't say →</a>
+      </section>
+
+      <!-- ============ S14: WHAT THE RECORD DOESN'T SAY (YET) ============ -->
+      <section class="sheet col" id="record-gaps" aria-labelledby="h-gaps">
+        <p class="eyebrow">The honest margins</p>
+        <h2 id="h-gaps">What the record doesn't say (yet).</h2>
+        <ol class="gaps-list">
+          <li>
+            The construction ramp-down after 2041 is illustrative — no cited figure describes
+            how the workforce winds down.
+          </li>
+          <li>
+            The talent lattice's ribbon widths are illustrative; only its structure — who feeds
+            whom — is cited.
+          </li>
+          <li>
+            No NYISO document publishes a full-buildout megawatt figure; the cited
+            interconnection requests stop at Fab 2<a class="cite" data-cite="nyiso-goldbook" href="#sources"></a>.
+          </li>
+          <li>
+            Commerce has published no award record for the Micron funding
+            agreements<a class="cite" data-cite="usaspending-data" href="#sources"></a> — the
+            ledger renders the absence.
+          </li>
+          <li>
+            QCEW counts every NAICS-3344 employer in a county, not Micron
+            headcount<a class="cite" data-cite="qcew-data" href="#sources"></a> — the plan series
+            and the measured series answer different questions.
+          </li>
+          <li>
+            OEWS publishes no semiconductor-technician wage for either corridor
+            metro<a class="cite" data-cite="oews-data" href="#sources"></a> — the occupation the
+            buildout most needs is the one the survey can't yet see here.
+          </li>
+        </ol>
+        <a class="fwd-link" href="#sources">Now the record itself →</a>
       </section>
 
       <!-- ============ SOURCES ============ -->

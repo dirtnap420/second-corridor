@@ -87,6 +87,14 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
+/* D37: kill widows — progressive enhancement, no fallback needed */
+h1,
+h2 {
+  text-wrap: balance;
+}
+.body-copy {
+  text-wrap: pretty;
+}
 svg {
   display: block;
 }
@@ -217,7 +225,10 @@ h2 {
 .cite {
   font-family: var(--font-mono);
   font-size: 0.72em;
-  vertical-align: super;
+  /* D12: super opened leading gaps in body copy — relative lift instead */
+  vertical-align: baseline;
+  position: relative;
+  top: -0.4em;
   color: var(--copper-text);
   text-decoration: none;
   margin-left: 1px;
@@ -298,6 +309,205 @@ details.numbers,
 .micro-tabs {
   display: inline-flex;
   border: 1px solid var(--ink);
+}
+/* S8: epistemic-status stamps — the promise-vs-measurement thread */
+.plate-stamp {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  padding: 1px 5px;
+  margin-right: 8px;
+}
+.plate-stamp--derived {
+  border-color: var(--copper);
+  color: var(--copper-text);
+}
+.plate-stamp--context {
+  border-color: var(--muted);
+  color: var(--muted);
+}
+.plate-stamp--measured {
+  border-color: var(--violet);
+  color: var(--violet);
+}
+/* S9: forward links — the current pulling the reader downstream */
+.fwd-link {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+  margin-top: 22px;
+}
+.fwd-link:hover {
+  color: var(--copper-text);
+}
+/* S10: the Part Two pivot — the hinge gets an interstitial */
+.part-pivot {
+  margin-top: 64px;
+}
+.pivot-rule {
+  border: 0;
+  border-top: 3px solid var(--ink);
+  margin: 0 0 18px;
+}
+.part-pivot .eyebrow {
+  font-size: 14px;
+}
+/* S12: plate takeaways */
+.plate-takeaway {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 0;
+  padding: 12px 14px 0;
+}
+/* S48/S49: the synthesis plate + watch list */
+.verdicts {
+  list-style: none;
+  margin: 0;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+.verdicts b {
+  font-weight: 500;
+  color: var(--copper-text);
+  margin-right: 6px;
+}
+.verdicts .vlink {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 11px;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.verdicts .vlink:hover {
+  color: var(--copper-text);
+}
+.watch-head {
+  font-size: clamp(20px, 2.4vw, 26px);
+  margin-top: 34px;
+}
+.watch-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.watch-list li {
+  border-left: 3px solid var(--copper);
+  padding-left: 12px;
+}
+/* S14: the honest margins */
+.gaps-list {
+  margin: 18px 0 0;
+  padding-left: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 44em;
+}
+/* D48: keyboard users skip the masthead chrome */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 10;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 10px 14px;
+}
+.skip-link:focus {
+  left: 12px;
+  top: 12px;
+}
+/* S2: the corridor in five numbers — inverted pyramid, each chip a door */
+.five-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 14px 0 4px;
+}
+.fn-item {
+  white-space: nowrap;
+}
+/* standalone cite marks next to chips: fixed 24×24 boxes from first paint —
+   satisfies the touch-target rule with a box axe can actually measure, and
+   the size never changes when the mark text fills in after data loads (a
+   flow-affecting fill rewrapped the masthead: measured CLS 0.128) */
+.fn-item .cite {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  vertical-align: middle;
+  top: 0;
+}
+.fn-chip {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: var(--ls-micro);
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  padding: 6px 10px;
+  text-decoration: none;
+}
+.fn-chip b {
+  font-weight: 500;
+  color: var(--copper-text);
+}
+.fn-chip:hover {
+  background: var(--silicon);
+}
+/* S5: the act structure, visible upfront (martini-glass shape) */
+.act-toc {
+  display: flex;
+  flex-direction: column;
+  margin: 8px 0 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.act-toc a {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 5px 0; /* 24px touch target; static text, so no reflow cost */
+}
+.act-toc a:hover {
+  color: var(--copper-text);
+}
+.act-toc b {
+  font-weight: 500;
+  color: var(--ink);
 }
 /* D19: Play → Pause → Replay relabeling must not resize the grid column —
    sized to the widest label ("Replay" measures 84.4px in the btn font) */
@@ -388,6 +598,89 @@ details.numbers,
   height: 16px;
   width: 2px;
   background: var(--copper);
+}
+/* S16: the TODAY tick — copper-outlined, paper-filled, taller than the rest */
+.scrubber-ticks .tick--today {
+  top: -2px;
+  height: 20px;
+  width: 4px;
+  background: var(--paper);
+  border: 1px solid var(--copper);
+  transform: translateX(-50%);
+}
+.tick-today-label {
+  position: absolute;
+  top: -14px;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: var(--ls-micro);
+  color: var(--copper-text);
+}
+/* S18: phase bands — the timeline gets chapters. Desktop texture: below
+   640px the labels collide on the short track (the era readout carries the
+   story state there), so the whole row hides. */
+.scrubber-phases {
+  position: relative;
+  height: 30px;
+  margin-top: 2px;
+  pointer-events: none;
+}
+@media (max-width: 640px) {
+  .scrubber-phases {
+    display: none;
+  }
+}
+.phase-band {
+  position: absolute;
+  height: 12px;
+  border-left: 1px solid var(--muted);
+  border-right: 1px solid var(--muted);
+  border-top: 1px solid var(--hairline);
+}
+.phase-band--r1 {
+  top: 0;
+}
+.phase-band--r2 {
+  top: 15px;
+}
+.phase-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  white-space: nowrap;
+  padding-left: 4px;
+}
+/* S19: era readout — the operative milestone under the year. Fixed column
+   width + reserved two-line height: era text changes on every milestone the
+   glide crosses, and an auto-sized column would reflow the whole track. */
+.scrubber-year-wrap {
+  text-align: right;
+  width: 96px;
+}
+.era-readout {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  line-height: 1.4;
+  margin-top: 2px;
+  min-height: 26px;
+}
+/* S20: the ledger's TODAY divider — above it the record, below it the schedule */
+.ledger li.ledger-today {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--copper-text);
+  border-top: 1px solid var(--copper);
+  cursor: default;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.ledger li.ledger-today:hover {
+  background: transparent;
 }
 input[type='range'].scrub {
   -webkit-appearance: none;
@@ -482,6 +775,25 @@ input[type='range'].scrub:focus-visible::-webkit-slider-thumb {
 .node-marker.active rect.mark {
   fill: var(--copper);
 }
+/* D14: the five squares read as clickable */
+.node-marker:hover rect.mark {
+  fill: var(--silicon);
+  stroke-width: 1.5;
+}
+.node-marker.active:hover rect.mark {
+  fill: var(--copper);
+  stroke-width: 1.5;
+}
+/* D15: persistent selection ring — offset copper outline, distinct from the
+   year-driven active fill */
+.node-marker .sel-ring {
+  fill: none;
+  stroke: none;
+}
+.node-marker.selected .sel-ring {
+  stroke: var(--copper);
+  stroke-width: 1.25;
+}
 .node-marker.hero text {
   font-weight: 500;
 }
@@ -491,6 +803,10 @@ input[type='range'].scrub:focus-visible::-webkit-slider-thumb {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   fill: var(--ink);
+  /* D16: ground-colored halo keeps RIT/CLAY crisp where the trace crosses */
+  stroke: var(--silicon);
+  stroke-width: 3px;
+  paint-order: stroke;
 }
 .node-marker:focus-visible {
   outline: none;
@@ -791,6 +1107,17 @@ header.masthead {
   padding: 8px 0 8px 46px;
   position: relative;
   border-top: 1px dotted var(--hairline);
+  scroll-margin-top: 24px; /* D11 */
+}
+/* D10: a cite click visibly lands somewhere */
+.sources li:target {
+  background: var(--paper);
+  border-left: 3px solid var(--copper);
+  padding-left: 43px;
+}
+/* D11: anchor jumps don't kiss the viewport edge */
+section.sheet {
+  scroll-margin-top: 24px;
 }
 .sources li::before {
   content: '[' counter(src) ']';

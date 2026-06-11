@@ -158,7 +158,7 @@ export function buildCapitalNumbers(numbersEl) {
 // widths were always illustrative; a structure-only list loses nothing.
 function citeMark(key) {
   const n = cite(key);
-  return n ? `<a class="cite" href="#sources">[${n}]</a>` : '';
+  return n ? `<a class="cite" href="#src-${n}">[${n}]</a>` : '';
 }
 
 function renderTalentRouteList(container) {

@@ -1,8 +1,9 @@
 {
   "comment": "F1 — the performance budget. Numbers chosen to be passable today; the point is catching drift. Bytes are raw (uncompressed); KiB = 1024 bytes. Enforced by scripts/lint-size.mjs (build), qa/perf.mjs (runtime), and qa/lighthouse.mjs (lab metrics).",
   "bundle": {
-    "mainJsBytes": 184320,
-    "cssBytes": 16384,
+    "comment": "Revised at Wave 4 (was 184320/16384): the storytelling wave added the narrative layer — takeaways, verdicts, phases, stamps — measured +7.5KB JS / +4.9KB CSS. Deliberate growth, recorded here; F9 (scoped d3, Wave 7) recovers bundle weight.",
+    "mainJsBytes": 204800,
+    "cssBytes": 20480,
     "fontTotalBytes": 92160
   },
   "runtime": {

@@ -271,6 +271,11 @@ export function renderMap(container, topo, opts, width) {
   /* ---------- nodes (transform-positioned so the view can morph) ---------- */
   const gNodes = document.createElementNS(SVG_NS, 'g');
   svg.appendChild(gNodes);
+  // D15: a persistent selection ring, distinct from the year-driven active
+  // fill; survives re-renders because the choice lives in uiState.
+  function applySelection(id) {
+    nodeEls.forEach((el, i) => el.classList.toggle('selected', NODES[i].id === id));
+  }
   const nodeEls = NODES.map((n, i) => {
     const g = document.createElementNS(SVG_NS, 'g');
     g.setAttribute('class', `node-marker${n.hero ? ' hero' : ''}`);
@@ -281,10 +286,15 @@ export function renderMap(container, topo, opts, width) {
     const size = n.hero ? 13 : 10;
     g.innerHTML = `
       <rect x="-22" y="-22" width="44" height="44" fill="transparent" stroke="none"></rect>
+      <rect class="sel-ring" x="${-size / 2 - 4}" y="${-size / 2 - 4}" width="${size + 8}" height="${size + 8}"></rect>
       <rect class="mark" x="${-size / 2}" y="${-size / 2}" width="${size}" height="${size}"></rect>
       <text x="0" y="${above ? -12 : 22}" text-anchor="middle">${n.name}</text>`;
     g.setAttribute('transform', `translate(${mapPts[i][0]},${mapPts[i][1]})`);
-    const select = () => onNodeSelect(n);
+    const select = () => {
+      if (uiState) uiState.selected = n.id;
+      applySelection(n.id);
+      onNodeSelect(n);
+    };
     g.addEventListener('click', select);
     g.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -295,6 +305,7 @@ export function renderMap(container, topo, opts, width) {
     gNodes.appendChild(g);
     return g;
   });
+  if (uiState && uiState.selected) applySelection(uiState.selected);
   const sectionLabelY = 34;
 
   // one-shot stamp echo when a node activates
