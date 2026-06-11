@@ -1,0 +1,12 @@
+/* TEAM */
+Author: Alex
+Contact: Alex@ozarkintelligence.com
+Site: https://second-corridor.vercel.app
+
+/* SITE */
+What: tracking New York's semiconductor buildout, 2022-2045, from public data
+Rule: every number cited, estimates labeled, suppression rendered as suppression
+Stack: vanilla JS + D3, no frameworks; self-hosted Archivo & IBM Plex Mono
+Data: BLS, Census, NSF, USAspending, NYISO (terms: /methods#data)
+License: MIT (code) - CC BY 4.0 (content & derived data)
+Corrections: /methods#corrections
