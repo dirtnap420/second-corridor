@@ -14,6 +14,7 @@
     "geo": "node scripts/build-geo.mjs",
     "og": "node scripts/build-og.mjs",
     "data": "node scripts/refresh.mjs",
+    "data:check": "node scripts/refresh.mjs --dry-run",
     "qa": "node qa/screenshot.mjs",
     "test": "node --test",
     "lighthouse": "node qa/lighthouse.mjs"

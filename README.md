@@ -4,11 +4,12 @@
 
 **Live: https://second-corridor.vercel.app** · deep link: [`#y=2030`](https://second-corridor.vercel.app/#y=2030) · skip the intro: `?nointro`
 
-Verified on the deployed URL (2026-06-10): Lighthouse **100 / 97 / 100**
-(performance / accessibility / best-practices), CLS 0.009, LCP 1.0s. Main
-bundle **60.8KB gzipped** JS+CSS (poster module lazy-loaded). Committed data
-**~44KB**. Offline proof: zero external requests, zero console errors
-(`node qa/offline.mjs`).
+Verified at the Wave 9 close (2026-06-11): Lighthouse **0.98 / 1.0 / 1.0**
+(performance / accessibility / best-practices, lab median of 3), CLS 0.004,
+LCP 1.86s, axe **zero findings** with an empty allowlist. Main-page bundle
+**~65KB gzipped** JS+CSS — below the launch baseline raw, despite eight more
+waves of product (the poster and tour modules lazy-load). Offline proof: zero
+external requests, zero console errors (`node qa/offline.mjs`).
 
 An interactive, single-purpose tracker of New York State's semiconductor buildout
 (2022–2045), assembled entirely from public data. One master scrubber drives a
@@ -44,17 +45,25 @@ qa/             Playwright visual-QA harness (dev only)
 
 ## Refresh & deploy
 
+The data refreshes itself: a scheduled workflow fetches, validates, diffs,
+archives, and opens a reviewed PR; new-period-only refreshes auto-merge after
+72h; merging to `main` IS the deploy (Vercel Git integration). Architecture,
+failure-mode labels, API conduct, and **rollback** live in
+[docs/pipeline.md](docs/pipeline.md).
+
 ```sh
 npm install
-npm run data    # re-fetch all public data → public/data/*.json (with provenance)
-npm run geo     # rebuild NY geometry from us-atlas
-npm run og      # rebuild the 1200×630 OG card
-npm run build   # vite build + design lint
-npx vercel deploy --prod --yes   # deploy ./dist per vercel.json
+npm run data:check   # dry run — print what a refresh would change, write nothing
+npm run data         # full refresh → public/data/*.json (writes on real change)
+npm run geo          # rebuild NY geometry from us-atlas
+npm run og           # rebuild og.png + the per-section share cards
+npm run build        # sources → CSVs/zip → cards → pages/feed → vite → lints
+node qa/health.mjs   # post-deploy: production serves what main says
 ```
 
 Deep links: `https://second-corridor.vercel.app/#y=2030` opens the instrument at
-a given year. `?nointro` skips the plotter opening.
+a given year. `?nointro` skips the plotter opening. `?embed=figNN` is the embed
+mode; `/f/01`–`/f/12` are per-figure share URLs.
 
 QA battery (Wave 1 gates; see `CLAUDE.md` for the session ritual):
 `npm run build` (design lint + bundle-size gate vs `perf-budget.json`) ·
@@ -255,6 +264,28 @@ objects inside `public/data/*.json` and in the on-page Sources list.
 inbound deep links will not be broken. `/f/01`–`/f/12` are per-figure share
 URLs that redirect to the matching section. Documented on the
 [methods page](https://second-corridor.vercel.app/methods#anchors).
+
+## If this tracker goes quiet
+
+Bus-factor honesty (R49): everything needed to carry this forward is in the
+repository, and the licenses permit it.
+
+1. **Fork it.** The refresh workflow (`.github/workflows/refresh.yml`) runs
+   on a fork unchanged. You need: Actions enabled, the repo setting "Allow
+   GitHub Actions to create and approve pull requests," and optionally a
+   `CENSUS_API_KEY` secret (the ACS fetcher falls back to the keyless
+   Summary File without it). `npm run data:check` proves the pipeline before
+   you commit anything.
+2. **Deploy anywhere static.** `npm run build` emits a self-contained
+   `dist/` — any static host serves it (`npx vercel deploy --prod` is one
+   command). Update the `SITE` constant in `vite.config.js` and
+   `scripts/build-pages.mjs` if the address changes, and keep the old URL
+   redirecting if you can — the stable-anchor promise is part of the work.
+3. **The licenses already say yes.** Code is MIT; content and derived data
+   are CC BY 4.0 — continuation with attribution is the intended outcome,
+   not a courtesy. The full architecture is in `docs/pipeline.md`; the data
+   surface is documented in `docs/data-contract.md`; upstream terms in
+   `docs/terms-ledger.md`.
 
 ## Colophon
 

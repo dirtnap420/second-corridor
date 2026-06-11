@@ -325,7 +325,12 @@ function buildLedger() {
       li.classList.toggle('past', ly < y && !isCur);
     }
     if (current && !state.playing) {
-      // keep the highlighted row in view inside the ledger scroll area
+      // keep the highlighted row in view inside the ledger scroll area.
+      // F36 — the 'auto' cases are load-bearing, don't simplify them away:
+      // smooth scrolls queued behind a gliding year stack up and lag the
+      // readout, and an element's smooth scroll can CANCEL an in-flight
+      // smooth page scroll (Chromium; bit both R22 and the Wave 8 tour).
+      // Reduced motion gets no animation per the global kill.
       const top = current.offsetTop - ol.clientHeight / 2;
       ol.scrollTo({
         top,

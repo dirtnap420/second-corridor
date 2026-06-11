@@ -70,6 +70,68 @@ jobs:
         continue-on-error: true
         run: node scripts/archive-sources.mjs
 
+      # P12 — auditability: the exact bytes each agency served this run,
+      # kept 90 days as a workflow artifact (raw/ is gitignored for size)
+      - name: Upload raw responses
+        if: steps.mode.outputs.mode == 'full'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: raw-${{ github.run_id }}
+          path: raw/
+          retention-days: 90
+          if-no-files-found: ignore
+
+      # P40 — freshness SLO: a fetcher that keeps "succeeding" while the
+      # agency stopped publishing never fails — this is the only alert for
+      # silent staleness. provenance.retrievedAt only moves on real change
+      # (no-change runs restore files), which is exactly the right clock.
+      - name: Staleness check (weekly only)
+        if: steps.mode.outputs.mode == 'full'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          STALE=$(node -e "
+            const { readFileSync, existsSync } = require('fs');
+            const cal = JSON.parse(readFileSync('scripts/release-calendar.json', 'utf8')).sources;
+            const EMITS = { qcew:'qcew', oews:'oews', ipeds:'ipeds', acs:'acs', lodes:'lodes', nyiso:'nyiso', permits:'permits' };
+            const out = [];
+            for (const [src, cfg] of Object.entries(cal)) {
+              if (!(src in EMITS) || !cfg.staleAfterDays) continue;
+              const p = 'public/data/' + EMITS[src] + '.json';
+              if (!existsSync(p)) continue;
+              const ra = JSON.parse(readFileSync(p, 'utf8')).provenance.retrievedAt;
+              const days = Math.floor((Date.now() - Date.parse(ra + 'T00:00:00Z')) / 86400e3);
+              if (days > cfg.staleAfterDays) out.push(src + ' (' + days + 'd > ' + cfg.staleAfterDays + 'd grace, ' + cfg.cadence + ')');
+            }
+            console.log(out.join('; '));
+          ")
+          if [ -n "$STALE" ]; then
+            gh label create stale-source --color D4A72C --description "a source exceeded its staleness grace" 2>/dev/null || true
+            if [ -z "$(gh issue list --state open --label stale-source --json number --jq '.[].number')" ]; then
+              gh issue create --title "Stale sources: $(date -u +%F)" --label stale-source --assignee dirtnap420 \
+                --body "Sources past their staleAfterDays grace (data unchanged since the dates in provenance): $STALE. Either the agency moved/renamed its files (fix the fetcher) or genuinely hasn't published (close this)."
+            fi
+          fi
+
+      # P38 — manual sources can't be fetched: every April, open the annual
+      # re-verify reminder for the Gold Book + FEIS-class citations
+      - name: Annual manual re-verify reminder (April, weekly run)
+        if: steps.mode.outputs.mode == 'full'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "$(date -u +%m)" = "04" ]; then
+            gh label create manual-reverify --color 565880 --description "annual manual source re-verification" 2>/dev/null || true
+            if [ -z "$(gh issue list --state open --label manual-reverify --json number --jq '.[].number')" ]; then
+              gh issue create --title "Annual re-verify: NYISO Gold Book (Table IV-7) + FEIS-class citations" \
+                --label manual-reverify --assignee dirtnap420 \
+                --body "The new Gold Book lands each April. Re-verify the Table IV-7 interconnection figures (PHYS_ANCHORS in src/data.js), the FEIS water table, and any 'current page' citations in src/sources.js; update sources + archives accordingly."
+            fi
+          fi
+
       - name: Detect changes
         id: diff
         run: |
