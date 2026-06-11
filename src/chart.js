@@ -6,6 +6,7 @@ import { scaleLinear, area as d3area, line as d3line } from 'd3';
 import {
   YEAR_MIN,
   YEAR_MAX,
+  TODAY,
   MILESTONES,
   investAt,
   constrLowAt,
@@ -82,6 +83,15 @@ export function renderChart(container, width) {
     </g>`;
   }
   put(flags);
+
+  /* S17: the TODAY hairline — visibly splits the derived series into
+     history behind us and interpolation ahead (the caption's "not a
+     forecast" made visible). Same flag typography, copper, always shown. */
+  const tx = x(TODAY);
+  put(`
+    <line x1="${tx}" y1="${INVEST.top - 6}" x2="${tx}" y2="${JOBS.top + JOBS.h}" stroke="var(--copper)" stroke-width="1.25" stroke-dasharray="4 3"></line>
+    <text transform="rotate(-90 ${tx} ${INVEST.top - 10})" x="${tx}" y="${INVEST.top - 10}" text-anchor="start" class="chart-label" style="fill:var(--copper-text);font-weight:500">TODAY</text>
+  `);
 
   /* axes */
   let ax = '';

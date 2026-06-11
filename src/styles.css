@@ -389,6 +389,86 @@ details.numbers,
   width: 2px;
   background: var(--copper);
 }
+/* S16: the TODAY tick — copper-outlined, paper-filled, taller than the rest */
+.scrubber-ticks .tick--today {
+  top: -2px;
+  height: 20px;
+  width: 4px;
+  background: var(--paper);
+  border: 1px solid var(--copper);
+  transform: translateX(-50%);
+}
+.tick-today-label {
+  position: absolute;
+  top: -14px;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: var(--ls-micro);
+  color: var(--copper-text);
+}
+/* S18: phase bands — the timeline gets chapters. Desktop texture: below
+   640px the labels collide on the short track (the era readout carries the
+   story state there), so the whole row hides. */
+.scrubber-phases {
+  position: relative;
+  height: 30px;
+  margin-top: 2px;
+  pointer-events: none;
+}
+@media (max-width: 640px) {
+  .scrubber-phases {
+    display: none;
+  }
+}
+.phase-band {
+  position: absolute;
+  height: 12px;
+  border-left: 1px solid var(--muted);
+  border-right: 1px solid var(--muted);
+  border-top: 1px solid var(--hairline);
+}
+.phase-band--r1 {
+  top: 0;
+}
+.phase-band--r2 {
+  top: 15px;
+}
+.phase-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  white-space: nowrap;
+  padding-left: 4px;
+}
+/* S19: era readout — the operative milestone under the year */
+.scrubber-year-wrap {
+  text-align: right;
+  max-width: 16ch;
+}
+.era-readout {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  line-height: 1.4;
+  margin-top: 2px;
+}
+/* S20: the ledger's TODAY divider — above it the record, below it the schedule */
+.ledger li.ledger-today {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--copper-text);
+  border-top: 1px solid var(--copper);
+  cursor: default;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.ledger li.ledger-today:hover {
+  background: transparent;
+}
 input[type='range'].scrub {
   -webkit-appearance: none;
   appearance: none;

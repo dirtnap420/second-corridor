@@ -4,6 +4,7 @@ import './styles.css';
 import {
   YEAR_MIN,
   YEAR_MAX,
+  TODAY,
   MILESTONES,
   INSTALLED_BASE,
   SOURCE_LIST,
@@ -172,6 +173,9 @@ function startPlay() {
   cancelGlide();
   if (state.year >= YEAR_MAX) setYear(YEAR_MIN, { updateHash: false });
   state.playing = true;
+  // D50: ~2 announcements/sec for 13s is noise — silence the live region
+  // during play; the final year announces once on stop
+  readout.setAttribute('aria-live', 'off');
   playBtn.setAttribute('aria-pressed', 'true');
   playBtn.textContent = 'Pause';
   if (motion.reduced) {
@@ -191,20 +195,59 @@ function stopPlay() {
   rafId = null;
   discreteTimer = null;
   setYear(state.year); // settle hash
+  // D50: re-arm the live region, then re-set the text so the final year
+  // is announced exactly once
+  readout.setAttribute('aria-live', 'polite');
+  requestAnimationFrame(() => {
+    const t = readout.textContent;
+    readout.textContent = '';
+    readout.textContent = t;
+  });
 }
 playBtn.addEventListener('click', () => (state.playing ? stopPlay() : startPlay()));
 
 /* ---------------- scrubber milestone ticks ---------------- */
+const pctOf = (y) => ((y - YEAR_MIN) / (YEAR_MAX - YEAR_MIN)) * 100;
+
 function buildTicks() {
   const wrap = document.getElementById('scrub-ticks');
   const ms = new Set(MILESTONES.map((m) => m.year));
   let html = '';
   for (let y = YEAR_MIN; y <= YEAR_MAX; y++) {
-    const pct = ((y - YEAR_MIN) / (YEAR_MAX - YEAR_MIN)) * 100;
     const cls = ms.has(y) ? 'tick tick--milestone' : 'tick';
-    html += `<span class="${cls}" style="left:${pct}%"></span>`;
+    html += `<span class="${cls}" style="left:${pctOf(y)}%"></span>`;
   }
+  // S16: the TODAY tick — everything left of it happened, everything right
+  // of it is promise. Computed, never hard-coded.
+  html += `<span class="tick tick--today" style="left:${pctOf(TODAY)}%"></span>
+    <span class="tick-today-label" style="left:${pctOf(TODAY)}%">TODAY</span>`;
   wrap.innerHTML = html;
+}
+
+/* ---------------- S18: phase bands under the scrubber ----------------
+   Labeled spans from the cited milestones — the timeline gets chapters. */
+function buildPhases() {
+  const track = document.querySelector('.scrubber-track');
+  if (!track) return;
+  const bands = [
+    { from: YEAR_MIN, to: 2026, label: 'SITEWORK →2026', keys: ['groundbreaking-2026'], row: 1 },
+    { from: 2026, to: 2041, label: 'CONSTRUCTION 2026–41', keys: ['fab1-construction-2026', 'constr-ends-2041'], row: 1 },
+    { from: 2030, to: YEAR_MAX, label: 'OPERATIONS 2030–', keys: ['fab1-ops-2030'], row: 2 },
+  ];
+  const div = document.createElement('div');
+  div.className = 'scrubber-phases';
+  div.setAttribute('aria-hidden', 'true');
+  div.innerHTML = bands
+    .filter((b) => b.keys.some((k) => cite(k)))
+    .map((b) => {
+      const marks = [...new Set(b.keys.map((k) => cite(k)).filter(Boolean))]
+        .map((n) => `[${n}]`)
+        .join('');
+      return `<span class="phase-band phase-band--r${b.row}" style="left:${pctOf(b.from)}%;width:${pctOf(b.to) - pctOf(b.from)}%">
+        <span class="phase-label">${b.label} ${marks}</span></span>`;
+    })
+    .join('');
+  track.appendChild(div);
 }
 
 /* ---------------- milestone ledger ---------------- */
@@ -212,8 +255,18 @@ function buildLedger() {
   const wrap = document.getElementById('ledger');
   const ol = document.createElement('ol');
   ol.setAttribute('aria-label', 'Milestone ledger');
+  let todayDividerPlaced = false;
   for (const m of MILESTONES) {
     if (!m.src.some((s) => cite(s))) continue; // no citation → does not render
+    // S20: one hairline between the record and the schedule
+    if (!todayDividerPlaced && m.year > TODAY) {
+      const div = document.createElement('li');
+      div.className = 'ledger-today';
+      div.setAttribute('aria-hidden', 'true');
+      div.innerHTML = `<span class="yr"></span><span>— TODAY · ABOVE: THE RECORD · BELOW: THE SCHEDULE —</span>`;
+      ol.appendChild(div);
+      todayDividerPlaced = true;
+    }
     const li = document.createElement('li');
     li.dataset.year = m.year;
     const marks = [...new Set(m.src.map((s) => cite(s)).filter(Boolean))]
@@ -231,6 +284,7 @@ function buildLedger() {
     const y = Math.floor(year + 1e-6);
     let current = null;
     for (const li of ol.children) {
+      if (!li.dataset.year) continue; // the TODAY divider
       const ly = Number(li.dataset.year);
       li.classList.toggle('past', ly < y);
       li.classList.toggle('current', false);
@@ -238,6 +292,7 @@ function buildLedger() {
     }
     // highlight the latest milestone at/before the scrub year
     for (const li of ol.children) {
+      if (!li.dataset.year) continue; // the TODAY divider
       if (Number(li.dataset.year) === (current ? Number(current.dataset.year) : -1)) {
         li.classList.add('current');
         li.classList.remove('past');
@@ -392,6 +447,27 @@ function makeWaferDial({ label, srcKeys }) {
   };
 }
 
+/* ---------------- S19: era readout under the year ----------------
+   The operative milestone state — the number becomes a story state. */
+function buildEra() {
+  const el = document.getElementById('era-readout');
+  if (!el) return;
+  const cited = MILESTONES.filter((m) => m.src.some((s) => cite(s)));
+  onYear((year) => {
+    const y = Math.floor(year + 1e-6);
+    let current = null;
+    for (const m of cited) if (m.year <= y) current = m;
+    if (!current) {
+      el.textContent = '';
+      return;
+    }
+    // short form: the label up to the first separator
+    const short = current.label.split(/[;—]/)[0].trim();
+    const n = cite(current.src[0]);
+    el.innerHTML = `${short.toUpperCase()}${n ? `<a class="cite" href="#src-${n}">[${n}]</a>` : ''}`;
+  });
+}
+
 function buildDials() {
   const wrap = document.getElementById('dials');
   const dInvest = makeDial({
@@ -511,8 +587,10 @@ async function boot() {
 
   buildInstalledBase();
   buildTicks();
+  buildPhases();
   buildLedger();
   buildDials();
+  buildEra();
 
   const site = responsiveMount(document.getElementById('site-panel'), (w) =>
     renderSite(document.getElementById('site-panel'), w)
@@ -624,9 +702,10 @@ async function boot() {
     )} · DATA: ${[...new Set(vintages)].join(' · ')}`;
   });
 
-  // initial year: deep link or 2022
+  // S3: initial year — deep link wins; otherwise land the reader in the
+  // present (decision #7). History sits behind the cursor, promise ahead.
   const initial = readHash();
-  setYear(initial !== null ? initial : YEAR_MIN, { updateHash: false });
+  setYear(initial !== null ? initial : Math.floor(TODAY + 1e-6), { updateHash: false });
 
   // poster export — dynamically imported on use, never in the main bundle
   document.getElementById('export-poster').addEventListener('click', async () => {

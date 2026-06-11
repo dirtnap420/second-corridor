@@ -144,9 +144,12 @@
                 aria-label="Timeline year"
               />
             </div>
-            <output id="year-readout" class="scrubber-year" aria-live="polite" for="year-slider"
-              >2022</output
-            >
+            <div class="scrubber-year-wrap">
+              <output id="year-readout" class="scrubber-year" aria-live="polite" for="year-slider"
+                >2022</output
+              >
+              <div id="era-readout" class="era-readout"></div>
+            </div>
           </div>
           <div class="ledger" id="ledger"></div>
           <div class="plate-caption plate-caption--bottom">
