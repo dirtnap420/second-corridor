@@ -11,6 +11,7 @@
     <link rel="canonical" href="https://second-corridor.vercel.app/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="alternate" type="application/atom+xml" title="Data changelog" href="/feed.xml" />
+    <link rel="alternate" type="application/json+oembed" href="/oembed.json" title="The Second Corridor" />
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content="The Second Corridor" />
@@ -130,6 +131,7 @@
           <!-- D18: the scrubber sits directly under the map it drives -->
           <div class="scrubber" id="scrubber-row">
             <button id="play" class="btn" aria-pressed="false">Play</button>
+            <button id="tour" class="btn">Tour</button>
             <div class="scrubber-track">
               <div class="scrubber-ticks" id="scrub-ticks" aria-hidden="true"></div>
               <input

@@ -730,6 +730,67 @@ function showNodePlate(node) {
     ${figs ? `<div class="node-deeper">GO DEEPER → ${figs}</div>` : ''}`;
 }
 
+/* ---------------- R28: embed mode ----------------
+   ?embed=figNN renders one plate: no masthead, an attribution footer with a
+   backlink, postMessage height for the host iframe. Local newsrooms embed
+   charts they can't build; every embed is a live backlink. The plate is
+   MOVED (not cloned) so its observers and listeners keep working. */
+const EMBED_PLATES = {
+  fig01: 'instrument',
+  fig02: 'buildout-plate',
+  fig03: 'capital-plate',
+  fig04: 'talent-plate',
+  fig05: 'base-plate',
+  fig06: 'qcew-plate',
+  fig06a: 'qcew-plate',
+  fig06b: 'oews-plate',
+  fig06c: 'ipeds-plate',
+  fig07: 'lodes-plate',
+  fig08: 'spending-plate',
+  fig09: 'comp-plate',
+  fig10: 'bps-plate',
+  fig10a: 'bps-plate',
+  fig10b: 'acs-plate',
+  fig11: 'phys-plate',
+  fig12: 'synthesis-plate',
+};
+export const EMBED = (() => {
+  const p = new URLSearchParams(location.search).get('embed');
+  return p && EMBED_PLATES[p] ? p : null;
+})();
+function setupEmbed() {
+  if (!EMBED) return false;
+  const plate = document.getElementById(EMBED_PLATES[EMBED]);
+  if (!plate || plate.hidden) return false;
+  const num = EMBED.replace('fig', '').slice(0, 2);
+  document.body.classList.add('embed-mode');
+  const shell = document.createElement('div');
+  shell.className = 'embed-shell';
+  shell.appendChild(plate);
+  const foot = document.createElement('footer');
+  foot.className = 'embed-foot';
+  foot.innerHTML = `FROM <a href="https://second-corridor.vercel.app/f/${num}" rel="noopener" target="_blank">THE SECOND CORRIDOR</a> · EVERY NUMBER CITED · ESTIMATES LABELED`;
+  shell.appendChild(foot);
+  document.body.insertBefore(shell, document.body.firstChild);
+  // in-page anchors have no targets here — point them at the full site
+  shell.querySelectorAll('a[href^="#"]').forEach((a) => {
+    a.setAttribute('href', `https://second-corridor.vercel.app/${a.getAttribute('href')}`);
+    a.setAttribute('target', '_blank');
+    a.setAttribute('rel', 'noopener');
+  });
+  // height handshake for host iframes
+  if (window.parent !== window) {
+    const post = () =>
+      window.parent.postMessage(
+        { type: 'second-corridor:height', height: document.documentElement.scrollHeight },
+        '*'
+      );
+    new ResizeObserver(post).observe(shell);
+    window.addEventListener('load', post);
+  }
+  return true;
+}
+
 /* ---------------- S50≡R24: copy-link per plate ----------------
    Every figure becomes independently citable: the copied URL is the /f/NN
    share shim (per-figure preview card) carrying the live instrument state. */
@@ -1078,13 +1139,17 @@ async function boot() {
     )} · DATA: ${[...new Set(vintages)].join(' · ')}`;
   });
 
+  // R28: embed hosts get one plate and an attribution footer — and none of
+  // the page chrome below (intro, nudge, tour, deep-link scroll)
+  const embedded = setupEmbed();
+
   // S3: initial year — deep link wins (captured before the S43 view/p parse
   // could rewrite the hash); otherwise land the reader in the present
   // (decision #7). S4: when the intro will run, boot at 2022 and let its
   // final beat scrub to today.
   const todayYear = Math.floor(TODAY + 1e-6);
   const introWillRun =
-    !motion.reduced && !new URLSearchParams(location.search).has('nointro');
+    !motion.reduced && !embedded && !new URLSearchParams(location.search).has('nointro');
   if (initial !== null) {
     setYear(initial, { updateHash: false });
     writeHash(); // settle the displayed hash to the full applied state
@@ -1114,9 +1179,17 @@ async function boot() {
     if (rows && summary) summary.textContent = `Open the data table · ${rows} rows`;
   });
 
+  // S15: the guided tour — author-driven first pass, lazy like the poster
+  document.getElementById('tour')?.addEventListener('click', async () => {
+    stopPlay();
+    cancelGlide();
+    const { runTour } = await import('./tour.js');
+    runTour({ glideTo, setYear: (y) => setYear(y), motion, todayYear });
+  });
+
   // S6: one-shot scrubber invitation after the opening settles — the most
   // important interaction on the page finally gets an invitation
-  if (!localStorage.getItem('sc:nudged') && !motion.reduced) {
+  if (!localStorage.getItem('sc:nudged') && !motion.reduced && !embedded) {
     setTimeout(() => {
       const track = document.querySelector('.scrubber-track');
       if (!track || state.playing) return;
@@ -1132,6 +1205,8 @@ async function boot() {
       localStorage.setItem('sc:nudged', '1');
     }, introWillRun ? 4200 : 1400);
   }
+
+  if (embedded) return; // R28: an embed host needs no opening animation
 
   runIntro({
     mapInstance: map.instance,

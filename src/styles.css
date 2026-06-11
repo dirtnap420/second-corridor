@@ -1484,6 +1484,63 @@ footer.colophon a:hover {
   outline: 2px solid var(--copper);
   outline-offset: 1px;
 }
+/* S15: tour caption card — deictic copy only; figures live on the plates */
+.tour-card {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 40;
+  width: min(520px, calc(100vw - 32px));
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  box-shadow: var(--shadow-offset);
+  padding: 14px 16px;
+}
+.tour-cap {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  margin: 0 0 10px;
+}
+.tour-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tour-step {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-right: auto;
+}
+/* R28: embed mode — one plate, attribution footer, nothing else */
+.embed-mode .masthead,
+.embed-mode main,
+.embed-mode footer.colophon,
+.embed-mode .toc-rail,
+.embed-mode .skip-link,
+.embed-mode #print-header,
+.embed-mode #tour {
+  display: none;
+}
+.embed-mode {
+  padding: 8px;
+}
+.embed-shell .plate {
+  margin-top: 0;
+}
+.embed-foot {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 8px 2px 0;
+}
+.embed-foot a {
+  color: var(--copper-text);
+}
 
 /* ---------- print: a credible PDF brief ---------- */
 #print-header {

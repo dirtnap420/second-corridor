@@ -45,7 +45,7 @@ if (!(await up())) { server.kill(); throw new Error('vite preview did not start'
 
 const browser = await chromium.launch();
 
-async function loadPage({ routes = null, allowConsole = [] } = {}) {
+async function loadPage({ routes = null, allowConsole = [], url = `${BASE}/?nointro#y=2030` } = {}) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 1400 } });
   const issues = [];
   page.on('console', (msg) => {
@@ -56,11 +56,11 @@ async function loadPage({ routes = null, allowConsole = [] } = {}) {
   });
   page.on('pageerror', (err) => issues.push(`pageerror: ${err.message}`));
   if (routes) {
-    for (const [url, handler] of Object.entries(routes)) {
-      await page.route(url, handler);
+    for (const [routeUrl, handler] of Object.entries(routes)) {
+      await page.route(routeUrl, handler);
     }
   }
-  await page.goto(`${BASE}/?nointro#y=2030`, { waitUntil: 'networkidle' });
+  await page.goto(url, { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(600);
   return { page, issues };
@@ -360,6 +360,77 @@ function reportIssues(issues, label) {
     }
     await page.close();
   }
+}
+
+/* ================= pass 7 — Wave 8: embed mode + guided tour ================= */
+{
+  console.log('PASS 7 — embed mode (R28) + guided tour (S15)');
+  // R28: one plate, attribution backlink, no page chrome. The embed page
+  // legitimately leaves the display fonts unused — allow that warning only.
+  const { page, issues } = await loadPage({
+    url: `${BASE}/?embed=fig07`,
+    allowConsole: [/preloaded using link preload but not used/],
+  });
+  const em = await page.evaluate(() => ({
+    mode: document.body.classList.contains('embed-mode'),
+    shellPlates: document.querySelectorAll('.embed-shell .plate').length,
+    foot: document.querySelector('.embed-foot a')?.getAttribute('href') || '',
+    mastheadHidden: getComputedStyle(document.querySelector('.masthead')).display === 'none',
+    relativeAnchors: document.querySelectorAll('.embed-shell a[href^="#"]').length,
+  }));
+  if (!em.mode || em.shellPlates !== 1) fail(`embed: expected one plate in the shell, got ${em.shellPlates} (mode=${em.mode})`);
+  if (!em.foot.includes('second-corridor.vercel.app/f/07')) fail(`embed: attribution backlink wrong: ${em.foot}`);
+  if (!em.mastheadHidden) fail('embed: masthead still visible');
+  if (em.relativeAnchors > 0) fail(`embed: ${em.relativeAnchors} in-page anchors left pointing at missing targets`);
+  if (em.mode && em.shellPlates === 1 && em.mastheadHidden && em.relativeAnchors === 0)
+    ok('embed renders one attributed plate, chrome hidden, anchors absolute');
+  reportIssues(issues, 'embed');
+
+  // the iframe handshake — from a CSP-free host document. about:blank
+  // INHERITS the previous document's CSP in Chromium, so the host is served
+  // through route interception instead (no header, no meta).
+  await page.route('**/__embed-host', (route) =>
+    route.fulfill({
+      contentType: 'text/html',
+      body: `<iframe src="${BASE}/?embed=fig07" width="800" height="400"></iframe>
+       <script>window.__h = null; addEventListener('message', (e) => {
+         if (e.data && e.data.type === 'second-corridor:height') window.__h = e.data.height;
+       });</script>`,
+    })
+  );
+  await page.goto(`${BASE}/__embed-host`);
+  let h = null;
+  for (let i = 0; i < 20 && h === null; i++) {
+    await page.waitForTimeout(300);
+    h = await page.evaluate(() => window.__h);
+  }
+  if (typeof h !== 'number' || h < 200) fail(`embed: no postMessage height handshake (got ${h})`);
+  else ok(`embed iframe handshake: host received height ${h}`);
+  await page.close();
+
+  // S15: the tour must play clean under reduced motion (beats jump, no glide)
+  const tp = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
+  const tIssues = [];
+  tp.on('console', (m) => {
+    if (m.type() === 'error' || m.type() === 'warning') tIssues.push(`${m.type()}: ${m.text()}`);
+  });
+  tp.on('pageerror', (e) => tIssues.push(`pageerror: ${e.message}`));
+  await tp.goto(`${BASE}/?nointro`, { waitUntil: 'networkidle' });
+  await tp.waitForTimeout(600);
+  await tp.click('#tour');
+  await tp.waitForSelector('.tour-card');
+  const seen = [];
+  for (let i = 0; i < 5; i++) {
+    seen.push(await tp.evaluate(() => document.querySelector('.tour-step')?.textContent));
+    await tp.click('.tour-next');
+    await tp.waitForTimeout(250);
+  }
+  const gone = await tp.evaluate(() => !document.querySelector('.tour-card'));
+  if (seen.join(',') !== '1 / 5,2 / 5,3 / 5,4 / 5,5 / 5') fail(`tour beats wrong: ${seen.join(',')}`);
+  else if (!gone) fail('tour card did not release after the last beat');
+  else ok('tour: five beats advance and release under reduced motion');
+  reportIssues(tIssues, 'tour');
+  await tp.close();
 }
 
 await browser.close();

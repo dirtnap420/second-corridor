@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "type": "rich",
+  "provider_name": "The Second Corridor",
+  "provider_url": "https://second-corridor.vercel.app/",
+  "title": "The Second Corridor — New York's semiconductor buildout, 2022–2045",
+  "author_name": "Alex",
+  "html": "<iframe src=\"https://second-corridor.vercel.app/?embed=fig01\" width=\"800\" height=\"680\" style=\"border:0\" title=\"The Second Corridor — corridor instrument\" loading=\"lazy\"></iframe>",
+  "width": 800,
+  "height": 680
+}
