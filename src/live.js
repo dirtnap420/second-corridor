@@ -22,6 +22,33 @@ function isSupp(v) {
   return v && typeof v === 'object' && (v.suppressed || v.absent);
 }
 
+/* S12: one takeaway line per plate — what skimmers keep. Values computed
+   from the data so a refresh can never strand a typed number. */
+function addTakeaway(panelId, html) {
+  const panel = document.getElementById(panelId);
+  if (!panel || !html) return;
+  const p = document.createElement('p');
+  p.className = 'plate-takeaway';
+  p.innerHTML = html;
+  panel.before(p);
+}
+
+/* S48: the WATCHING verdict composes from whichever datasets loaded */
+const watching = { permits: null, completions: null };
+function updateWatching() {
+  const el = document.getElementById('v-watching-val');
+  const li = document.getElementById('verdict-watching');
+  if (!el || !li) return;
+  const parts = [];
+  if (watching.permits) parts.push(`permits (${watching.permits})`);
+  if (watching.completions) parts.push(`completions (${watching.completions})`);
+  parts.push('Zone C load');
+  if (parts.length > 1) {
+    el.textContent = parts.join(' · ');
+    li.hidden = false;
+  }
+}
+
 async function fetchJson(path) {
   try {
     const r = await fetch(path);
@@ -88,6 +115,35 @@ function renderQcew(data) {
         <text x="0" y="${MH - 2}" class="chart-label">${latestLabel}</text>
       </svg>`;
     grid.appendChild(fig);
+  }
+
+  /* S12 takeaway + S48 measured verdict — computed, never typed */
+  const latestBy = data.corridor.map((c) => ({
+    name: c.name,
+    latest: c.series[c.series.length - 1],
+  }));
+  const published = latestBy.filter(
+    (x) => typeof x.latest.semi === 'number' && x.latest.semi > 0
+  );
+  if (published.length) {
+    const names = published.map((x) => x.name.toUpperCase());
+    const who =
+      names.length <= 3
+        ? `ONLY ${names.join(' AND ')} PUBLISH`
+        : `${names.length} OF ${latestBy.length} CORRIDOR COUNTIES PUBLISH`;
+    addTakeaway(
+      'qcew-panel',
+      `${who} SEMICONDUCTOR EMPLOYMENT; THE REST IS SUPPRESSED OR ZERO. <a class="cite" href="#src-${n}">[${n}]</a>`
+    );
+  }
+  const ono = latestBy.find((x) => x.name === 'Onondaga');
+  if (ono && typeof ono.latest.semi === 'number') {
+    const v = document.getElementById('verdict-measured');
+    const val = document.getElementById('v-measured-val');
+    if (v && val) {
+      val.textContent = `${fmt(ono.latest.semi)} semiconductor jobs in Onondaga County, ${ono.latest.year}`;
+      v.hidden = false;
+    }
   }
 
   /* numbers table */
@@ -169,6 +225,19 @@ function renderIpeds(data) {
   show('ipeds-plate');
   setVintage('ipeds-vintage', prov);
   const n = cite('ipeds-data');
+
+  /* S48 watching slot — latest survey-year total across all institutions */
+  {
+    const yrs = [...new Set(data.series.map((s) => s.year))].sort();
+    const last = yrs[yrs.length - 1];
+    const total = data.series
+      .filter((s) => s.year === last)
+      .reduce((a, r) => a + (r.cert || 0) + (r.assoc || 0) + (r.bach || 0) + (r.grad || 0), 0);
+    if (total > 0) {
+      watching.completions = `${fmt(total)} in AY ${last - 1}–${String(last).slice(2)}`;
+      updateWatching();
+    }
+  }
 
   const INSTS = [
     { key: 'Rochester Institute of Technology', short: 'RIT', color: 'var(--copper)' },
@@ -290,6 +359,15 @@ function renderLodes(data) {
   wrap.innerHTML = html;
   panel.appendChild(wrap);
 
+  /* S12 takeaway: the body copy's Monroe setup pays off at the top of the plate */
+  const monroe = data.origins.find((o) => o.fips === '36055');
+  if (monroe && monroeRank > 0) {
+    addTakeaway(
+      'lodes-panel',
+      `MONROE — ROCHESTER — RANKS #${monroeRank} · ${fmt(monroe.jobs)} COMMUTERS ALREADY WORK IN ONONDAGA. <a class="cite" href="#src-${n}">[${n}]</a>`
+    );
+  }
+
   const numbersEl = document.getElementById('lodes-numbers');
   let trows = '';
   for (const o of data.origins) {
@@ -306,6 +384,21 @@ function renderSpending(data) {
   const prov = data.provenance;
   const el = document.getElementById('spending-vintage');
   if (el) el.textContent = `as recorded in USAspending, retrieved ${prov.retrievedAt}`;
+
+  /* S13: the absence duration renders from data, never hard-coded; the
+     sentence (and the S48 verdict) only hold while the absence does */
+  const micronPresent = data.awards.some((a) => /micron/i.test(a.recipient));
+  const dur = document.getElementById('absence-duration');
+  if (dur && !micronPresent && data.chipsNotPublished) {
+    const signed = Date.UTC(2024, 11, 9); // funding agreements signed 2024-12-09
+    const ret = Date.parse(prov.retrievedAt);
+    const months = Math.floor((ret - signed) / (30.44 * 86400e3));
+    if (months > 0) dur.textContent = ` — ${months} months after signing`;
+  }
+  if (!micronPresent && data.chipsNotPublished) {
+    const v = document.getElementById('verdict-unrecorded');
+    if (v) v.hidden = false;
+  }
   const panel = document.getElementById('spending-panel');
   const nUSA = cite('usaspending-data');
   const nNIST = cite('chips-direct-6_1b');
@@ -476,6 +569,26 @@ function renderComparators(qcew) {
 function renderBps(data) {
   show('bps-plate');
   setVintage('bps-vintage', data.provenance);
+
+  /* S12/S27 takeaway (approved wording) — series-high stated only when the
+     data says so; adjacency, never cause (the bottom caption keeps the
+     disclaimer). Recomputed every refresh. */
+  {
+    const n = cite('bps-data');
+    const ono = data.counties.find((c) => c.fips === '36067');
+    if (ono && n) {
+      const latest = ono.series[ono.series.length - 1];
+      const max = ono.series.reduce((a, s) => (s.units > a.units ? s : a), ono.series[0]);
+      addTakeaway(
+        'bps-panel',
+        latest.units >= max.units
+          ? `${latest.year}: ${fmt(latest.units)} UNITS PERMITTED IN ONONDAGA — THE HIGHEST IN THE SERIES. <a class="cite" href="#src-${n}">[${n}]</a>`
+          : `${latest.year}: ${fmt(latest.units)} UNITS PERMITTED IN ONONDAGA · SERIES HIGH ${max.year}: ${fmt(max.units)}. <a class="cite" href="#src-${n}">[${n}]</a>`
+      );
+      watching.permits = `${fmt(latest.units)} in ${latest.year}`;
+      updateWatching();
+    }
+  }
   const panel = document.getElementById('bps-panel');
   const n = cite('bps-data');
 
@@ -727,6 +840,16 @@ export async function initLive() {
   if (permits) renderBps(permits);
   if (acs) renderAcs(acs);
   renderPhys(nyiso);
+
+  // S48: the synthesis plate's vintage = the freshest retrievedAt loaded
+  const synthV = document.getElementById('synthesis-vintage');
+  if (synthV) {
+    const dates = [qcew, oews, ipeds, lodes, spending, permits, acs, nyiso]
+      .filter((d) => d && d.provenance)
+      .map((d) => d.provenance.retrievedAt)
+      .sort();
+    if (dates.length) synthV.textContent = `as refreshed ${dates[dates.length - 1]}`;
+  }
 
   return { qcew, oews, ipeds, lodes, spending, permits, acs, nyiso };
 }

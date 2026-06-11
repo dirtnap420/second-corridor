@@ -310,6 +310,126 @@ details.numbers,
   display: inline-flex;
   border: 1px solid var(--ink);
 }
+/* S8: epistemic-status stamps — the promise-vs-measurement thread */
+.plate-stamp {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  padding: 1px 5px;
+  margin-right: 8px;
+}
+.plate-stamp--derived {
+  border-color: var(--copper);
+  color: var(--copper-text);
+}
+.plate-stamp--context {
+  border-color: var(--muted);
+  color: var(--muted);
+}
+.plate-stamp--measured {
+  border-color: var(--violet);
+  color: var(--violet);
+}
+/* S9: forward links — the current pulling the reader downstream */
+.fwd-link {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+  margin-top: 22px;
+}
+.fwd-link:hover {
+  color: var(--copper-text);
+}
+/* S10: the Part Two pivot — the hinge gets an interstitial */
+.part-pivot {
+  margin-top: 64px;
+}
+.pivot-rule {
+  border: 0;
+  border-top: 3px solid var(--ink);
+  margin: 0 0 18px;
+}
+.part-pivot .eyebrow {
+  font-size: 14px;
+}
+/* S12: plate takeaways */
+.plate-takeaway {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 0;
+  padding: 12px 14px 0;
+}
+/* S48/S49: the synthesis plate + watch list */
+.verdicts {
+  list-style: none;
+  margin: 0;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+.verdicts b {
+  font-weight: 500;
+  color: var(--copper-text);
+  margin-right: 6px;
+}
+.verdicts .vlink {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 11px;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.verdicts .vlink:hover {
+  color: var(--copper-text);
+}
+.watch-head {
+  font-size: clamp(20px, 2.4vw, 26px);
+  margin-top: 34px;
+}
+.watch-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.watch-list li {
+  border-left: 3px solid var(--copper);
+  padding-left: 12px;
+}
+/* S14: the honest margins */
+.gaps-list {
+  margin: 18px 0 0;
+  padding-left: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 44em;
+}
 /* D48: keyboard users skip the masthead chrome */
 .skip-link {
   position: absolute;
