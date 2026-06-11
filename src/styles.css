@@ -12,13 +12,8 @@
   font-display: swap;
   src: url('/fonts/archivo-v25-latin-regular.woff2') format('woff2');
 }
-@font-face {
-  font-family: 'Archivo';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/archivo-v25-latin-500.woff2') format('woff2');
-}
+/* Archivo 500 deleted in the F10 audit — every font-weight:500 usage on the
+   site resolves to Plex Mono 500 (verified Wave 2); body text is 400/700/900 */
 @font-face {
   font-family: 'Archivo';
   font-style: normal;
@@ -55,6 +50,9 @@
   --ink: #14161d;
   --muted: #5b5f6f;
   --copper: #b5562a;
+  /* D42: text-only copper — #b5562a on silicon is ~4.1:1, below AA for small
+     text. Marks, fills, and large type keep --copper. */
+  --copper-text: #9c4a22;
   --violet: #565880;
   --green: #3e7048;
   --hairline: #d4d7e0;
@@ -102,7 +100,7 @@ a {
   text-underline-offset: 2px;
 }
 a:hover {
-  color: var(--copper);
+  color: var(--copper-text);
 }
 
 /* visible focus everywhere */
@@ -181,7 +179,7 @@ section.sheet {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: var(--ls-micro);
-  color: var(--copper);
+  color: var(--copper-text);
   margin-bottom: 14px;
 }
 h1,
@@ -220,7 +218,7 @@ h2 {
   font-family: var(--font-mono);
   font-size: 0.72em;
   vertical-align: super;
-  color: var(--copper);
+  color: var(--copper-text);
   text-decoration: none;
   margin-left: 1px;
 }
@@ -258,6 +256,16 @@ h2 {
 .plate-body {
   padding: 14px;
 }
+/* mobile overflow sweep (Wave 2): a table wider than the plate (OEWS wages,
+   the numbers tables) scrolls inside its container — the page never scrolls
+   sideways. Scoped to the table-bearing containers only: a blanket
+   .plate-body rule created scrollable regions without keyboard access (axe).
+   details.numbers is keyboard-reachable via its summary; #oews-panel gets
+   tabindex in renderOews. */
+details.numbers,
+#oews-panel {
+  overflow-x: auto;
+}
 .divider {
   border: 0;
   border-top: 1px dotted var(--hairline);
@@ -290,6 +298,47 @@ h2 {
 .micro-tabs {
   display: inline-flex;
   border: 1px solid var(--ink);
+}
+/* D19: Play → Pause → Replay relabeling must not resize the grid column —
+   sized to the widest label ("Replay" measures 84.4px in the btn font) */
+#play {
+  min-width: 88px;
+}
+
+/* D3: talent lattice renders as a route list below 560px (see sankey.js) */
+.route-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.route {
+  border-left: 3px solid var(--copper);
+  padding-left: 12px;
+}
+.route-chip {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: var(--ls-micro);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  padding: 4px 8px;
+}
+.route-from,
+.route-to {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink);
+  margin-top: 6px;
+}
+.route-from {
+  color: var(--muted);
 }
 .micro-tabs .btn {
   border: 0;
@@ -477,6 +526,7 @@ input[type='range'].scrub:focus-visible::-webkit-slider-thumb {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 10px;
+  margin-right: 6px; /* D8: dt/dd are inline — without this the plate ran "NODECLAY" */
 }
 .node-plate dd {
   display: inline;
@@ -634,7 +684,7 @@ details.numbers summary {
 }
 details.numbers summary::before {
   content: '+ ';
-  color: var(--copper);
+  color: var(--copper-text);
   margin-right: 6px;
 }
 details.numbers[open] summary::before {
@@ -748,7 +798,7 @@ header.masthead {
   left: 0;
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--copper);
+  color: var(--copper-text);
 }
 .sources .retrieved {
   font-family: var(--font-mono);

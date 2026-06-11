@@ -149,7 +149,10 @@ async function loadFromApi(key) {
       `${API_BASE}/${year}/acs/acs5?get=NAME,${VARS.join(',')}&for=county:*&in=state:${STATE}`;
     const cachePath = `${rawDir}acs5-${year}-b15003-ny.json`;
     let text;
-    if (existsSync(cachePath)) {
+    // P43: a published ACS vintage is immutable; the probe loop tries newer
+    // vintages first, so a new release is fetched before any cache can hit.
+    // NO_CACHE=1 forces refetch.
+    if (existsSync(cachePath) && !process.env.NO_CACHE) {
       text = readFileSync(cachePath, 'utf8');
     } else {
       await politeDelay();
@@ -277,7 +280,8 @@ async function loadFromSummaryFile() {
   for (const y of PROBE_YEARS) {
     url = `${SF_BASE}/${y}/table-based-SF/data/5YRData/acsdt5y${y}-b15003.dat`;
     const cachePath = `${rawDir}sf-${y}-b15003-ny.psv`;
-    if (existsSync(cachePath)) {
+    // P43: same immutable-vintage reasoning as the API path; NO_CACHE=1 refetches
+    if (existsSync(cachePath) && !process.env.NO_CACHE) {
       lines = readFileSync(cachePath, 'utf8').split('\n').filter((l) => l.length > 0);
       year = y;
       break;

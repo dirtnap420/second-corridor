@@ -19,9 +19,8 @@ const BASE = `http://localhost:${PORT}`;
 
 // M4 allowlist — pre-existing, tracked violations only. Each entry carries the
 // item ID that will clear it; remove the entry when the item lands.
-const AXE_ALLOWLIST = {
-  'color-contrast': 'D42 (Wave 2) — copper on silicon ~4.0:1, README Decision 20',
-};
+// (color-contrast was allowlisted until D42 landed the --copper-text token.)
+const AXE_ALLOWLIST = {};
 
 const LIVE_PLATES = [
   'qcew-plate', 'oews-plate', 'ipeds-plate', 'lodes-plate', 'spending-plate',

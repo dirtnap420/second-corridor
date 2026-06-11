@@ -148,9 +148,12 @@ async function fetchAllPages(url) {
   return records;
 }
 
-async function cached(file, producer) {
+// P43: completed survey years cache permanently; the latest year passes
+// fresh:true (Urban revises/repostes it). NO_CACHE=1 bypasses all reads.
+async function cached(file, producer, { fresh = false } = {}) {
   const fp = path.join(RAW_DIR, file);
-  if (existsSync(fp)) return JSON.parse(await readFile(fp, 'utf8'));
+  if (existsSync(fp) && !fresh && !process.env.NO_CACHE)
+    return JSON.parse(await readFile(fp, 'utf8'));
   const data = await producer();
   await writeFile(fp, JSON.stringify(data));
   return data;
@@ -200,9 +203,11 @@ async function probeLatestUrbanYear() {
 }
 
 // --- 3. Pull totals (majornum=1, sex=99, race=99) per Urban year x inst -----
-async function pullCompletions(urbanYear, unitid) {
-  const recs = await cached(`completions-${urbanYear}-${unitid}.json`, () =>
-    fetchAllPages(`${API}/completions-cip-6/${urbanYear}/?unitid=${unitid}&sex=99&race=99&majornum=1`)
+async function pullCompletions(urbanYear, unitid, { fresh = false } = {}) {
+  const recs = await cached(
+    `completions-${urbanYear}-${unitid}.json`,
+    () => fetchAllPages(`${API}/completions-cip-6/${urbanYear}/?unitid=${unitid}&sex=99&race=99&majornum=1`),
+    { fresh }
   );
   if (recs.length === 0) throw new Error(`Empty completions pull for unitid ${unitid}, Urban year ${urbanYear}`);
   assertFields(recs[0], `completions-cip-6/${urbanYear}/?unitid=${unitid}`);
@@ -342,7 +347,7 @@ async function main() {
   const pulls = new Map(); // `${urbanYear}-${unitid}` -> records
   for (const u of urbanYears) {
     for (const inst of INSTITUTIONS) {
-      const recs = await pullCompletions(u, inst.unitid);
+      const recs = await pullCompletions(u, inst.unitid, { fresh: u === latestUrban });
       pulls.set(`${u}-${inst.unitid}`, recs);
       console.log(`  Urban ${u} ${inst.short}: ${recs.length} total-rows`);
     }

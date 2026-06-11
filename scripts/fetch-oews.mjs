@@ -71,7 +71,9 @@ async function headOk(url) {
 }
 
 async function download(url, dest) {
-  if (existsSync(dest) && statSync(dest).size > 10_000) {
+  // P43: an OEWS vintage is immutable once published, so cache-if-present is
+  // correct here; NO_CACHE=1 still forces a refetch (CI / cache repair)
+  if (existsSync(dest) && statSync(dest).size > 10_000 && !process.env.NO_CACHE) {
     console.log(`  cache hit: ${dest} (${(statSync(dest).size / 1e6).toFixed(1)} MB)`);
     return readFileSync(dest);
   }
@@ -97,6 +99,7 @@ async function pickVintage() {
     const maDest = join(RAW_DIR, `oesm${yy}ma.zip`);
     const natDest = join(RAW_DIR, `oesm${yy}nat.zip`);
     const cached =
+      !process.env.NO_CACHE &&
       existsSync(maDest) && statSync(maDest).size > 10_000 &&
       existsSync(natDest) && statSync(natDest).size > 10_000;
     if (cached || ((await headOk(maUrl)) && (await headOk(natUrl)))) {

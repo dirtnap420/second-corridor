@@ -61,7 +61,7 @@ export function renderMap(container, topo, opts, width) {
   const mapPts = NODES.map((n) => projection(n.lonlat));
   const distMi = NODES.map((n) => geoDistance(NODES[0].lonlat, n.lonlat) * EARTH_MI);
   const totalMi = distMi[distMi.length - 1];
-  const SM = { l: 56, r: 30 };
+  const SM = { l: 56, r: 56 }; // D6: r=30 clipped the Albany riser's labels
   const datumY = Math.round(H * 0.62);
   const sectionPts = distMi.map((d) => [SM.l + (d / totalMi) * (W - SM.l - SM.r), datumY]);
 
@@ -121,9 +121,26 @@ export function renderMap(container, topo, opts, width) {
       html += `<line x1="${x}" y1="${datumY}" x2="${x}" y2="${datumY + 6}" stroke="var(--muted)" stroke-width="1"></line>
         <text x="${x}" y="${datumY + 18}" text-anchor="middle" class="chart-label">STA ${mi} MI</text>`;
     }
-    html += `<text x="${SM.l}" y="${datumY - 10}" text-anchor="start" class="chart-label" style="fill:var(--copper)">STAMP → ALBANY · GREAT-CIRCLE ${Math.round(totalMi)} MI</text>`;
+    // title sits at the panel's top-left — at datum height it ran through
+    // the RIT risers (D5 overlap sweep)
+    html += `<text x="${SM.l}" y="20" text-anchor="start" class="chart-label" style="fill:var(--copper)">STAMP → ALBANY · GREAT-CIRCLE ${Math.round(totalMi)} MI</text>`;
     html += `<g class="risers"></g>`;
-    html += `<text x="${SM.l}" y="${H - 8}" class="chart-label">RISERS — COPPER: CUMULATIVE CAPITAL $B · INK: COUNTY NAICS-3344 EMP (QCEW) · VIOLET: COMPLETIONS (IPEDS)</text>`;
+    // legend + the D5 dagger footnote; one line wide, stacked when narrow
+    const legendParts = [
+      'RISERS — COPPER: CUMULATIVE CAPITAL $B',
+      'INK: COUNTY NAICS-3344 EMP (QCEW)',
+      'VIOLET: COMPLETIONS (IPEDS)',
+    ];
+    const dagLine = '† QCEW SUPPRESSED (BLS CONFIDENTIALITY)';
+    if (W < 600) {
+      legendParts.forEach((p, i) => {
+        html += `<text x="${SM.l}" y="${H - 8 - (legendParts.length - i) * 12}" class="chart-label">${p}</text>`;
+      });
+      html += `<text x="${SM.l}" y="${H - 8}" class="chart-label">${dagLine}</text>`;
+    } else {
+      html += `<text x="${SM.l}" y="${H - 20}" class="chart-label">${legendParts.join(' · ')}</text>`;
+      html += `<text x="${SM.l}" y="${H - 8}" class="chart-label">${dagLine}</text>`;
+    }
     gSection.innerHTML = html;
   }
   svg.appendChild(gSection);
@@ -174,14 +191,27 @@ export function renderMap(container, topo, opts, width) {
       const bw = 8;
       const gap = 4;
       let bx = x - (defs.length * bw + (defs.length - 1) * gap) / 2;
+      // D5: values render horizontally, centered on the bar group and stacked
+      // above its tallest bar (rotated labels collided with the node squares
+      // and each other at Clay/RIT). Labels carry their bar's color.
+      const nodeBars = [];
+      const relayout = () => {
+        const visible = nodeBars.filter((b) => !b.hidden);
+        const top = Math.max(0, ...visible.map((b) => b.h));
+        visible.forEach((b, j) => {
+          b.label.setAttribute('x', x);
+          b.label.setAttribute('y', datumY - top - 6 - j * 12);
+        });
+      };
       for (const d of defs) {
         if (d.suppressed) {
+          // D5: dagger instead of a rotated string; footnote in the legend
           const t = document.createElementNS(SVG_NS, 'text');
           t.setAttribute('class', 'chart-label');
-          t.setAttribute('x', bx + 4);
-          t.setAttribute('y', datumY - 8);
-          t.setAttribute('transform', `rotate(-90 ${bx + 4} ${datumY - 8})`);
-          t.textContent = 'QCEW SUPPR.';
+          t.setAttribute('x', bx + bw / 2);
+          t.setAttribute('y', datumY - 5);
+          t.setAttribute('text-anchor', 'middle');
+          t.textContent = '†';
           gRisers.appendChild(t);
         } else {
           const rect = document.createElementNS(SVG_NS, 'rect');
@@ -192,21 +222,24 @@ export function renderMap(container, topo, opts, width) {
           rect.style.transformOrigin = 'bottom';
           const label = document.createElementNS(SVG_NS, 'text');
           label.setAttribute('class', 'chart-label');
+          label.setAttribute('text-anchor', 'middle');
+          label.style.fill = d.color;
           gRisers.appendChild(rect);
           gRisers.appendChild(label);
           riserBars.push(rect);
-          const lx = bx + 7;
+          const bar = { label, h: 0, hidden: true };
+          nodeBars.push(bar);
           const place = (v, text) => {
             const h = Math.max(1.5, (v / d.max) * RISER_MAX_H);
             const hidden = v <= 0;
+            bar.h = h;
+            bar.hidden = hidden;
             rect.style.display = hidden ? 'none' : '';
             label.style.display = hidden ? 'none' : '';
             rect.setAttribute('y', datumY - h);
             rect.setAttribute('height', h);
-            label.setAttribute('x', lx);
-            label.setAttribute('y', datumY - h - 6);
-            label.setAttribute('transform', `rotate(-90 ${lx} ${datumY - h - 6})`);
             label.textContent = text;
+            relayout();
           };
           if (d.dynamic) dynamicRisers.push({ place, value: d.value, fmt: d.fmt });
           else place(d.v, d.text);

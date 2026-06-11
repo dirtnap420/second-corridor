@@ -133,30 +133,31 @@ Goal: clean base. Every visible defect from the design review plus the four runt
 findings and two pipeline bugs.
 
 Design P1s:
-- [ ] D1 — Fig 02 legend clipping
-- [ ] D2 — mobile site-panel caption collision
-- [ ] D3 — mobile talent sankey legibility (largest item this wave)
-- [ ] D4 — Fig 02 mobile milestone flags
-- [ ] D5 — section-view riser label collisions
-- [ ] D6 — Albany riser right-edge clip
-- [ ] D7 — Fig 04 duplicated caption
-- [ ] D8 — node-plate `NODECLAY` spacing
-- [ ] D19 — Play button width lock
-- [ ] D35 — Fig 10a `GB.` label clipping
+- [x] D1 — Fig 02 legend clipping
+- [x] D2 — mobile site-panel caption collision
+- [x] D3 — mobile talent sankey legibility (largest item this wave)
+- [x] D4 — Fig 02 mobile milestone flags
+- [x] D5 — section-view riser label collisions
+- [x] D6 — Albany riser right-edge clip
+- [x] D7 — Fig 04 duplicated caption
+- [x] D8 — node-plate `NODECLAY` spacing
+- [x] D19 — Play button width lock
+- [x] D35 — Fig 10a `GB.` label clipping
 
 Runtime findings:
-- [ ] F27 — clamp play-loop delta
-- [ ] F10 — preload Archivo 900; audit 500
-- [ ] F19 — parallelize `boot()`
+- [x] F27 — clamp play-loop delta
+- [x] F10 — preload Archivo 900; audit 500 *(preload half landed Wave 1; the
+      500 audit found it unused — face + woff2 deleted, fonts 86.9→72.4KB)*
+- [x] F19 — parallelize `boot()`
 - [x] F20 — reserve `.map-stage` space (CLS) *(landed early in Wave 1 — CI's
       slower runner exposed the unreserved stage as CLS 0.175; see deviations)*
 
 Pipeline script bugs (independent of CI):
-- [ ] P25 — fail-soft orchestrator replaces `&&` chain (first cut of P42)
-- [ ] P43 — stale-cache fix across all eight fetchers
+- [x] P25 — fail-soft orchestrator replaces `&&` chain (first cut of P42)
+- [x] P43 — stale-cache fix across all eight fetchers
 
 Token safety (do before later styling work builds on it):
-- [ ] D42 — `--copper-text` accessible token
+- [x] D42 — `--copper-text` accessible token
 
 **Exit:** full battery; fresh qa shots at 3 widths × 2 years show zero clipping or
 overlap; `npm run data -- --dry-run` (or equivalent) survives one fetcher failing.
@@ -583,3 +584,41 @@ scope on the GCM token before pushing `.github/workflows/`.
   PR head and again on the main merge commit (the no-op proof); production
   deployed and verified. GCM token confirmed to carry `workflow` scope
   (Wave 3's open check, answered early).
+
+**Wave 2 progress (2026-06-10/11, branch `wave-2-defects`):**
+- All boxes above landed. Notes and deviations:
+- D1 went further than planned: the key also clipped at 375 (never seen in
+  the column-width screenshots) — left-aligned everywhere + two-row wrap
+  below 420px.
+- D5 includes a bonus overlap fix: the GREAT-CIRCLE title sat at datum height
+  and ran through the RIT risers — moved to the section panel's top-left.
+- D42 raised Lighthouse accessibility 0.97 → **1.0**; the axe allowlist is
+  now empty and axe reports zero findings at any severity. README Decision 20
+  marked resolved.
+- The mobile-overflow hunt found two real culprits: the OEWS wage table
+  (361px in a 333px plate → the standing 21px page overflow) and the numbers
+  tables when opened (page → 623px). Fixed with scoped overflow containment —
+  and the first attempt (blanket `.plate-body` rule) was **caught by the axe
+  gate** (scrollable-region-focusable): final version scopes to
+  `details.numbers` + `#oews-panel` with keyboard access on the panel.
+- The m-instrument shot review caught D2's first fix overprinting fab labels
+  at 375 — captions moved to the panel bottom. (Two of this wave's own fixes
+  were corrected by Wave 1's gates/review loop — the machinery pays rent.)
+- P43 per the audit: qcew/bps/ipeds refetch their latest period fresh each
+  run (with a freshThisRun set to avoid double-downloading probe files);
+  lodes always probes (cache fallback only on probe failure); **usaspending
+  never reads cache** — it is the FAIN watcher, and a cached response would
+  have hidden the Micron award appearing on USAspending (raw/ is a write-only
+  audit archive; OFFLINE=1 reads it back). oews/acs/nyiso vintages are
+  immutable with calendar-anchored newest-first probes — cache-if-present is
+  correct there; all eight honor NO_CACHE=1.
+- P25 proven: `node scripts/refresh.mjs --only=nyiso,qcew --fail=qcew` →
+  qcew FAIL, nyiso completed, exit 1 (the wave's fail-soft exit criterion).
+  An incidental nyiso.json retrievedAt-only bump (UTC midnight rollover) was
+  reverted — timestamp churn isn't a data refresh (P45's concern, Wave 3).
+- Throttled perf trace after F19: boot stages now overlap fetches; playback
+  p95 16.7ms / max 50.0ms (within the 60ms cap, 0 frames over).
+- Exit battery: build+lints, units 8/8, offline proof, contract 4/4 (axe 0
+  findings), visual baselines regenerated ×2 (post-D42 colors, post-caption
+  fix) and verified deterministic, Lighthouse perf 0.99 / **a11y 1.0** / bp
+  1.0 / CLS 0.003, shots reviewed at 375/768/1280 — zero clipping/overlap.

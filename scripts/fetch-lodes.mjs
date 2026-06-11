@@ -58,9 +58,10 @@ async function headOk(url) {
   return true;
 }
 
-/** Stream-download url → dest (atomic via .part rename). No-op if cached. */
+/** Stream-download url → dest (atomic via .part rename). No-op if cached.
+ *  P43: a published LODES year is immutable; NO_CACHE=1 forces a refetch. */
 async function download(url, dest) {
-  if (existsSync(dest)) {
+  if (existsSync(dest) && !process.env.NO_CACHE) {
     console.log(`  cache hit: ${dest.split(/[\\/]/).pop()}`);
     return;
   }
@@ -80,18 +81,13 @@ async function download(url, dest) {
 }
 
 // ---------------------------------------------------------------------------
-// 1. Determine the latest LODES year (reuse cached pair if present).
+// 1. Determine the latest LODES year. P43: always probe — the old
+// reuse-cached-pair shortcut meant a newly published year was never noticed.
+// HEAD probes are cheap; the per-file cache below still avoids re-downloads.
+// Falls back to the newest cached pair only if probing fails outright.
 // ---------------------------------------------------------------------------
 let year = null;
-const cachedYears = readdirSync(rawDir)
-  .map((f) => f.match(/^ny_od_main_JT00_(\d{4})\.csv\.gz$/)?.[1])
-  .filter(Boolean)
-  .map(Number)
-  .filter((y) => existsSync(`${rawDir}${auxName(y)}`));
-if (cachedYears.length > 0) {
-  year = Math.max(...cachedYears);
-  console.log(`Using cached LODES year ${year}`);
-} else {
+try {
   for (let y = PROBE_FROM; y >= PROBE_TO; y--) {
     if (await headOk(`${LODES_BASE}/${mainName(y)}`)) {
       if (!(await headOk(`${LODES_BASE}/${auxName(y)}`))) {
@@ -103,6 +99,15 @@ if (cachedYears.length > 0) {
   }
   if (year === null) throw new Error(`No LODES8 ny_od_main_JT00 file found for any year ${PROBE_TO}-${PROBE_FROM}`);
   console.log(`Latest LODES year available: ${year}`);
+} catch (probeErr) {
+  const cachedYears = readdirSync(rawDir)
+    .map((f) => f.match(/^ny_od_main_JT00_(\d{4})\.csv\.gz$/)?.[1])
+    .filter(Boolean)
+    .map(Number)
+    .filter((y) => existsSync(`${rawDir}${auxName(y)}`));
+  if (cachedYears.length === 0) throw probeErr;
+  year = Math.max(...cachedYears);
+  console.log(`Probe failed (${probeErr.message}); falling back to cached LODES year ${year}`);
 }
 
 const mainPath = `${rawDir}${mainName(year)}`;

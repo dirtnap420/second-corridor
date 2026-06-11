@@ -110,6 +110,11 @@ function renderOews(data) {
   show('oews-plate');
   setVintage('oews-vintage', prov);
   const panel = document.getElementById('oews-panel');
+  // the wage table can overflow narrow plates and scrolls inside the panel —
+  // a scrollable region needs keyboard access (axe: scrollable-region-focusable)
+  panel.setAttribute('tabindex', '0');
+  panel.setAttribute('role', 'region');
+  panel.setAttribute('aria-label', 'Wages table, corridor metros vs national — scrollable');
   const n = cite('oews-data');
 
   const cell = (d) => {
@@ -502,8 +507,10 @@ function renderBps(data) {
       events += `<line x1="${xOf(2022)}" y1="10" x2="${xOf(2022)}" y2="${16 + plotH}" stroke="var(--copper)" stroke-width="1"></line>
       <text x="${xOf(2022)}" y="8" text-anchor="middle" class="chart-label" style="fill:var(--copper)">ANN.</text>`;
     const gx = xOf(years[years.length - 1]) + bw + 3;
+    // D35: end-anchored just left of the hairline — middle-anchored at the
+    // panel's right edge it clipped in every panel
     events += `<line x1="${gx}" y1="10" x2="${gx}" y2="${16 + plotH}" stroke="var(--copper)" stroke-width="1" stroke-dasharray="2 3"></line>
-      <text x="${gx}" y="8" text-anchor="middle" class="chart-label" style="fill:var(--copper)">GB. '26</text>`;
+      <text x="${gx - 3}" y="8" text-anchor="end" class="chart-label" style="fill:var(--copper)">GB. '26</text>`;
 
     const fig = document.createElement('figure');
     fig.style.cssText = 'margin:0';

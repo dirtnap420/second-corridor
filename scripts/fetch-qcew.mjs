@@ -45,10 +45,17 @@ mkdirSync(rawDir, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let madeNetworkRequest = false;
 
-/** Fetch one QCEW CSV (with raw/ cache). Returns text, or null on 404 if allow404. */
-async function fetchCsv(year, qtr, fips, { allow404 = false } = {}) {
+/** Fetch one QCEW CSV (with raw/ cache). Returns text, or null on 404 if allow404.
+ *  P43: completed periods cache permanently; pass fresh:true for the latest
+ *  period (BLS revises it) and for probes. NO_CACHE=1 bypasses all reads. */
+const freshThisRun = new Set(); // files already (re)fetched live in this run
+async function fetchCsv(year, qtr, fips, { allow404 = false, fresh = false } = {}) {
   const cachePath = `${rawDir}${year}-${qtr}-${fips}.csv`;
-  if (existsSync(cachePath)) return readFileSync(cachePath, 'utf8');
+  if (
+    existsSync(cachePath) &&
+    (freshThisRun.has(cachePath) || (!fresh && !process.env.NO_CACHE))
+  )
+    return readFileSync(cachePath, 'utf8');
 
   if (madeNetworkRequest) await sleep(DELAY_MS); // be polite between live requests
   madeNetworkRequest = true;
@@ -64,6 +71,7 @@ async function fetchCsv(year, qtr, fips, { allow404 = false } = {}) {
     throw new Error(`Unexpected response body (not a QCEW CSV) from ${url}: ${text.slice(0, 120)}`);
   }
   writeFileSync(cachePath, text);
+  freshThisRun.add(cachePath);
   console.log(`  fetched ${year}/${qtr}/${fips} (${(text.length / 1024).toFixed(0)} KB)`);
   return text;
 }
@@ -146,14 +154,14 @@ const probeFips = '36067';
 
 let latestYear = null;
 for (let y = nowYear; y >= FIRST_YEAR; y--) {
-  if ((await fetchCsv(y, 'a', probeFips, { allow404: true })) !== null) { latestYear = y; break; }
+  if ((await fetchCsv(y, 'a', probeFips, { allow404: true, fresh: true })) !== null) { latestYear = y; break; }
 }
 if (latestYear === null) throw new Error(`No QCEW annual file found for any year ${FIRST_YEAR}-${nowYear}`);
 
 let latestQ = null;
 outer: for (let y = nowYear; y >= FIRST_YEAR; y--) {
   for (let q = 4; q >= 1; q--) {
-    if ((await fetchCsv(y, q, probeFips, { allow404: true })) !== null) { latestQ = { y, q }; break outer; }
+    if ((await fetchCsv(y, q, probeFips, { allow404: true, fresh: true })) !== null) { latestQ = { y, q }; break outer; }
   }
 }
 if (latestQ === null) throw new Error(`No QCEW quarterly file found for any quarter ${FIRST_YEAR}Q1-${nowYear}Q4`);
@@ -169,7 +177,7 @@ for (const { fips, name } of CORRIDOR) {
   const series = [];
   for (let year = FIRST_YEAR; year <= latestYear; year++) {
     const ctx = `annual ${year} area ${fips}`;
-    const text = await fetchCsv(year, 'a', fips);
+    const text = await fetchCsv(year, 'a', fips, { fresh: year === latestYear });
     const rows = parseCsv(text, ANNUAL_COLS, ctx);
     assertFips(rows, fips, ctx);
 
@@ -208,7 +216,7 @@ for (const { fips, name } of COMPARATORS) {
   const months = [];
   for (const { y, q } of quarters) {
     const ctx = `quarterly ${y}Q${q} area ${fips}`;
-    const text = await fetchCsv(y, q, fips);
+    const text = await fetchCsv(y, q, fips, { fresh: y === latestQ.y && q === latestQ.q });
     const rows = parseCsv(text, QTR_COLS, ctx);
     assertFips(rows, fips, ctx);
 

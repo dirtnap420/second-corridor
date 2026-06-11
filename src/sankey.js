@@ -152,8 +152,45 @@ export function buildCapitalNumbers(numbersEl) {
 }
 
 /* ---------------- talent lattice ---------------- */
+// D3: below 560px the sankey is illegible (labels clip the viewBox and sit on
+// ribbons), so it renders as a stacked route list instead — one block per
+// program/mechanism, listing its inbound schools and outbound employers. The
+// widths were always illustrative; a structure-only list loses nothing.
+function citeMark(key) {
+  const n = cite(key);
+  return n ? `<a class="cite" href="#sources">[${n}]</a>` : '';
+}
+
+function renderTalentRouteList(container) {
+  const nodeById = Object.fromEntries(TALENT_SANKEY.nodes.map((n) => [n.id, n]));
+  const ul = document.createElement('ul');
+  ul.className = 'route-list';
+  ul.setAttribute(
+    'aria-label',
+    'Talent pathways: schools through programs to employers. Structure from the public record.'
+  );
+  for (const mid of TALENT_SANKEY.nodes.filter((n) => n.layer === 1)) {
+    const from = TALENT_SANKEY.links
+      .filter((l) => l.target === mid.id)
+      .map((l) => `${nodeById[l.source].label}${citeMark(nodeById[l.source].src)}`);
+    const to = TALENT_SANKEY.links
+      .filter((l) => l.source === mid.id)
+      .map((l) => `${nodeById[l.target].label}${citeMark(nodeById[l.target].src)}`);
+    const li = document.createElement('li');
+    li.className = 'route';
+    li.innerHTML = `
+      <span class="route-chip">${mid.label.toUpperCase()}${citeMark(mid.src)}</span>
+      <div class="route-from">${from.join(' · ')}</div>
+      <div class="route-to">→ ${to.join(' · ')}</div>`;
+    ul.appendChild(li);
+  }
+  container.appendChild(ul);
+  return {};
+}
+
 export function renderTalentSankey(container, width) {
   const W = Math.max(330, width);
+  if (width < 560) return renderTalentRouteList(container);
   const narrow = W < 640;
   const H = narrow ? 480 : 470;
   const lm = narrow ? 104 : 230;
