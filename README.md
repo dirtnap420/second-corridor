@@ -60,9 +60,10 @@ QA battery (Wave 1 gates; see `CLAUDE.md` for the session ritual):
 `npm run build` (design lint + bundle-size gate vs `perf-budget.json`) ·
 `npm test` (derived-series + citation-gate units) · `node qa/offline.mjs`
 (zero external requests) · `node qa/contract.mjs` (plates render, fixtures,
-axe a11y) · `node qa/visual-diff.mjs` (pixelmatch vs `qa/baselines/`, local
-only) · `node qa/perf.mjs [--throttle]` (runtime trace) · `npm run lighthouse`
-(budget asserted). `npm run qa` screenshots years {2022, 2026, 2030, 2045} ×
+axe a11y, subpages) · `node qa/visual-diff.mjs` (pixelmatch vs `qa/baselines/`,
+local only, pinned clock) · `node qa/print.mjs` (print-path smoke; `--publish`
+regenerates `public/brief.pdf`) · `node qa/perf.mjs [--throttle]` (runtime
+trace) · `npm run lighthouse` (budget asserted). `npm run qa` screenshots years {2022, 2026, 2030, 2045} ×
 widths {375, 768, 1280} into `qa/shots/` (gitignored) for visual review.
 CI (`.github/workflows/ci.yml`) runs build, units, offline proof, contract,
 and Lighthouse on every push to main and every PR.

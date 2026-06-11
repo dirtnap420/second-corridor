@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-06-15",
+  "newPeriodsOnly": false,
+  "datasets": {
+    "qcew": {
+      "priorVintage": "QCEW annual 2020-2025; quarterly 2020Q1-2025Q4",
+      "vintage": "QCEW annual 2020-2026; quarterly 2020Q1-2026Q1",
+      "periodsAdded": ["corridor[year=2026]"],
+      "suppressionFlips": [],
+      "valuesChanged": [],
+      "valuesChangedCount": 0,
+      "other": []
+    },
+    "permits": {
+      "priorVintage": "BPS 2015-2025",
+      "vintage": "BPS 2015-2025",
+      "periodsAdded": [],
+      "suppressionFlips": [],
+      "valuesChanged": [
+        { "path": "counties.series[year=2024].units", "was": 1640, "now": 1701 }
+      ],
+      "valuesChangedCount": 1,
+      "other": []
+    }
+  }
+}

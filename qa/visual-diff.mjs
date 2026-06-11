@@ -43,6 +43,22 @@ for (let i = 0; i < 40 && !(await up()); i++) await new Promise((r) => setTimeou
 if (!(await up())) { server.kill(); throw new Error('vite preview did not start'); }
 
 /* ---------- capture ---------- */
+// S45 made render output date-dependent ("retrieved … · N days ago", the
+// TODAY tick, the release calendar) — pin the clock or the baselines rot
+// daily. The pin must be ≥ the data's retrievedAt (ages clamp at 0).
+const FIXED_NOW = Date.parse('2026-06-15T12:00:00Z');
+const FREEZE_CLOCK = `{
+  const fixed = ${FIXED_NOW};
+  const RealDate = Date;
+  class FixedDate extends RealDate {
+    constructor(...a) { a.length ? super(...a) : super(fixed); }
+    static now() { return fixed; }
+  }
+  FixedDate.parse = RealDate.parse.bind(RealDate);
+  FixedDate.UTC = RealDate.UTC.bind(RealDate);
+  window.Date = FixedDate;
+}`;
+
 const browser = await chromium.launch();
 const names = [];
 for (const width of WIDTHS) {
@@ -50,6 +66,7 @@ for (const width of WIDTHS) {
     viewport: { width, height: 1400 },
     reducedMotion: 'reduce',
   });
+  await page.addInitScript(FREEZE_CLOCK);
   for (const year of YEARS) {
     await page.goto(`${BASE}/?nointro#y=${year}`, { waitUntil: 'networkidle' });
     await page.evaluate(() => document.fonts.ready);

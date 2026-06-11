@@ -32,8 +32,9 @@ Run at every wave exit (and before starting work, to confirm green):
 npm run build           # vite build + design lint + bundle-size gate
 npm test                # unit tests: derived series + citation gate
 node qa/offline.mjs     # self-containment proof: zero external requests/console errors
-node qa/contract.mjs    # contract test: plates render, no NaN/undefined, axe a11y, fixtures
-node qa/visual-diff.mjs # pixelmatch vs qa/baselines/ (deterministic reduced-motion shots)
+node qa/contract.mjs    # contract test: plates render, no NaN/undefined, axe a11y, fixtures, subpages
+node qa/visual-diff.mjs # pixelmatch vs qa/baselines/ (deterministic reduced-motion shots, pinned clock)
+node qa/print.mjs       # print-path smoke: the brief renders, timed (--publish → public/brief.pdf)
 npm run qa              # year×width screenshots for human review (gitignored)
 node qa/sections.mjs    # per-section shots (needs dev server on 5173)
 node qa/instrument.mjs  # instrument close-ups (needs dev server on 5173)

@@ -139,6 +139,26 @@ function reportIssues(issues, label) {
   if (vintages.length) fail(`empty vintages: ${vintages.join(', ')}`);
   else ok('every visible vintage is set');
 
+  /* Wave 6 chrome: share affordances, archived links, freshness surfaces */
+  const w6 = await page.evaluate(() => ({
+    copyLinks: document.querySelectorAll('.copy-link').length,
+    archived: document.querySelectorAll('.src-archived').length,
+    ages: [...document.querySelectorAll('[id$="-vintage"]')].filter((el) =>
+      /(day(s)? ago|today)/.test(el.textContent)
+    ).length,
+    rev: document.getElementById('colophon-rev')?.textContent.trim() || '',
+    next: document.getElementById('colophon-next')?.textContent.trim() || '',
+    plateCsvLinks: document.querySelectorAll('.plate-links a[download]').length,
+  }));
+  if (w6.copyLinks < 14) fail(`expected ≥14 copy-link buttons, got ${w6.copyLinks}`);
+  if (w6.archived < 25) fail(`expected ≥25 archived source links, got ${w6.archived}`);
+  if (w6.ages < 8) fail(`expected ≥8 vintage lines carrying a relative age, got ${w6.ages}`);
+  if (!/^rev \S+/.test(w6.rev)) fail(`colophon rev not set: "${w6.rev}"`);
+  if (!w6.next.includes('EXPECTED NEXT RELEASES')) fail('release-calendar line missing from colophon');
+  if (w6.plateCsvLinks < 8) fail(`expected ≥8 plate CSV links, got ${w6.plateCsvLinks}`);
+  if (w6.copyLinks >= 14 && w6.archived >= 25 && w6.ages >= 8 && w6.next && w6.plateCsvLinks >= 8)
+    ok(`wave-6 chrome present (${w6.copyLinks} copy-links, ${w6.archived} archived, ${w6.plateCsvLinks} CSV links, ${w6.rev})`);
+
   await textSweep(page, 'real data');
   reportIssues(issues, 'real data');
 
@@ -233,6 +253,69 @@ function reportIssues(issues, label) {
   await textSweep(page, 'extreme');
   reportIssues(issues, 'extreme');
   await page.close();
+}
+
+/* ================= pass 5 — fixture: changes.json (S44) ================= */
+{
+  console.log('PASS 5 — fixture: since-last-refresh deltas');
+  const { page, issues } = await loadPage({
+    routes: {
+      '**/data/changes.json': (route) =>
+        route.fulfill({ path: fixture('changes-sample.json'), contentType: 'application/json' }),
+    },
+  });
+  const chips = await page.evaluate(() =>
+    [...document.querySelectorAll('.refresh-delta')].map((e) => ({
+      plate: e.closest('.plate')?.id,
+      text: e.textContent,
+    }))
+  );
+  const plates = new Set(chips.map((c) => c.plate));
+  if (!plates.has('qcew-plate') || !plates.has('comp-plate') || !plates.has('bps-plate'))
+    fail(`delta chips missing — got: ${[...plates].join(', ') || '(none)'}`);
+  else if (!chips.every((c) => c.text.startsWith('SINCE LAST REFRESH (2026-06-15)')))
+    fail('delta chip text malformed');
+  else ok(`delta chips render on affected plates (${chips.length} chips)`);
+  await textSweep(page, 'changes');
+  reportIssues(issues, 'changes');
+  await page.close();
+}
+
+/* ================= pass 6 — the subpages (R7/R8/R12) ================= */
+{
+  console.log('PASS 6 — subpages: methods, decisions, changelog');
+  for (const sub of ['methods', 'decisions', 'changelog']) {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 1400 } });
+    const issues = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error' || msg.type() === 'warning') issues.push(`${msg.type()}: ${msg.text()}`);
+    });
+    page.on('pageerror', (err) => issues.push(`pageerror: ${err.message}`));
+    await page.goto(`${BASE}/${sub}.html`, { waitUntil: 'networkidle' });
+    await page.evaluate(() => document.fonts.ready);
+    const state = await page.evaluate(() => ({
+      h1: document.querySelector('h1')?.textContent.trim() || '',
+      filled: [...document.querySelectorAll('[data-fill]')].every((el) => el.textContent.trim() !== '—'),
+    }));
+    if (!state.h1) fail(`${sub}: no h1 rendered`);
+    if (!state.filled) fail(`${sub}: data-fill spans not populated (rev/refreshed)`);
+    await textSweep(page, sub);
+    reportIssues(issues, sub);
+
+    if (sub === 'methods') {
+      // the richest subpage carries the a11y gate for all three
+      await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') });
+      const axe = await page.evaluate(async () => {
+        const r = await window.axe.run(document, { resultTypes: ['violations'] });
+        return r.violations
+          .filter((v) => v.impact === 'serious' || v.impact === 'critical')
+          .map((v) => `${v.id} (${v.nodes.length})`);
+      });
+      if (axe.length) fail(`methods axe: ${axe.join(', ')}`);
+      else ok('methods: axe clean');
+    }
+    await page.close();
+  }
 }
 
 await browser.close();
