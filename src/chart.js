@@ -22,11 +22,12 @@ function srcMarks(keys) {
   return [...new Set(keys.map((k) => cite(k)).filter(Boolean))].map((n) => ` [${n}]`).join('');
 }
 
-export function renderChart(container, width) {
+export function renderChart(container, width, qcew = null, commitYear = null) {
   const W = Math.max(330, width);
   const narrow = W < 620;
   const H = narrow ? 420 : 470;
-  const M = { l: narrow ? 44 : 60, r: 14 };
+  // D23: wide layouts reserve a right gutter for series end-labels
+  const M = { l: narrow ? 44 : 60, r: narrow ? 14 : 106 };
   const INVEST = { top: 36, h: narrow ? 64 : 80 };
   const JOBS = { top: INVEST.top + INVEST.h + 44, h: H - (INVEST.top + INVEST.h + 44) - 50 };
 
@@ -90,7 +91,7 @@ export function renderChart(container, width) {
   const tx = x(TODAY);
   put(`
     <line x1="${tx}" y1="${INVEST.top - 6}" x2="${tx}" y2="${JOBS.top + JOBS.h}" stroke="var(--copper)" stroke-width="1.25" stroke-dasharray="4 3"></line>
-    <text transform="rotate(-90 ${tx} ${INVEST.top - 10})" x="${tx}" y="${INVEST.top - 10}" text-anchor="start" class="chart-label" style="fill:var(--copper-text);font-weight:500">TODAY</text>
+    <text transform="rotate(-90 ${tx} ${INVEST.top - 10})" x="${tx}" y="${INVEST.top - 10}" text-anchor="end" class="chart-label" style="fill:var(--copper-text);font-weight:500">TODAY</text>
   `);
 
   /* axes */
@@ -125,25 +126,63 @@ export function renderChart(container, width) {
     <path d="${investLine}" fill="none" stroke="var(--copper)" stroke-width="1.75"></path>
   `);
 
-  /* key — D1: left-aligned at every width; the right-anchored position
-     (W-332) clipped "SUPPLY (STACKED ON PERM)" at column widths. The full
-     strip runs ~344px, so below 420px it wraps to two rows. Direct
-     end-labels (D23, Wave 5) will replace this key entirely. */
-  const keyY = JOBS.top - 14;
-  const keyX = M.l;
-  const keyWrap = W < 420;
-  const row1Y = keyWrap ? keyY - 15 : keyY; // wrap upward into the 44px gap band
-  const supX = keyWrap ? keyX : keyX + 172;
-  put(`
-    <g class="chart-label">
-      <rect x="${keyX}" y="${row1Y - 9}" width="9" height="9" fill="url(#hatch)" stroke="var(--ink)" stroke-width="0.5"></rect>
-      <text x="${keyX + 14}" y="${row1Y}">CONSTR BAND</text>
-      <rect x="${keyX + 106}" y="${row1Y - 9}" width="9" height="9" fill="var(--copper)"></rect>
-      <text x="${keyX + 120}" y="${row1Y}">PERM</text>
-      <rect x="${supX}" y="${keyY - 9}" width="9" height="9" fill="var(--violet)" opacity="0.5"></rect>
-      <text x="${supX + 14}" y="${keyY}">SUPPLY (STACKED ON PERM)</text>
-    </g>
-  `);
+  /* S23 (approved): the measured Onondaga QCEW series at true scale — the
+     thesis image: 52,000 promised against hundreds measured, one frame, one
+     scale. The flatness IS the statement (spike decision: floor-line, no
+     inset); the callout carries what the pixels can't. */
+  const onoSeries = qcew?.corridor
+    ?.find((c) => c.fips === '36067')
+    ?.series.filter((s) => s.year >= YEAR_MIN && typeof s.semi === 'number');
+  if (onoSeries && onoSeries.length >= 2) {
+    const nQ = cite('qcew-data');
+    const d = onoSeries
+      .map((s, i) => `${i ? 'L' : 'M'}${x(s.year).toFixed(1)},${yJ(s.semi).toFixed(1)}`)
+      .join('');
+    const last = onoSeries[onoSeries.length - 1];
+    const lx = x(last.year);
+    const ly = yJ(last.semi);
+    const calloutY = ly - (narrow ? 34 : 44);
+    put(`
+      <path d="${d}" fill="none" stroke="var(--ink)" stroke-width="2"></path>
+      <line x1="${lx}" y1="${ly - 3}" x2="${lx}" y2="${calloutY + 4}" stroke="var(--hairline)" stroke-width="1"></line>
+      <text class="chart-label" x="${Math.min(lx, W - M.r - 10)}" y="${calloutY}" text-anchor="${narrow ? 'middle' : 'start'}" style="fill:var(--ink);font-weight:500">ONONDAGA NAICS-3344, MEASURED — ANNUAL · ${last.semi.toLocaleString('en-US')} AT ${last.year}${nQ ? ` [${nQ}]` : ''}</text>
+    `);
+  }
+
+  /* D23: direct end-labels in the right gutter replace the key at wide
+     widths (narrow keeps the wrapped key — a 96px gutter costs too much
+     of a 330px plate) */
+  if (!narrow) {
+    const ex = x(YEAR_MAX) + 6;
+    put(`
+      <g class="chart-label">
+        <text x="${ex}" y="${yJ(permAt(YEAR_MAX) / 2) + 3}" style="fill:var(--copper-text);font-weight:500">PERM ${Math.round(permAt(YEAR_MAX)).toLocaleString('en-US')}</text>
+        <text x="${ex}" y="${yJ(permAt(YEAR_MAX) + supplyAt(YEAR_MAX) / 2) + 3}" style="fill:var(--violet);font-weight:500">SUPPLY ~${Math.round(supplyAt(YEAR_MAX)).toLocaleString('en-US')}</text>
+        <rect x="${x(2036) - 5}" y="${yJ(constrHighAt(2036)) - 16}" width="9" height="9" fill="url(#hatch)" stroke="var(--ink)" stroke-width="0.5"></rect>
+        <text x="${x(2036) + 8}" y="${yJ(constrHighAt(2036)) - 8}">CONSTR BAND</text>
+      </g>
+    `);
+  }
+
+  /* key — narrow widths only (D23's end-labels replace it from 620px up;
+     a 96px label gutter costs too much of a 330px plate) */
+  if (narrow) {
+    const keyY = JOBS.top - 14;
+    const keyX = M.l;
+    const keyWrap = W < 420;
+    const row1Y = keyWrap ? keyY - 15 : keyY; // wrap upward into the gap band
+    const supX = keyWrap ? keyX : keyX + 172;
+    put(`
+      <g class="chart-label">
+        <rect x="${keyX}" y="${row1Y - 9}" width="9" height="9" fill="url(#hatch)" stroke="var(--ink)" stroke-width="0.5"></rect>
+        <text x="${keyX + 14}" y="${row1Y}">CONSTR BAND</text>
+        <rect x="${keyX + 106}" y="${row1Y - 9}" width="9" height="9" fill="var(--copper)"></rect>
+        <text x="${keyX + 120}" y="${row1Y}">PERM</text>
+        <rect x="${supX}" y="${keyY - 9}" width="9" height="9" fill="var(--violet)" opacity="0.5"></rect>
+        <text x="${supX + 14}" y="${keyY}">SUPPLY (STACKED ON PERM)</text>
+      </g>
+    `);
+  }
 
   /* cursor: hairline + year tag + a carriage square riding the invest line
      with its live value */
@@ -155,6 +194,46 @@ export function renderChart(container, width) {
     <text x="${x(YEAR_MIN) + 9}" y="${yI(0) - 6}" class="chart-label" style="fill:var(--copper);font-weight:500">$0.0B</text>
   `);
   const [cLine, cRect, cText, cDot, cVal] = cursor.children;
+
+  /* D24≡S24 (approved): hover-scrub — a crosshair previews the derived
+     values at the pointer's year; click commits it to the master scrubber.
+     Every chart becoming a controller is the site's signature move.
+     Desktop only: narrow viewports drive the real scrubber. */
+  if (!narrow) {
+    const hover = put(`
+      <g style="display:none;pointer-events:none">
+        <line x1="0" x2="0" y1="${INVEST.top - 6}" y2="${JOBS.top + JOBS.h}" stroke="var(--ink)" stroke-width="1" stroke-dasharray="2 3"></line>
+        <text class="chart-label" x="${M.l}" y="${H - 4}" style="font-weight:500;paint-order:stroke;stroke:var(--silicon);stroke-width:3px"></text>
+      </g>
+    `);
+    const [hLine, hText] = hover.children;
+    const yrOf = (e) => {
+      const r = svg.getBoundingClientRect();
+      const px = (e.clientX - r.left) * (W / r.width);
+      return Math.max(YEAR_MIN, Math.min(YEAR_MAX, YEAR_MIN + ((px - M.l) / (W - M.l - M.r)) * (YEAR_MAX - YEAR_MIN)));
+    };
+    svg.addEventListener('pointermove', (e) => {
+      const yrI = Math.floor(yrOf(e) + 1e-6);
+      const px = x(yrI);
+      hover.style.display = '';
+      hLine.setAttribute('x1', px);
+      hLine.setAttribute('x2', px);
+      const lo = Math.round(constrLowAt(yrI));
+      const hi = Math.round(constrHighAt(yrI));
+      hText.textContent =
+        `${yrI} · INVESTED $${investAt(yrI).toFixed(1)}B${srcMarks(['micron-100b', 'micron-20b-first-phase'])}` +
+        ` · CONSTRUCTION ${lo === hi ? lo.toLocaleString('en-US') : `${lo.toLocaleString('en-US')}–${hi.toLocaleString('en-US')}`}${srcMarks(['constr-3000-4000'])}` +
+        ` · PERMANENT ${Math.round(permAt(yrI)).toLocaleString('en-US')}${srcMarks(['micron-9000-direct'])}` +
+        ` · SUPPLY & INDUCED ${Math.round(supplyAt(yrI)).toLocaleString('en-US')}${srcMarks(['micron-50000-total'])}`;
+    });
+    svg.addEventListener('pointerleave', () => {
+      hover.style.display = 'none';
+    });
+    if (commitYear) {
+      svg.addEventListener('click', (e) => commitYear(Math.floor(yrOf(e) + 1e-6)));
+      svg.style.cursor = 'crosshair';
+    }
+  }
 
   function update(year) {
     const px = x(year);

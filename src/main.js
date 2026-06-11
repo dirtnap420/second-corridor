@@ -601,12 +601,6 @@ async function boot() {
   );
   onYear((y) => site.update(y));
 
-  const chart = responsiveMount(document.getElementById('buildout-chart'), (w) =>
-    renderChart(document.getElementById('buildout-chart'), w)
-  );
-  onYear((y) => chart.update(y));
-  buildChartNumbers(document.getElementById('buildout-numbers'));
-
   responsiveMount(document.getElementById('capital-sankey'), (w) =>
     renderCapitalSankey(document.getElementById('capital-sankey'), w)
   );
@@ -624,6 +618,14 @@ async function boot() {
   // citation steps — only now is the source registry complete
   bindCiteMarks();
   buildSources();
+
+  // Fig 02 mounts after data so the measured QCEW overlay (S23) draws with
+  // the derived series — promise and meter in one frame
+  const chart = responsiveMount(document.getElementById('buildout-chart'), (w) =>
+    renderChart(document.getElementById('buildout-chart'), w, live.qcew, glideTo)
+  );
+  onYear((y) => chart.update(y));
+  buildChartNumbers(document.getElementById('buildout-numbers'));
 
   // D13: selected before the map mounts so the ring renders with it
   const uiState = { particles: 'ambient', view: 'map', selected: 'clay' };
