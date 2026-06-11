@@ -57,6 +57,29 @@ export function renderMap(container, topo, opts, width) {
     <path class="county" d="${path(stateShape)}"></path>
     <path class="county-mesh" d="${path(interior)}" fill="none" stroke="var(--hairline)" stroke-width="0.6"></path>
     <path class="state-outline" d="${path(stateShape)}"></path>`;
+  // D17: map furniture in the dead lower-left corner — a mono scale bar and
+  // north arrow, on-register for a field instrument. Lives in gGeo so it
+  // dims with the geography in section view.
+  {
+    const latMid = 42.2;
+    const dLon = 50 / (Math.cos((latMid * Math.PI) / 180) * 69.172); // 50 mi in degrees lon
+    const p1 = projection([-78.6, latMid]);
+    const p2 = projection([-78.6 + dLon, latMid]);
+    const barPx = Math.abs(p2[0] - p1[0]);
+    const bx = 14;
+    const by = H - 16;
+    gGeo.innerHTML += `
+      <g class="map-furniture" aria-hidden="true">
+        <line x1="${bx}" y1="${by}" x2="${bx + barPx}" y2="${by}" stroke="var(--ink)" stroke-width="1"></line>
+        <line x1="${bx}" y1="${by - 4}" x2="${bx}" y2="${by + 4}" stroke="var(--ink)" stroke-width="1"></line>
+        <line x1="${bx + barPx / 2}" y1="${by - 3}" x2="${bx + barPx / 2}" y2="${by + 3}" stroke="var(--ink)" stroke-width="1"></line>
+        <line x1="${bx + barPx}" y1="${by - 4}" x2="${bx + barPx}" y2="${by + 4}" stroke="var(--ink)" stroke-width="1"></line>
+        <text x="${bx}" y="${by - 8}" class="chart-label">0</text>
+        <text x="${bx + barPx}" y="${by - 8}" text-anchor="end" class="chart-label">50 MI</text>
+        <path d="M${bx + 6},${by - 34} l4,10 l-4,-3 l-4,3 Z" fill="var(--ink)"></path>
+        <text x="${bx + 14}" y="${by - 26}" class="chart-label">N</text>
+      </g>`;
+  }
   svg.appendChild(gGeo);
 
   /* ---------- node geometry: map + section positions ---------- */

@@ -310,6 +310,82 @@ details.numbers,
   display: inline-flex;
   border: 1px solid var(--ink);
 }
+/* S29: the wafer metaphor, taught once */
+.dial-note {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-top: 4px;
+  max-width: 150px;
+}
+/* S37: dial labels are doors */
+.dial-link {
+  color: inherit;
+  text-decoration: none;
+}
+.dial-link:hover {
+  color: var(--copper-text);
+}
+/* D21: the ledger reads as interactive */
+.ledger li:not(.ledger-today) {
+  cursor: pointer;
+}
+.ledger li:not(.ledger-today):hover {
+  background: var(--paper);
+}
+.ledger-more {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  border-top: 1px solid var(--hairline);
+  padding: 5px 14px;
+}
+/* S39: the node plate's go-deeper row */
+.node-deeper {
+  margin-top: 8px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.node-deeper a {
+  color: var(--copper-text);
+  text-decoration: none;
+  padding: 4px 2px; /* touch target */
+}
+/* S6: the one-shot scrubber invitation */
+.drag-nudge {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--paper);
+  background: var(--copper);
+  padding: 2px 7px;
+  animation: nudge-fade 2.2s linear forwards;
+}
+input[type='range'].scrub.nudge::-webkit-slider-thumb {
+  animation: nudge-pulse 0.7s ease-in-out 2;
+}
+@keyframes nudge-fade {
+  0%, 80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes nudge-pulse {
+  50% { transform: translateX(6px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drag-nudge,
+  input[type='range'].scrub.nudge::-webkit-slider-thumb {
+    animation: none;
+  }
+}
 /* D27: program labels carry the spine's weight */
 .sankey-label--mid {
   font-weight: 500;
