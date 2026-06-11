@@ -14,7 +14,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
+import { RETRIEVED_AT, SCHEMA_VERSION, TERMS } from './lib/run-meta.mjs';
 
 const API_BASE = 'https://data.bls.gov/cew/data/api';
 const USER_AGENT =
@@ -281,6 +281,7 @@ const out = {
       'total = all-industry total covered employment (industry 10, own_code 0, agglvl 70). ' +
       "Non-disclosable cells (disclosure_code 'N') are {suppressed:true}. " +
       'A county-industry row absent from the QCEW file means zero covered establishments and is recorded as 0.',
+    ...TERMS.qcew,
   },
   corridor,
   comparators,

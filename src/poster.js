@@ -214,7 +214,7 @@ export async function composePoster({ year }) {
   ${readoutSvg}
 
   <line x1="56" y1="${SRC.y - 10}" x2="${W - 56}" y2="${SRC.y - 10}" stroke="${T.hairline}" stroke-width="1"/>
-  <text x="56" y="${SRC.y}" font-family="IBM Plex Mono" font-size="9" letter-spacing="1" fill="${T.muted}">SOURCES — RETRIEVED 2026-06-10 · FULL CITATIONS AT SECOND-CORRIDOR.VERCEL.APP</text>
+  <text x="56" y="${SRC.y}" font-family="IBM Plex Mono" font-size="9" letter-spacing="1" fill="${T.muted}">SOURCES — RETRIEVED ${SOURCE_LIST.map((s) => s.retrieved).sort().pop()} · FULL CITATIONS AT SECOND-CORRIDOR.VERCEL.APP</text>
   ${sources}
 
   ${titleBlock}

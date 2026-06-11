@@ -23,7 +23,7 @@ import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
-import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
+import { RETRIEVED_AT, SCHEMA_VERSION, TERMS } from './lib/run-meta.mjs';
 
 const LODES_BASE = 'https://lehd.ces.census.gov/data/lodes/LODES8/ny/od';
 const COUNTY_CODES_URL = 'https://www2.census.gov/geo/docs/reference/codes2020/national_county2020.txt';
@@ -265,6 +265,7 @@ const out = {
       'LODES OD counts are noise-infused by Census, not cell-suppressed. ' +
       'County names from codes2020/national_county2020.txt with the bare " County" suffix stripped. ' +
       `corridorShare = combined share of home counties ${CORRIDOR_FIPS.join(', ')}.`,
+    ...TERMS.lodes,
   },
   workCounty: WORK_COUNTY,
   totalJobs,

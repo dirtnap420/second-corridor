@@ -1324,6 +1324,66 @@ footer.colophon {
   text-transform: uppercase;
   color: var(--muted);
 }
+footer.colophon a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+footer.colophon a:hover {
+  color: var(--copper-text);
+}
+.colophon-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-bottom: 10px;
+  color: var(--ink);
+}
+.colophon-next {
+  margin-top: 10px;
+}
+/* R15: each source row carries its Wayback copy — muted, after the retrieval */
+.sources .src-archived {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+/* S44: the since-last-refresh chip — the diff, restated, nothing more */
+.refresh-delta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--copper-text);
+  margin: 0;
+  padding: 10px 14px 0;
+}
+/* S50: per-plate copy-link, caption-weight chrome */
+.copy-link {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--hairline);
+  padding: 2px 7px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+.copy-link:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+/* R31/R10: takeable numbers + the dictionary, caption-weight */
+.plate-links a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.plate-links a:hover {
+  color: var(--copper-text);
+}
 
 /* ---------- print: a credible PDF brief ---------- */
 #print-header {

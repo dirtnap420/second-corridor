@@ -297,41 +297,41 @@ CSS polish batch:
 ## Wave 6 — reach pass 1 + live-data storytelling (~1–2 sessions)
 
 Pipeline-dependent frontend now unblocks:
-- [ ] S44 — "since last refresh" deltas (consumes P9)
-- [ ] S45 — relative data-age chips
-- [ ] S46 — next-release calendar surface (consumes P34)
-- [ ] S47 — one voice for empty states
-- [ ] R15≡P28 — archived links rendered in Sources
+- [x] S44 — "since last refresh" deltas (consumes P9) *(as delta chips — see deviations)*
+- [x] S45 — relative data-age chips
+- [x] S46 — next-release calendar surface (consumes P34)
+- [x] S47 — one voice for empty states
+- [x] R15≡P28 — archived links rendered in Sources
 
 Citability floor:
-- [ ] R2 — license applied (per decision #2)
-- [ ] R3 — repo public
-- [ ] R4 — independence statement
-- [ ] R5 — contact + corrections channel
-- [ ] R7 — methods page
-- [ ] R8 — editorial-decisions page *(per decision #4)*
-- [ ] R9 — corrections policy + log
-- [ ] R10 — data dictionary
-- [ ] R11 — recommended-citation block
-- [ ] R12 — changelog page (consumes P10)
-- [ ] R13 — limitations page (reuses S14 content)
-- [ ] R14 — robots.txt + humans.txt
-- [ ] R16 — sitemap + JSON-LD Article/Dataset
-- [ ] R18 — og:updated_time
-- [ ] R20 — stable-anchor documentation
-- [ ] R21 — build rev in colophon
+- [x] R2 — license applied (per decision #2)
+- [x] R3 — repo public *(flipped by Alex; discovered during exit verification — see deviations)*
+- [x] ~~R4 — independence statement~~ *(dropped per Q2 — see deviations)*
+- [x] R5 — contact + corrections channel
+- [x] R7 — methods page
+- [x] R8 — editorial-decisions page *(per decision #4)*
+- [x] R9 — corrections policy + log
+- [x] R10 — data dictionary
+- [x] R11 — recommended-citation block
+- [x] R12 — changelog page (consumes P10)
+- [x] R13 — limitations page (reuses S14 content)
+- [x] R14 — robots.txt + humans.txt
+- [x] R16 — sitemap + JSON-LD Article/Dataset
+- [x] R18 — og:updated_time
+- [x] R20 — stable-anchor documentation
+- [x] R21 — build rev in colophon
 
 Shareable surfaces & data out:
-- [ ] R22 — `/f/NN` share URLs
-- [ ] R23 — per-section OG images (extends `build-og.mjs`)
-- [ ] S50≡R24 — copy-link per plate (one implementation)
-- [ ] R25 — poster footer URL check
-- [ ] F48≡R26 — print-PDF harness + linked brief (one implementation)
-- [ ] P49 — API terms ledger (gates next three)
-- [ ] R31 — CSV per plate
-- [ ] R32 — data-contract doc
-- [ ] R33 — `all.zip`
-- [ ] R34 — license field in provenance
+- [x] R22 — `/f/NN` share URLs
+- [x] R23 — per-section OG images (extends `build-og.mjs`)
+- [x] S50≡R24 — copy-link per plate (one implementation)
+- [x] R25 — poster footer URL check
+- [x] F48≡R26 — print-PDF harness + linked brief (one implementation)
+- [x] P49 — API terms ledger (gates next three) *(NYISO adjudication — see deviations)*
+- [x] R31 — CSV per plate
+- [x] R32 — data-contract doc
+- [x] R33 — `all.zip`
+- [x] R34 — license field in provenance
 
 **Exit:** share cards validate in OG/Twitter validators; CSVs open clean in a
 spreadsheet; methods/decisions pages live; deploy.
@@ -446,6 +446,56 @@ Triage every remaining P3 explicitly — do, defer, or drop with a Deviations no
   overruns; both split cleanly at their cluster boundaries if needed.
 
 ## Deviations & notes
+
+**Wave 6 progress (2026-06-10, branch `wave-6-reach`):**
+- All boxes landed except R3 (staged — see below). Notes and deviations:
+- **S44 (changed):** ships as since-last-refresh *delta chips* — a direct
+  restatement of changes.json (period/revision counts + vintage transition) on
+  each affected plate — not the plan's per-figure `(+82 SINCE 2025Q3)`
+  arithmetic. P9's diff walks period-keyed arrays only; nested entity arrays
+  (qcew's `corridor[]`) diff wholesale, so per-figure prior values aren't in
+  the artifact. Verified against a synthetic changes.json (now a contract-test
+  fixture); the real file appears with the first post-launch change.
+- **P49 adjudication (author review):** seven of eight upstream sources are
+  public domain or attribution-licensed (Urban's ODC-By attribution and the
+  Census-API notice now ride in provenance). **NYISO grants no express reuse
+  license.** The derived Zone C annual figures ship in the downloads anyway —
+  they are facts computed by this pipeline from public operational CSVs, six
+  rows deep (Feist) — with the judgment documented in docs/terms-ledger.md.
+  If Alex prefers, nyiso.csv + the zip entry come out with one config line;
+  emailing NYISO for written permission is the clean resolution.
+- **R23 (changed):** per-section cards are design-system compositions
+  (figure number + the section's own headline/eyebrow parsed from index.html
+  + refresh date + corridor motif), not plate snapshots — snapshots would need
+  a headless raster of the live DOM per refresh; the resvg harness stays
+  deterministic and runs inside `npm run build`, so refresh deploys always
+  ship current cards.
+- **Budget revision (recorded in perf-budget.json):** cssBytes 20480→24576 —
+  the size gate sums all dist CSS and the subpage sheet (3.4KB, standalone by
+  design so prose pages don't load the 19.7KB instrument sheet) now exists.
+  Main JS ends the wave at 98.8% of its unchanged budget; F9 (Wave 7) recovers.
+- **S45 forced a QA hardening:** render output is now date-dependent (ages,
+  TODAY tick, release calendar), so visual-diff pins the page clock
+  (2026-06-15T12:00:00Z, ≥ all retrievedAt; ages clamp at 0). Baselines
+  regenerated under the pinned clock.
+- **R22 implementation note:** the share shims rewrite `#sNN` into an `&f=NN`
+  hash slot so the `#y=` state survives the redirect; the index-side scroll is
+  load-deferred and instant — the browser's load-time scroll restoration
+  clobbers earlier scrolls, and the ledger's follow-scroll cancels smooth ones.
+- **F48≡R26:** public/brief.pdf is committed (~1.1MB) and regenerated by the
+  refresh workflow on change runs — repo weight grows per refresh, same
+  watch-item as the visual baselines (M3 note).
+- **R3 — already public:** exit verification found the repo ALREADY public
+  (`private: false`, unauthenticated fetch 200; Wave 5's deploys still showed
+  private) — Alex flipped it himself. The pre-public history audit ran clean:
+  no secret-shaped strings in any committed blob, no .env/key/raw files ever
+  committed. One exposure now live, flagged FYI: commit metadata (early
+  commits + the refresh workflow's git config) carries
+  `Alex Harris <aharris128@gmail.com>` while the public byline is "Alex"
+  alone. Rewriting history would scrub it but breaks tags/PR refs — Alex's
+  call whether it matters.
+
+
 
 **2026-06-10 — Phase 0 decisions FINAL (all collected):**
 1. Byline: **"Alex" alone** · contact **Alex@ozarkintelligence.com**

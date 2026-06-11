@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Methods — The Second Corridor</title>
+    <meta
+      name="description"
+      content="How The Second Corridor knows what it knows: the citation gate, suppression discipline, derived-vs-measured rules, refresh cadence, data dictionary, and how to cite it."
+    />
+    <link rel="canonical" href="https://second-corridor.vercel.app/methods" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Methods — The Second Corridor" />
+    <meta
+      property="og:description"
+      content="The citation gate, suppression discipline, derived-vs-measured rules, refresh cadence, data dictionary, and how to cite this tracker."
+    />
+    <meta property="og:url" content="https://second-corridor.vercel.app/methods" />
+    <meta property="og:image" content="https://second-corridor.vercel.app/og.png" />
+    <link rel="stylesheet" href="/src/pages.css" />
+    <script type="module" src="/src/page-meta.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="page">
+      <header>
+        <p class="eyebrow">The Second Corridor · methods</p>
+        <h1>How this site knows what it knows.</h1>
+        <nav class="page-nav" aria-label="Page sections">
+          <a href="/">← the instrument</a>
+          <a href="#corrections">corrections</a>
+          <a href="#dictionary">dictionary</a>
+          <a href="#cite">cite this</a>
+          <a href="#limitations">limitations</a>
+          <a href="#anchors">anchors</a>
+          <a href="#data">data downloads</a>
+          <a href="/decisions">decisions</a>
+          <a href="/changelog">changelog</a>
+        </nav>
+      </header>
+
+      <main id="main">
+        <p>
+          The Second Corridor tracks New York State's semiconductor buildout (2022–2045)
+          from public records and public statistical data. Its operating rule is printed
+          on the masthead: <strong>every number cited, estimates labeled</strong> — and
+          the rule is enforced mechanically, not editorially.
+        </p>
+
+        <h2 id="gate">The citation gate</h2>
+        <p>
+          Every figure on the site references a key in a citation registry. A figure whose
+          key is absent from the registry <em>does not render</em> — the gate is enforced
+          in code, and a unit test sweeps every authored figure on every build to confirm
+          its key resolves to a verified source. Each entry in the registry was located in
+          a primary public source and then adversarially re-verified against the live
+          document before first render.
+        </p>
+        <p>
+          Where the record contradicted the site's own working spec, the record won, and
+          the disagreement is published on the
+          <a href="/decisions">editorial decisions page</a>.
+        </p>
+
+        <h2 id="derived">Plan, derived, measured</h2>
+        <p>
+          Part One (sections 01–05) draws the <em>published plan</em>: announcements,
+          funding agreements, the environmental record. Part Two (sections 06–11) is
+          <em>measurement</em>: data fetched from BLS, Census, NSF, USAspending, and NYISO.
+          Every plate is stamped <code>RECORD</code>, <code>DERIVED</code>,
+          <code>MEASURED</code>, or <code>CONTEXT</code> so the two are never confused.
+        </p>
+        <ul>
+          <li>
+            <strong>Derived series are interpolations, not forecasts.</strong> The Fig 02
+            curves run linearly between cited anchors and are labeled
+            <code>INTERPOLATED BETWEEN CITED ANCHORS — NOT A FORECAST</code>. The exact
+            rules are published in the
+            <a href="https://github.com/dirtnap420/second-corridor#data-integrity">repository README</a>
+            and implemented in <code>src/data.js</code>.
+          </li>
+          <li>
+            <strong>Suppression is information.</strong> Where an agency withholds a cell
+            (BLS confidentiality, survey scope), the site renders the suppression — hatched,
+            labeled, with the reason — never a zero, never an imputed value.
+          </li>
+          <li>
+            <strong>Takeaway lines are arithmetic on already-cited figures</strong> or a
+            direct restatement of the record, computed from the data at render time so a
+            refresh can never strand a typed number. The site states adjacency, never
+            cause.
+          </li>
+          <li>
+            <strong>Vintages render from provenance.</strong> Each data file embeds a
+            <code>provenance</code> block (source, URL, vintage, retrieval date, license);
+            every date printed on a plate comes from there, never from markup.
+          </li>
+        </ul>
+
+        <h2 id="refresh">Refresh cadence</h2>
+        <p>
+          The data refreshes itself: a weekly full refresh (Mondays) re-fetches all eight
+          sources, validates each against a JSON Schema and cross-field invariants, and
+          opens a reviewed pull request when the published record actually changed; a daily
+          check watches USAspending for the one record this tracker most expects — a Micron
+          CHIPS award appearing. Refreshes that only append new periods (no value
+          revisions) merge automatically after 72 hours; anything that revises a published
+          value waits for review. Every change is logged in the
+          <a href="/changelog">data changelog</a>, the prior state is archived in the
+          repository, and source URLs are snapshotted to the
+          <a href="https://web.archive.org/">Internet Archive</a>.
+        </p>
+        <p>
+          The built site is self-contained: all data ships as committed JSON with the
+          page, and the QA battery proves the deployed site makes zero requests to
+          external services.
+        </p>
+
+        <h2 id="corrections">Contact &amp; corrections</h2>
+        <p>
+          Corrections are welcome —
+          <a href="mailto:Alex@ozarkintelligence.com">Alex@ozarkintelligence.com</a> or
+          <a href="https://github.com/dirtnap420/second-corridor/issues">GitHub issues</a>.
+        </p>
+        <p>
+          <strong>Policy:</strong> errors are corrected in place as soon as they are
+          verified; every correction is logged below with the date, what was wrong, and
+          what changed; a material error — one that changes what a figure says — is
+          additionally noted on the affected plate for 90 days. Routine data revisions by
+          the source agencies are not corrections; they flow through the
+          <a href="/changelog">changelog</a>.
+        </p>
+        <h3>Corrections log</h3>
+        <p class="note">NO CORRECTIONS TO DATE — THE LOG IS EMPTY. ERRORS, ONCE VERIFIED, WILL APPEAR HERE.</p>
+
+        <h2 id="dictionary">Data dictionary</h2>
+        <p>
+          The terms the plates use, defined once. Plate captions link here.
+        </p>
+        <dl>
+          <dt>NAICS 3344</dt>
+          <dd>
+            "Semiconductor and other electronic component manufacturing" in the North
+            American Industry Classification System. The employment series count
+            <em>every</em> NAICS-3344 employer in a county — not Micron headcount.
+          </dd>
+          <dt>QCEW</dt>
+          <dd>
+            BLS Quarterly Census of Employment and Wages — an administrative census of
+            employers covered by unemployment insurance. A county-industry cell flagged
+            non-disclosable (code <code>N</code>) renders as suppressed; a county-industry
+            row absent from the file means zero covered establishments and renders as a
+            measured zero. The two are different facts and render differently.
+          </dd>
+          <dt>OEWS</dt>
+          <dd>
+            BLS Occupational Employment and Wage Statistics — a survey <em>estimate</em> of
+            wages by occupation and metro. Occupations the survey cannot estimate locally
+            are "not published": absence of an estimate, not absence of workers.
+          </dd>
+          <dt>LODES (JT00)</dt>
+          <dd>
+            Census LEHD Origin–Destination Employment Statistics. JT00 counts
+            <em>jobs</em>, not workers — a person holding two jobs counts twice — so the
+            site says "commutes," not "commuters." All-industry: OD files carry no industry
+            breakout, and the site does not imply one.
+          </dd>
+          <dt>IPEDS · CIP</dt>
+          <dd>
+            The federal postsecondary data system; completions are counted by Classification
+            of Instructional Programs code. Completions lag roughly two years; the site
+            re-keys all years to NCES survey years. <code>AY 2021–22</code> means the
+            academic year ending 2022.
+          </dd>
+          <dt>ACS B15003</dt>
+          <dd>
+            American Community Survey 5-year table for educational attainment, population
+            25+. Five-year estimates trade currency for county-level reliability.
+          </dd>
+          <dt>FAIN · CFDA</dt>
+          <dd>
+            Federal Award Identification Number, and the Catalog of Federal Domestic
+            Assistance program number (CHIPS Incentives = 11.037). An award without a FAIN
+            on USAspending has not been published to the federal spending record — that
+            absence is itself a datapoint this site tracks daily.
+          </dd>
+          <dt>Announced · obligated · outlaid</dt>
+          <dd>
+            Three different facts about federal money: a press release, a binding
+            commitment recorded on USAspending, and cash actually disbursed. CHIPS direct
+            funding disburses against milestones, so obligated ≠ behind-schedule.
+          </dd>
+          <dt>Suppressed · not published · measured zero</dt>
+          <dd>
+            The site's three absence states, each with its reason printed: agency
+            confidentiality (QCEW <code>S</code>), survey scope (OEWS), and a true zero in
+            the administrative record. None of the three is ever rendered as a value.
+          </dd>
+          <dt>Vintage · retrieved</dt>
+          <dd>
+            The period the data describes vs. the date this site fetched it. Both print on
+            every measured plate.
+          </dd>
+          <dt>NYISO Zone C · MW · MGD</dt>
+          <dd>
+            The grid operator's Central NY load zone (the megafab's zone); megawatts;
+            million gallons per day (water figures, from the project's Final Environmental
+            Impact Statement).
+          </dd>
+          <dt>schemaVersion</dt>
+          <dd>
+            Each published JSON carries a schema version; structural changes increment it.
+            See the <a href="https://github.com/dirtnap420/second-corridor/blob/main/docs/data-contract.md">data contract</a>.
+          </dd>
+        </dl>
+
+        <h2 id="cite">Recommended citation</h2>
+        <p>
+          Cite the site with its data-refresh date (printed in the colophon and below) and
+          your retrieval date. Every source row on the
+          <a href="/#sources">Sources list</a> also carries an Internet Archive link, so
+          a citation of this tracker can always be resolved against what the underlying
+          record said at the time.
+        </p>
+        <pre><code>Alex. "The Second Corridor: tracking New York's semiconductor buildout,
+2022–2045." second-corridor.vercel.app. Data refreshed <span data-fill="refreshed">—</span>;
+retrieved YYYY-MM-DD.</code></pre>
+        <pre><code>@misc{secondcorridor,
+  author       = {Alex},
+  title        = {The Second Corridor: tracking New York's semiconductor
+                  buildout, 2022--2045},
+  howpublished = {\url{https://second-corridor.vercel.app}},
+  year         = {2026},
+  note         = {Data refreshed <span data-fill="refreshed">—</span>; retrieved YYYY-MM-DD}
+}</code></pre>
+        <p>
+          To cite a single figure, use its share URL (<code>/f/01</code>–<code>/f/12</code>)
+          — each redirects to the matching section and carries its own preview card.
+        </p>
+
+        <h2 id="limitations">Limitations</h2>
+        <p>
+          What the record doesn't say (yet) — maintained on the instrument at
+          <a href="/#record-gaps">"the honest margins,"</a> restated here for permalink:
+        </p>
+        <ol>
+          <li>
+            The construction ramp-down after 2041 is illustrative — no cited figure
+            describes how the workforce winds down.
+          </li>
+          <li>
+            The talent lattice's ribbon widths are illustrative; only its structure — who
+            feeds whom — is cited.
+          </li>
+          <li>
+            No NYISO document publishes a full-buildout megawatt figure; the cited
+            interconnection requests (2026 Gold Book, Table IV-7) stop at Fab 2.
+          </li>
+          <li>
+            Commerce has published no award record on USAspending for the Micron funding
+            agreements — the federal ledger renders the absence.
+          </li>
+          <li>
+            QCEW counts every NAICS-3344 employer in a county, not Micron headcount — the
+            plan series and the measured series answer different questions.
+          </li>
+          <li>
+            OEWS publishes no semiconductor-technician wage for either corridor metro —
+            the occupation the buildout most needs is the one the survey can't yet see
+            here.
+          </li>
+        </ol>
+
+        <h2 id="anchors">Stable anchors</h2>
+        <p>
+          These URLs are a documented, stable surface — inbound deep links will not be
+          broken:
+        </p>
+        <ul>
+          <li>
+            <code>/#s01</code>–<code>/#s12</code>, <code>/#record-gaps</code>,
+            <code>/#sources</code> — section anchors.
+          </li>
+          <li>
+            <code>/#src-N</code> — individual source rows. Footnote numbers are append-only:
+            new sources are added at the end of the list, never renumbered.
+          </li>
+          <li>
+            <code>/#y=YYYY</code> — the instrument at a given year; <code>&amp;view=section</code>
+            and <code>&amp;p=flows</code> carry the full instrument state.
+          </li>
+          <li>
+            <code>/f/01</code>–<code>/f/12</code> — per-figure share URLs (redirect to the
+            section, carry per-figure preview cards, accept the same state hash).
+          </li>
+          <li>
+            <code>/data/*.json</code> — the published data files, per the
+            <a href="https://github.com/dirtnap420/second-corridor/blob/main/docs/data-contract.md">data contract</a>.
+          </li>
+          <li><code>?nointro</code> — skips the opening animation.</li>
+        </ul>
+
+        <h2 id="data">Data downloads</h2>
+        <p>
+          The numbers behind every plate, in tidy long-format CSV (one row per
+          entity-period-measure) and as the published JSON. Content and derived data are
+          <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>; upstream
+          terms per source are in the
+          <a href="https://github.com/dirtnap420/second-corridor/blob/main/docs/terms-ledger.md">terms ledger</a>
+          and in each file's <code>provenance</code> block.
+        </p>
+        <ul class="mono">
+          <li><a href="/data/all.zip">all.zip</a> — every JSON + CSV + the source registry + license</li>
+          <li><a href="/data/csv/qcew.csv">qcew.csv</a> · <a href="/data/qcew.json">qcew.json</a> — county semiconductor employment</li>
+          <li><a href="/data/csv/oews.csv">oews.csv</a> · <a href="/data/oews.json">oews.json</a> — metro wages by occupation</li>
+          <li><a href="/data/csv/ipeds.csv">ipeds.csv</a> · <a href="/data/ipeds.json">ipeds.json</a> — completions by institution and year</li>
+          <li><a href="/data/csv/lodes.csv">lodes.csv</a> · <a href="/data/lodes.json">lodes.json</a> — commuting origins of Onondaga workers</li>
+          <li><a href="/data/csv/spending.csv">spending.csv</a> · <a href="/data/spending.json">spending.json</a> — federal award ledger</li>
+          <li><a href="/data/csv/permits.csv">permits.csv</a> · <a href="/data/permits.json">permits.json</a> — housing units permitted</li>
+          <li><a href="/data/csv/acs.csv">acs.csv</a> · <a href="/data/acs.json">acs.json</a> — educational attainment</li>
+          <li><a href="/data/csv/nyiso.csv">nyiso.csv</a> · <a href="/data/nyiso.json">nyiso.json</a> — Zone C load, annual</li>
+          <li><a href="/data/sources.json">sources.json</a> — the citation registry · <a href="/data/archives.json">archives.json</a> — Wayback snapshots</li>
+        </ul>
+        <p>
+          A print-ready brief of the whole instrument:
+          <a href="/brief.pdf">brief.pdf</a> (regenerated with each data refresh).
+        </p>
+      </main>
+
+      <footer class="page-footer">
+        <span>Built by Alex · <a href="mailto:Alex@ozarkintelligence.com">Alex@ozarkintelligence.com</a></span>
+        <span>Code <a href="https://github.com/dirtnap420/second-corridor/blob/main/LICENSE">MIT</a> · content &amp; data <a href="https://github.com/dirtnap420/second-corridor/blob/main/LICENSE-CONTENT.md">CC BY 4.0</a></span>
+        <span>rev <span data-fill="rev">—</span> · data refreshed <span data-fill="refreshed">—</span></span>
+      </footer>
+    </div>
+  </body>
+</html>

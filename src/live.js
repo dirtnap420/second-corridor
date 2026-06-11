@@ -13,9 +13,20 @@ function show(plateId) {
   document.getElementById(plateId).hidden = false;
 }
 
+/* S45: freshness is the differentiator — make it felt, not archival.
+   Computed at render; clamped so a same-day retrieval never goes negative. */
+export function relAge(retrievedAt) {
+  const days = Math.max(
+    0,
+    Math.floor((Date.now() - Date.parse(`${retrievedAt}T00:00:00Z`)) / 86400e3)
+  );
+  return days === 0 ? 'today' : days === 1 ? '1 day ago' : `${days} days ago`;
+}
+
 function setVintage(elId, prov) {
   const el = document.getElementById(elId);
-  if (el && prov) el.textContent = `${prov.vintage} · retrieved ${prov.retrievedAt}`;
+  if (el && prov)
+    el.textContent = `${prov.vintage} · retrieved ${prov.retrievedAt} · ${relAge(prov.retrievedAt)}`;
 }
 
 function isSupp(v) {
@@ -31,6 +42,56 @@ function addTakeaway(panelId, html) {
   p.className = 'plate-takeaway';
   p.innerHTML = html;
   panel.before(p);
+}
+
+/* S44: "since last refresh" — the moment numbers visibly move, the essay
+   becomes a tracker. changes.json (P9) exists only after a refresh that
+   changed the published record; each affected plate gets a delta chip that
+   restates the diff — counts and vintages straight from the file, no
+   editorializing. The plate's own cite mark covers the figures. */
+const CHANGE_PLATES = {
+  qcew: ['qcew-plate', 'comp-plate'],
+  oews: ['oews-plate'],
+  ipeds: ['ipeds-plate'],
+  lodes: ['lodes-plate'],
+  spending: ['spending-plate'],
+  permits: ['bps-plate'],
+  acs: ['acs-plate'],
+  nyiso: ['phys-plate'],
+};
+function renderRefreshDeltas(changes) {
+  if (!changes || !changes.datasets) return;
+  for (const [name, c] of Object.entries(changes.datasets)) {
+    const bits = [];
+    if (c.periodsAdded?.length)
+      bits.push(`+${c.periodsAdded.length} NEW PERIOD${c.periodsAdded.length > 1 ? 'S' : ''}`);
+    if (c.valuesChangedCount) bits.push(`${c.valuesChangedCount} VALUE${c.valuesChangedCount > 1 ? 'S' : ''} REVISED`);
+    if (c.suppressionFlips?.length) bits.push(`${c.suppressionFlips.length} SUPPRESSION FLIP${c.suppressionFlips.length > 1 ? 'S' : ''}`);
+    // long vintage strings (qcew's spans two clauses) would swamp the chip —
+    // the plate's vintage line already shows the new one in full
+    if (c.vintage && c.priorVintage && c.vintage !== c.priorVintage && (c.priorVintage + c.vintage).length <= 56)
+      bits.push(`VINTAGE ${c.priorVintage} → ${c.vintage}`);
+    if (!bits.length) continue;
+    for (const plateId of CHANGE_PLATES[name] || []) {
+      const plate = document.getElementById(plateId);
+      if (!plate || plate.hidden) continue;
+      const p = document.createElement('p');
+      p.className = 'refresh-delta';
+      p.textContent = `SINCE LAST REFRESH (${changes.generatedAt}): ${bits.join(' · ')}`;
+      plate.querySelector('.plate-caption--top')?.after(p);
+    }
+  }
+}
+
+/* S47: one voice for absence — the Fig 08 pattern, standardized. Every
+   suppressed/unpublished surface states the absence and its one-line why. */
+function absenceNote(panelId, html) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  const p = document.createElement('p');
+  p.className = 'method-note absence-note';
+  p.innerHTML = `THE ABSENCE IS THE DATAPOINT — ${html}`;
+  panel.appendChild(p);
 }
 
 /* S48: the WATCHING verdict composes from whichever datasets loaded */
@@ -244,6 +305,21 @@ function renderOews(data) {
   const t2 = document.createElement('table');
   t2.innerHTML = `<thead><tr><th>Employment</th><th>Rochester</th><th>Syracuse</th><th>National</th><th>Source</th></tr></thead><tbody>${rows}</tbody>`;
   numbersEl.appendChild(t2);
+
+  /* S47: the table's absence states, named in the standard voice */
+  const hasAbsent = data.occupations.some((o) => o.rochester?.absent || o.syracuse?.absent);
+  const hasSupp = data.occupations.some(
+    (o) => isSupp(o.rochester?.median) || isSupp(o.syracuse?.median)
+  );
+  if (hasAbsent || hasSupp) {
+    absenceNote(
+      'oews-panel',
+      `${hasAbsent ? '"NOT PUBLISHED" = NO OEWS ESTIMATE EXISTS FOR THAT METRO (SURVEY SCOPE), NOT ZERO WORKERS' : ''}` +
+        `${hasAbsent && hasSupp ? ' · ' : ''}` +
+        `${hasSupp ? '"SUPPRESSED" = BLS CONFIDENTIALITY' : ''}` +
+        ` <a class="cite" href="#src-${n}">[${n}]</a>`
+    );
+  }
 }
 
 /* ================= 06c — IPEDS stacked bars ================= */
@@ -436,7 +512,8 @@ function renderSpending(data) {
   show('spending-plate');
   const prov = data.provenance;
   const el = document.getElementById('spending-vintage');
-  if (el) el.textContent = `as recorded in USAspending, retrieved ${prov.retrievedAt}`;
+  if (el)
+    el.textContent = `as recorded in USAspending, retrieved ${prov.retrievedAt} · ${relAge(prov.retrievedAt)}`;
 
   /* S13: the absence duration renders from data, never hard-coded; the
      sentence (and the S48 verdict) only hold while the absence does */
@@ -889,16 +966,21 @@ function renderPhys(nyiso) {
 
 /* ================= boot ================= */
 export async function initLive() {
-  const [qcew, oews, ipeds, lodes, spending, permits, acs, nyiso] = await Promise.all([
-    fetchJson('/data/qcew.json'),
-    fetchJson('/data/oews.json'),
-    fetchJson('/data/ipeds.json'),
-    fetchJson('/data/lodes.json'),
-    fetchJson('/data/spending.json'),
-    fetchJson('/data/permits.json'),
-    fetchJson('/data/acs.json'),
-    fetchJson('/data/nyiso.json'),
-  ]);
+  const [qcew, oews, ipeds, lodes, spending, permits, acs, nyiso, changes, archives] =
+    await Promise.all([
+      fetchJson('/data/qcew.json'),
+      fetchJson('/data/oews.json'),
+      fetchJson('/data/ipeds.json'),
+      fetchJson('/data/lodes.json'),
+      fetchJson('/data/spending.json'),
+      fetchJson('/data/permits.json'),
+      fetchJson('/data/acs.json'),
+      fetchJson('/data/nyiso.json'),
+      // S44/R15 — both absent-tolerant: changes.json exists only after the
+      // first post-launch change; archives.json after the first Wayback pass
+      fetchJson('/data/changes.json'),
+      fetchJson('/data/archives.json'),
+    ]);
 
   // register data sources into the numbered sources list (after the Phase 0
   // set). Metadata lives in live-sources.js, shared with the build-time
@@ -924,6 +1006,7 @@ export async function initLive() {
   if (permits) renderBps(permits);
   if (acs) renderAcs(acs);
   renderPhys(nyiso);
+  renderRefreshDeltas(changes); // S44 — after the plates exist
 
   // S48: the synthesis plate's vintage = the freshest retrievedAt loaded
   const synthV = document.getElementById('synthesis-vintage');
@@ -935,5 +1018,5 @@ export async function initLive() {
     if (dates.length) synthV.textContent = `as refreshed ${dates[dates.length - 1]}`;
   }
 
-  return { qcew, oews, ipeds, lodes, spending, permits, acs, nyiso };
+  return { qcew, oews, ipeds, lodes, spending, permits, acs, nyiso, archives };
 }

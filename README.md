@@ -60,9 +60,10 @@ QA battery (Wave 1 gates; see `CLAUDE.md` for the session ritual):
 `npm run build` (design lint + bundle-size gate vs `perf-budget.json`) ·
 `npm test` (derived-series + citation-gate units) · `node qa/offline.mjs`
 (zero external requests) · `node qa/contract.mjs` (plates render, fixtures,
-axe a11y) · `node qa/visual-diff.mjs` (pixelmatch vs `qa/baselines/`, local
-only) · `node qa/perf.mjs [--throttle]` (runtime trace) · `npm run lighthouse`
-(budget asserted). `npm run qa` screenshots years {2022, 2026, 2030, 2045} ×
+axe a11y, subpages) · `node qa/visual-diff.mjs` (pixelmatch vs `qa/baselines/`,
+local only, pinned clock) · `node qa/print.mjs` (print-path smoke; `--publish`
+regenerates `public/brief.pdf`) · `node qa/perf.mjs [--throttle]` (runtime
+trace) · `npm run lighthouse` (budget asserted). `npm run qa` screenshots years {2022, 2026, 2030, 2045} ×
 widths {375, 768, 1280} into `qa/shots/` (gitignored) for visual review.
 CI (`.github/workflows/ci.yml`) runs build, units, offline proof, contract,
 and Lighthouse on every push to main and every PR.
@@ -234,6 +235,26 @@ objects inside `public/data/*.json` and in the on-page Sources list.
     set). OCC's Micron-aligned programs launched fall 2023, after the
     latest available completions year (AY 2021-22) — its bars show the
     pre-Micron baseline, which is the point of the panel.
+
+## License & reuse
+
+- **Code** (src/, scripts/, qa/, build config): [MIT](LICENSE).
+- **Content & derived data** (site copy, `public/data/*.json`, generated CSVs,
+  `data-archive/`): [CC BY 4.0](LICENSE-CONTENT.md) — reuse freely, including
+  commercially, with attribution.
+- **Upstream data** stays under its agencies' own terms — see the per-source
+  [terms ledger](docs/terms-ledger.md). Each published JSON carries `license`
+  and `attribution` in its `provenance` block.
+- The `/data/*.json` files are a documented, stable surface:
+  [data contract](docs/data-contract.md).
+
+## Stable anchors
+
+`#s01`–`#s12`, `#record-gaps`, `#sources`, `#src-N` (source rows), and the
+`#y=YYYY` (+ `&view=` / `&p=`) instrument state are stable, versioned anchors —
+inbound deep links will not be broken. `/f/01`–`/f/12` are per-figure share
+URLs that redirect to the matching section. Documented on the
+[methods page](https://second-corridor.vercel.app/methods#anchors).
 
 ## Colophon
 

@@ -107,6 +107,13 @@ jobs:
           npx playwright install --with-deps chromium
           npm run build && npm test && node qa/offline.mjs && node qa/contract.mjs
 
+      # F48≡R26 — the linked brief carries current data: regenerate it so it
+      # rides the refresh PR (the PR step's `git add public` picks it up)
+      - name: Rebuild the print brief
+        if: steps.diff.outputs.changed == 'true'
+        continue-on-error: true
+        run: node qa/print.mjs --publish
+
       - name: Open refresh PR
         if: steps.diff.outputs.changed == 'true'
         env:

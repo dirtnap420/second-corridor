@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Editorial decisions — The Second Corridor</title>
+    <meta
+      name="description"
+      content="Where the public record contradicted this tracker's own spec, the record won. The three adjudicated conflicts, published in full."
+    />
+    <link rel="canonical" href="https://second-corridor.vercel.app/decisions" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Editorial decisions — The Second Corridor" />
+    <meta
+      property="og:description"
+      content="Where the public record contradicted this tracker's own spec, the record won. The three adjudicated conflicts, published in full."
+    />
+    <meta property="og:url" content="https://second-corridor.vercel.app/decisions" />
+    <meta property="og:image" content="https://second-corridor.vercel.app/og.png" />
+    <link rel="stylesheet" href="/src/pages.css" />
+    <script type="module" src="/src/page-meta.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="page">
+      <header>
+        <p class="eyebrow">The Second Corridor · editorial decisions</p>
+        <h1>Where the record disagreed with the spec, the record won.</h1>
+        <nav class="page-nav" aria-label="Page sections">
+          <a href="/">← the instrument</a>
+          <a href="/methods">methods</a>
+          <a href="/changelog">changelog</a>
+        </nav>
+      </header>
+
+      <main id="main">
+        <p>
+          This tracker was built against a written specification. In three places the
+          public record contradicted what the spec said to render. Each time, the record
+          was verified in the primary document and rendered instead — and the
+          disagreement is published here rather than silently patched. The full decision
+          log, including the smaller calls, lives in the
+          <a href="https://github.com/dirtnap420/second-corridor#decisions">repository README</a>.
+        </p>
+
+        <h2>1 · CHIPS direct funding renders itemized</h2>
+        <p>
+          The spec called for a single capital-stack band labeled "single agreement, NY
+          share not itemized." Micron's
+          <a href="https://www.sec.gov/Archives/edgar/data/723125/000110465924127174/tm2430615d1_8k.htm">SEC Form 8-K (December 9, 2024)</a>
+          itemizes the finalized award: up to $6.165B in total — $4.6B for Clay Fabs 1–2,
+          $1.5B for the Boise, Idaho fab, and up to $65M for workforce — executed as
+          <em>two</em> funding agreements under one finalized award. Shipping the spec's
+          label would have shipped a false statement; the itemized, citable version
+          renders in Fig 03.
+        </p>
+
+        <h2>2 · The "~$12M federal workforce" figure is omitted</h2>
+        <p>
+          The spec carried a ~$12M federal workforce figure. No such figure could be
+          located in any public document (searched: NSF, NIST, Commerce, the White House,
+          DOL, Natcast). The figures that exist in the record are $40M in the
+          <a href="https://www.nist.gov/news-events/news/2024/12/department-commerce-awards-chips-incentives-micron-idaho-and-new-york">April 2024 preliminary terms</a>
+          (superseded) and up to $65M in the
+          <a href="https://www.sec.gov/Archives/edgar/data/723125/000110465924127174/tm2430615d1_8k.htm">final agreements</a>.
+          The $65M renders, cited to the 8-K; the unverifiable number does not render at
+          all.
+        </p>
+
+        <h2>3 · "88 NY semiconductor companies" is date-qualified</h2>
+        <p>
+          The spec's "88 NY semiconductor companies" is, per the
+          <a href="https://www.governor.ny.gov/news/governor-hochul-announces-new-team-guide-states-strategy-become-nations-leading-hub">governor's April 2022 announcement</a>,
+          a count of <em>establishments</em> as of that date; the state's current count is
+          <a href="https://esd.ny.gov/industries/semiconductors">156+ companies</a>
+          (Empire State Development). Both figures render in section 05, each carrying its
+          date; the talent lattice's supplier node uses the current 156+.
+        </p>
+
+        <h2>Why publish this</h2>
+        <p>
+          A tracker that adjudicates conflicts with its own specification — and says so —
+          is auditable in a way an essay is not. The same discipline applies forward:
+          future conflicts between a source document and anything this site renders are
+          corrected toward the record and logged on the
+          <a href="/methods#corrections">corrections log</a> or, for routine agency
+          revisions, the <a href="/changelog">data changelog</a>.
+        </p>
+      </main>
+
+      <footer class="page-footer">
+        <span>Built by Alex · <a href="mailto:Alex@ozarkintelligence.com">Alex@ozarkintelligence.com</a></span>
+        <span>Code <a href="https://github.com/dirtnap420/second-corridor/blob/main/LICENSE">MIT</a> · content &amp; data <a href="https://github.com/dirtnap420/second-corridor/blob/main/LICENSE-CONTENT.md">CC BY 4.0</a></span>
+        <span>rev <span data-fill="rev">—</span> · data refreshed <span data-fill="refreshed">—</span></span>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -27,9 +27,12 @@ import {
 } from './sankey.js';
 import { responsiveMount } from './responsive.js';
 import { onTick } from './ticker.js';
-import { initLive } from './live.js';
+import { initLive, relAge } from './live.js';
 import { renderSite } from './site.js';
 import { runIntro } from './intro.js';
+// S46: the release rhythms (P34 config) ride into the bundle — they change
+// with the pipeline, never at runtime
+import releaseCalendar from '../scripts/release-calendar.json';
 
 /* ---------------- motion preference (live) ---------------- */
 const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -545,14 +548,19 @@ function bindCiteMarks() {
 }
 
 /* ---------------- sources list ---------------- */
-function buildSources() {
+function buildSources(archives) {
   const ol = document.getElementById('sources-list');
+  const snaps = archives?.archives || {};
   for (const s of SOURCE_LIST) {
     const li = document.createElement('li');
     li.id = `src-${s.n}`;
+    // R15≡P28: a citation that can't rot — each row carries its Wayback copy
+    const snap = snaps[s.url];
     li.innerHTML = `<a href="${s.url}" rel="noopener">${s.title}</a> — ${s.publisher}${
       s.date ? `, ${s.date}` : ''
-    }. <span class="retrieved">Retrieved ${s.retrieved}.</span>`;
+    }. <span class="retrieved">Retrieved ${s.retrieved}.</span>${
+      snap ? ` <a class="src-archived" href="${snap.archiveUrl}" rel="noopener">archived ↗</a>` : ''
+    }`;
     ol.appendChild(li);
   }
 }
@@ -604,6 +612,124 @@ function showNodePlate(node) {
     </dl>
     <div style="margin-top:6px">${node.plate}</div>
     ${figs ? `<div class="node-deeper">GO DEEPER → ${figs}</div>` : ''}`;
+}
+
+/* ---------------- S50≡R24: copy-link per plate ----------------
+   Every figure becomes independently citable: the copied URL is the /f/NN
+   share shim (per-figure preview card) carrying the live instrument state. */
+const PLATE_SECTIONS = {
+  instrument: '01',
+  'buildout-plate': '02',
+  'capital-plate': '03',
+  'talent-plate': '04',
+  'base-plate': '05',
+  'qcew-plate': '06',
+  'oews-plate': '06',
+  'ipeds-plate': '06',
+  'lodes-plate': '07',
+  'spending-plate': '08',
+  'comp-plate': '09',
+  'bps-plate': '10',
+  'acs-plate': '10',
+  'phys-plate': '11',
+  'synthesis-plate': '12',
+};
+function addCopyLinks() {
+  for (const [plateId, num] of Object.entries(PLATE_SECTIONS)) {
+    const cap = document.getElementById(plateId)?.querySelector('.plate-caption--top');
+    if (!cap) continue;
+    const btn = document.createElement('button');
+    btn.className = 'copy-link';
+    btn.textContent = 'COPY LINK';
+    btn.setAttribute('aria-label', `Copy a shareable link to figure ${num}`);
+    btn.addEventListener('click', async () => {
+      const url = `${location.origin}/f/${num}${location.hash}`;
+      let copied = false;
+      try {
+        await navigator.clipboard.writeText(url);
+        copied = true;
+      } catch {
+        // clipboard API needs a secure context — fall back to execCommand
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          copied = document.execCommand('copy');
+        } catch {
+          /* leave copied false */
+        }
+        ta.remove();
+      }
+      btn.textContent = copied ? 'COPIED ✓' : 'COPY FAILED';
+      setTimeout(() => (btn.textContent = 'COPY LINK'), 1600);
+    });
+    cap.appendChild(btn);
+  }
+}
+
+/* ---------------- R31+R10: plate caption links ----------------
+   The numbers behind each measured plate, takeable (tidy CSV), and the
+   dictionary that defines its terms. */
+const PLATE_CSV = {
+  'qcew-plate': 'qcew',
+  'comp-plate': 'qcew',
+  'oews-plate': 'oews',
+  'ipeds-plate': 'ipeds',
+  'lodes-plate': 'lodes',
+  'spending-plate': 'spending',
+  'bps-plate': 'permits',
+  'acs-plate': 'acs',
+  'phys-plate': 'nyiso',
+};
+function addPlateLinks() {
+  document.querySelectorAll('.plate').forEach((plate) => {
+    const bottom = plate.querySelector('.plate-caption--bottom');
+    if (!bottom) return;
+    const csv = PLATE_CSV[plate.id];
+    const span = document.createElement('span');
+    span.className = 'plate-links';
+    span.innerHTML = `${
+      csv ? `<a href="/data/csv/${csv}.csv" download>DOWNLOAD CSV</a> · ` : ''
+    }<a href="/methods#dictionary">TERMS</a>`;
+    bottom.appendChild(span);
+  });
+}
+
+/* ---------------- S46: the next-release calendar ----------------
+   Appointment viewing for data — when returning will show something new.
+   Derived from the pipeline's release-calendar config + today's date;
+   labeled approximate because the config is (release dates drift). */
+function buildReleaseCalendar() {
+  const el = document.getElementById('colophon-next');
+  if (!el) return;
+  const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+  const LABELS = { qcew: 'QCEW', oews: 'OEWS', ipeds: 'IPEDS', acs: 'ACS', lodes: 'LODES', permits: 'BPS' };
+  const now = new Date();
+  const y = now.getUTCFullYear();
+  const m = now.getUTCMonth();
+  const parts = [];
+  for (const [key, cfg] of Object.entries(releaseCalendar.sources)) {
+    if (!(key in LABELS)) continue; // monthly/continuous tempos read below
+    let when = null;
+    if (cfg.cadence === 'quarterly' && cfg.monthsAfterPeriodEnd) {
+      // releases land ~lag months after each quarter end (Mar/Jun/Sep/Dec)
+      for (let q = 0; q < 9 && !when; q++) {
+        const rel = Date.UTC(y - 1, 2 + q * 3 + cfg.monthsAfterPeriodEnd, 1);
+        if (rel > now.getTime()) when = new Date(rel);
+      }
+    } else if (cfg.expectedMonth) {
+      const em = cfg.expectedMonth - 1;
+      when = new Date(Date.UTC(em >= m ? y : y + 1, em, 1));
+    }
+    if (when) parts.push({ key, when });
+  }
+  parts.sort((a, b) => a.when - b.when);
+  const line = parts
+    .map((p) => `${LABELS[p.key]} ${MON[p.when.getUTCMonth()]} ${p.when.getUTCFullYear()}`)
+    .join(' · ');
+  el.textContent = `EXPECTED NEXT RELEASES (APPROX.): ${line} · USASPENDING CHECKED DAILY`;
 }
 
 /* ---------------- boot ---------------- */
@@ -664,7 +790,10 @@ async function boot() {
 
   // citation steps — only now is the source registry complete
   bindCiteMarks();
-  buildSources();
+  buildSources(live.archives);
+  addCopyLinks(); // S50≡R24
+  addPlateLinks(); // R31+R10
+  buildReleaseCalendar(); // S46
 
   // Fig 02 mounts after data so the measured QCEW overlay (S23) draws with
   // the derived series — promise and meter in one frame
@@ -768,6 +897,27 @@ async function boot() {
     );
     if (h.view === 'section') setView('section');
     if (h.p === 'flows' && live.lodes) setParticles('flows');
+    // R22: arrivals from a /f/NN share shim land on exactly the figure that
+    // earned the link (the shim rewrites #sNN into &f=NN to spare the y slot).
+    // Deferred past the window load event: the browser's own load-time
+    // fragment/scroll-restoration pass resets an earlier scroll to top.
+    // Instant, not smooth: the ledger's follow-scroll on the first setYear
+    // cancels an in-flight smooth page scroll.
+    // R22: arrivals from a /f/NN share shim land on exactly the figure that
+    // earned the link (the shim rewrites #sNN into &f=NN to spare the y slot).
+    // Synchronous + load-deferred on purpose: rAF never fires in a hidden
+    // tab, and the browser's load-time scroll restoration resets anything
+    // earlier. Instant, not smooth: the ledger's follow-scroll on the first
+    // setYear cancels an in-flight smooth page scroll.
+    if (/^\d{2}$/.test(h.f || '')) {
+      const target = document.getElementById(`s${h.f}`);
+      const scrollToFigure = () =>
+        target.scrollIntoView({ behavior: 'instant', block: 'start' });
+      if (target) {
+        if (document.readyState === 'complete') scrollToFigure();
+        else window.addEventListener('load', scrollToFigure, { once: true });
+      }
+    }
   }
 
   // S37: Fig 07's caption links back up into the flows view
@@ -776,13 +926,20 @@ async function boot() {
     setParticles('flows');
   });
 
-  // colophon vintage: latest retrievedAt across all provenance objects
+  // colophon vintage: latest retrievedAt across all provenance objects,
+  // with its relative age (S45) and the build rev (R21) — any screenshot of
+  // the page is traceable to an exact build and data state
   const vintageEl = document.getElementById('colophon-vintage');
   const provs = [geo, live.qcew, live.oews, live.ipeds, live.lodes, live.spending, live.permits, live.acs, live.nyiso].filter(
     (d) => d && d.provenance
   );
   const dates = provs.map((d) => d.provenance.retrievedAt).sort();
-  if (dates.length) vintageEl.textContent = dates[dates.length - 1];
+  if (dates.length) {
+    const latest = dates[dates.length - 1];
+    vintageEl.textContent = `${latest} · ${relAge(latest)}`;
+  }
+  const revEl = document.getElementById('colophon-rev');
+  if (revEl) revEl.textContent = `rev ${__BUILD_REV__}`;
 
   // S7: expectations line — readers commit when they can size the
   // commitment. Plates counted live; freshness from provenance, never markup.

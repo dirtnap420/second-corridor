@@ -22,7 +22,7 @@ import { mkdirSync, existsSync, readFileSync, writeFileSync, statSync, renameSyn
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Unzip, UnzipInflate, unzipSync, strFromU8 } from 'fflate';
-import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
+import { RETRIEVED_AT, SCHEMA_VERSION, TERMS } from './lib/run-meta.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const RAW_DIR = join(ROOT, 'raw', 'oews');
@@ -487,6 +487,7 @@ async function main() {
         `. {suppressed:true} = BLS-nondisclosed estimate ('*' wage / '**' employment); ` +
         `{topcoded:true} = wage at or above the OEWS publication top-code ('#'); ` +
         `{absent:true} = occupation not published for that MSA at all.`,
+      ...TERMS.oews,
     },
     areas: Object.fromEntries(MSA_MATCHERS.map((mm) => [mm.key, areaFound.get(mm.key)])),
     occupations,
