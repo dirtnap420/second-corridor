@@ -26,11 +26,14 @@ mkdirSync(rawDir, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let madeNetworkRequest = false;
 
-/** Fetch one monthly zip (with raw/ cache). Returns Buffer, or null on 404 if allow404. */
+/** Fetch one monthly zip (with raw/ cache). Returns Buffer, or null on 404 if allow404.
+ *  P43: monthly archives are immutable, and the probe origin is calendar-
+ *  derived (always the newest possible complete month), so cache-if-present
+ *  is correct; NO_CACHE=1 forces refetch. */
 async function fetchMonthZip(yyyymm, { allow404 = false } = {}) {
   const fileName = `${yyyymm}01palIntegrated_csv.zip`;
   const cachePath = `${rawDir}${fileName}`;
-  if (existsSync(cachePath)) return readFileSync(cachePath);
+  if (existsSync(cachePath) && !process.env.NO_CACHE) return readFileSync(cachePath);
 
   if (madeNetworkRequest) await sleep(DELAY_MS); // be polite between live requests
   madeNetworkRequest = true;

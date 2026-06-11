@@ -12,7 +12,7 @@
     "lint:size": "node scripts/lint-size.mjs",
     "geo": "node scripts/build-geo.mjs",
     "og": "node scripts/build-og.mjs",
-    "data": "node scripts/fetch-qcew.mjs && node scripts/fetch-ipeds.mjs && node scripts/fetch-oews.mjs && node scripts/fetch-lodes.mjs && node scripts/fetch-usaspending.mjs && node scripts/fetch-bps.mjs && node scripts/fetch-acs.mjs && node scripts/fetch-nyiso.mjs",
+    "data": "node scripts/refresh.mjs",
     "qa": "node qa/screenshot.mjs",
     "test": "node --test",
     "lighthouse": "node qa/lighthouse.mjs"

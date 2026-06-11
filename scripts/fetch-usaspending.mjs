@@ -62,7 +62,12 @@ let madeNetworkRequest = false;
 
 async function apiFetch(cacheName, path, postBody = null) {
   const cachePath = `${rawDir}${cacheName}.json`;
-  if (existsSync(cachePath)) return JSON.parse(readFileSync(cachePath, 'utf8'));
+  // P43: these are cumulative discovery searches — this fetcher IS the FAIN
+  // watcher (P36), and a cached response would mean the Micron award landing
+  // on USAspending was never noticed. Always fetch live; the raw/ file is a
+  // write-only audit archive, read back only under OFFLINE=1.
+  if (existsSync(cachePath) && process.env.OFFLINE === '1')
+    return JSON.parse(readFileSync(cachePath, 'utf8'));
 
   if (madeNetworkRequest) await sleep(DELAY_MS); // be polite between live requests
   madeNetworkRequest = true;

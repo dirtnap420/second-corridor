@@ -39,10 +39,17 @@ mkdirSync(rawDir, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let madeNetworkRequest = false;
 
-/** Fetch one annual county file (with raw/ cache). Returns text, or null on 404 if allow404. */
-async function fetchAnnual(year, { allow404 = false } = {}) {
+/** Fetch one annual county file (with raw/ cache). Returns text, or null on 404 if allow404.
+ *  P43: completed years cache permanently; the latest year passes fresh:true
+ *  (Census revises it). NO_CACHE=1 bypasses all reads. */
+const freshThisRun = new Set(); // files already (re)fetched live in this run
+async function fetchAnnual(year, { allow404 = false, fresh = false } = {}) {
   const cachePath = `${rawDir}co${year}a.txt`;
-  if (existsSync(cachePath)) return readFileSync(cachePath, 'utf8');
+  if (
+    existsSync(cachePath) &&
+    (freshThisRun.has(cachePath) || (!fresh && !process.env.NO_CACHE))
+  )
+    return readFileSync(cachePath, 'utf8');
 
   if (madeNetworkRequest) await sleep(DELAY_MS); // be polite between live requests
   madeNetworkRequest = true;
@@ -58,6 +65,7 @@ async function fetchAnnual(year, { allow404 = false } = {}) {
     throw new Error(`Unexpected response body (not a BPS flat file) from ${url}: ${text.slice(0, 120)}`);
   }
   writeFileSync(cachePath, text);
+  freshThisRun.add(cachePath);
   console.log(`  fetched co${year}a.txt (${(text.length / 1024).toFixed(0)} KB)`);
   return text;
 }
@@ -126,7 +134,7 @@ function toCount(value, field, context) {
 const nowYear = new Date().getUTCFullYear();
 let latestYear = null;
 for (let y = nowYear; y >= FIRST_YEAR; y--) {
-  if ((await fetchAnnual(y, { allow404: true })) !== null) { latestYear = y; break; }
+  if ((await fetchAnnual(y, { allow404: true, fresh: true })) !== null) { latestYear = y; break; }
 }
 if (latestYear === null) throw new Error(`No BPS annual county file found for any year ${FIRST_YEAR}-${nowYear}`);
 console.log(`Latest annual file: co${latestYear}a.txt`);
@@ -137,7 +145,7 @@ console.log(`Latest annual file: co${latestYear}a.txt`);
 const seriesByFips = new Map(COUNTIES.map((c) => [c.fips, []]));
 
 for (let year = FIRST_YEAR; year <= latestYear; year++) {
-  const text = await fetchAnnual(year);
+  const text = await fetchAnnual(year, { fresh: year === latestYear });
   const { unitCols, rows } = parseAnnualFile(text, year);
 
   for (const { fips, name } of COUNTIES) {
