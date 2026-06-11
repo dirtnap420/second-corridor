@@ -34,6 +34,11 @@ let madeNetworkRequest = false;
 async function fetchMonthZip(yyyymm, { allow404 = false } = {}) {
   const fileName = `${yyyymm}01palIntegrated_csv.zip`;
   const cachePath = `${rawDir}${fileName}`;
+  if (process.env.OFFLINE === '1') {
+    if (existsSync(cachePath)) return readFileSync(cachePath);
+    if (allow404) return null;
+    throw new Error(`OFFLINE: no cache for ${fileName}`);
+  }
   if (existsSync(cachePath) && !process.env.NO_CACHE) return readFileSync(cachePath);
 
   if (madeNetworkRequest) await sleep(DELAY_MS); // be polite between live requests

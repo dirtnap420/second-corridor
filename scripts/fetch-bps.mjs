@@ -46,6 +46,11 @@ let madeNetworkRequest = false;
 const freshThisRun = new Set(); // files already (re)fetched live in this run
 async function fetchAnnual(year, { allow404 = false, fresh = false } = {}) {
   const cachePath = `${rawDir}co${year}a.txt`;
+  if (process.env.OFFLINE === '1') {
+    if (existsSync(cachePath)) return readFileSync(cachePath, 'utf8');
+    if (allow404) return null;
+    throw new Error(`OFFLINE: no cache for co${year}a.txt`);
+  }
   if (
     existsSync(cachePath) &&
     (freshThisRun.has(cachePath) || (!fresh && !process.env.NO_CACHE))

@@ -192,6 +192,8 @@ async function verifyInstitutions(aroundYear) {
 
 // --- 2. Find the latest completions year (Urban label) with data ------------
 async function probeLatestUrbanYear() {
+  if (process.env.OFFLINE === '1')
+    throw new Error('OFFLINE: ipeds requires a live probe for the latest completions year');
   for (let y = PROBE_FROM; y >= SEAM - 1; y--) {
     const d = await fetchJson(`${API}/completions-cip-6/${y}/?unitid=195003&sex=99&race=99&majornum=1`, { tolerate404and500: true });
     if (d && d.count > 0) {

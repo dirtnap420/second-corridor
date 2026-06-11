@@ -52,6 +52,11 @@ let madeNetworkRequest = false;
 const freshThisRun = new Set(); // files already (re)fetched live in this run
 async function fetchCsv(year, qtr, fips, { allow404 = false, fresh = false } = {}) {
   const cachePath = `${rawDir}${year}-${qtr}-${fips}.csv`;
+  if (process.env.OFFLINE === '1') {
+    if (existsSync(cachePath)) return readFileSync(cachePath, 'utf8');
+    if (allow404) return null;
+    throw new Error(`OFFLINE: no cache for ${year}/${qtr}/${fips}`);
+  }
   if (
     existsSync(cachePath) &&
     (freshThisRun.has(cachePath) || (!fresh && !process.env.NO_CACHE))

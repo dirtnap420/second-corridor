@@ -89,6 +89,7 @@ async function download(url, dest) {
 // ---------------------------------------------------------------------------
 let year = null;
 try {
+  if (process.env.OFFLINE === '1') throw new Error('OFFLINE: skipping HEAD probes');
   for (let y = PROBE_FROM; y >= PROBE_TO; y--) {
     if (await headOk(`${LODES_BASE}/${mainName(y)}`)) {
       if (!(await headOk(`${LODES_BASE}/${auxName(y)}`))) {

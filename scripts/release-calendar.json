@@ -1,0 +1,13 @@
+{
+  "comment": "P34 — expected release rhythms per source. Drives the refresh cadence and the next-release surface (S46, Wave 6). monthsAfterPeriodEnd/expectedMonth are approximate by design — staleness alerts use the staleAfterDays grace.",
+  "sources": {
+    "qcew": { "cadence": "quarterly", "monthsAfterPeriodEnd": 5, "staleAfterDays": 200, "notes": "BLS QCEW: ~5 months after quarter end" },
+    "oews": { "cadence": "annual", "expectedMonth": 4, "staleAfterDays": 420, "notes": "May vintage published the following spring" },
+    "ipeds": { "cadence": "annual", "expectedMonth": 10, "staleAfterDays": 420, "notes": "Urban/NCES completions, fall" },
+    "acs": { "cadence": "annual", "expectedMonth": 12, "staleAfterDays": 420, "notes": "ACS 5-year, December" },
+    "lodes": { "cadence": "annual", "expectedMonth": 8, "staleAfterDays": 480, "notes": "LEHD LODES, typically late summer" },
+    "nyiso": { "cadence": "monthly", "monthsAfterPeriodEnd": 1, "staleAfterDays": 60, "notes": "palIntegrated monthly archives; Gold Book each April (manual, see P38)" },
+    "permits": { "cadence": "annual", "expectedMonth": 5, "staleAfterDays": 420, "notes": "Census BPS annual county files, spring" },
+    "usaspending": { "cadence": "continuous", "staleAfterDays": 14, "notes": "nightly publication; checked daily for the Micron FAIN" }
+  }
+}
