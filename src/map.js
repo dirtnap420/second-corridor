@@ -6,7 +6,9 @@
 // view only — flows are geography-bound). Particles render as plotter streaks
 // with age-based fade-in/out so density changes never pop. All surfaces are
 // driven by update(year); a copper carriage square rides the trace tip.
-import { geoConicConformal, geoPath, geoDistance, line as d3line, curveCatmullRom } from 'd3';
+// F9: scoped imports — no meta-package guesswork for the bundler
+import { geoConicConformal, geoPath, geoDistance } from 'd3-geo';
+import { line as d3line, curveCatmullRom } from 'd3-shape';
 import { feature, mesh, merge } from 'topojson-client';
 import { NODES, YEAR_MIN, YEAR_MAX, investAt } from './data.js';
 
@@ -24,6 +26,21 @@ export function renderMap(container, topo, opts, width) {
   /* ---------- projection (noted in README) ---------- */
   const counties = feature(topo, topo.objects.counties);
   const pad = Math.max(10, W * 0.02);
+  // D46: at phone widths the full state leaves the corridor a tiny band in
+  // empty flanks — fit to the corridor's own extent instead (margin anchors
+  // keep node labels and the trace curve inside); full state from ~600px up.
+  // The state outline simply runs off-canvas, a map sheet cropped to its
+  // subject.
+  const fitTarget =
+    W < 600
+      ? {
+          type: 'MultiPoint',
+          coordinates: NODES.map((n) => n.lonlat).concat([
+            [-78.9, 42.45],
+            [-73.3, 43.45],
+          ]),
+        }
+      : counties;
   const projection = geoConicConformal()
     .parallels([40.5, 44.5])
     .rotate([76.5, 0])
@@ -32,7 +49,7 @@ export function renderMap(container, topo, opts, width) {
         [pad, pad],
         [W - pad, H - pad * 2],
       ],
-      counties
+      fitTarget
     );
   const path = geoPath(projection);
 
@@ -125,6 +142,13 @@ export function renderMap(container, topo, opts, width) {
   const traceFill = gTrace.querySelector('.trace-fill');
   const traceTip = gTrace.querySelector('.trace-tip');
   let traceLen = traceFill.getTotalLength();
+  // F31: both endpoint lengths measured once (a synchronous d swap before
+  // first paint) — the morph lerps between them instead of forcing
+  // getTotalLength() geometry every frame
+  const mapTraceLen = traceLen;
+  traceFill.setAttribute('d', sectionTraceD);
+  const sectionTraceLen = traceFill.getTotalLength();
+  traceFill.setAttribute('d', mapTraceD);
   traceFill.style.strokeDasharray = `${traceLen}`;
   traceFill.style.strokeDashoffset = `${traceLen}`;
 
@@ -353,9 +377,17 @@ export function renderMap(container, topo, opts, width) {
   canvas.setAttribute('aria-hidden', 'true');
   container.appendChild(canvas);
   const ctx = canvas.getContext('2d');
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  // F30: particles are streaks, not text — on a low-RAM device cap the
+  // backing store at 1.5× instead of 2×
+  const dpr = Math.min(
+    window.devicePixelRatio || 1,
+    navigator.deviceMemory && navigator.deviceMemory <= 4 ? 1.5 : 2
+  );
   canvas.width = Math.round(W * dpr);
   canvas.height = Math.round(H * dpr);
+  // F32: scale once per surface instead of multiplying every coordinate in
+  // every drawStreak — fewer multiplies per particle per frame
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   const SAMPLES = 240;
   let tracePts = [];
@@ -459,47 +491,80 @@ export function renderMap(container, topo, opts, width) {
 
   function drawStreak(x0, y0, x1, y1, size, alpha) {
     ctx.globalAlpha = alpha * 0.45;
-    ctx.lineWidth = size * dpr;
+    ctx.lineWidth = size;
     ctx.beginPath();
-    ctx.moveTo(x0 * dpr, y0 * dpr);
-    ctx.lineTo(x1 * dpr, y1 * dpr);
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
     ctx.stroke();
     ctx.globalAlpha = alpha;
-    const s = size * 1.6 * dpr;
-    ctx.fillRect(x1 * dpr - s / 2, y1 * dpr - s / 2, s, s);
+    const s = size * 1.6;
+    ctx.fillRect(x1 - s / 2, y1 - s / 2, s, s);
   }
 
   function drawStaticFlows() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, W, H);
     ctx.strokeStyle = '#b5562a';
     ctx.globalAlpha = 0.38;
     for (const a of flowArcs) {
-      ctx.lineWidth = a.w * dpr;
+      ctx.lineWidth = a.w;
       ctx.beginPath();
-      ctx.moveTo(a.p0[0] * dpr, a.p0[1] * dpr);
-      ctx.quadraticCurveTo(a.cp[0] * dpr, a.cp[1] * dpr, a.p1[0] * dpr, a.p1[1] * dpr);
+      ctx.moveTo(a.p0[0], a.p0[1]);
+      ctx.quadraticCurveTo(a.cp[0], a.cp[1], a.p1[0], a.p1[1]);
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
   }
 
+  /* F29: adaptive pool — a low-end device keeps the atmosphere without the
+     jank. Rolling frame-time average; sustained >25ms for 2s scales the pool
+     down 30% (repeatable), sustained recovery scales it back up. */
+  let emaMs = 16.7;
+  let slowSince = null;
+  let calmSince = null;
+  let poolScale = 1;
+  function adaptPool(frameMs, t) {
+    emaMs = emaMs * 0.92 + frameMs * 0.08;
+    if (emaMs > 25) {
+      calmSince = null;
+      if (slowSince === null) slowSince = t;
+      else if (t - slowSince > 2000 && poolScale > 0.3) {
+        poolScale = Math.max(0.3, poolScale * 0.7);
+        slowSince = null;
+      }
+    } else {
+      slowSince = null;
+      if (poolScale < 1 && emaMs < 18) {
+        if (calmSince === null) calmSince = t;
+        else if (t - calmSince > 4000) {
+          poolScale = Math.min(1, poolScale / 0.7);
+          calmSince = null;
+        }
+      } else {
+        calmSince = null;
+      }
+    }
+  }
+
   function frame(t) {
     if (!running || destroyed) return;
     if (lastFrame === null) lastFrame = t;
-    const dt = Math.min(0.05, (t - lastFrame) / 1000);
+    const frameMs = t - lastFrame;
+    const dt = Math.min(0.05, frameMs / 1000);
     lastFrame = t;
+    if (frameMs > 0) adaptPool(frameMs, t);
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, W, H);
     ctx.strokeStyle = '#b5562a';
     ctx.fillStyle = '#b5562a';
     const m = effectiveMode();
 
     if (m === 'ambient') {
       // pool management: spawn with fade-in, retire with fade-out
-      if (particles.length < targetCount) {
-        for (let i = particles.length; i < targetCount; i++) spawnAmbient(false);
-      } else if (particles.length > targetCount) {
-        let excess = particles.length - targetCount;
+      const scaledTarget = Math.round(targetCount * poolScale);
+      if (particles.length < scaledTarget) {
+        for (let i = particles.length; i < scaledTarget; i++) spawnAmbient(false);
+      } else if (particles.length > scaledTarget) {
+        let excess = particles.length - scaledTarget;
         for (const p of particles) {
           if (excess <= 0) break;
           if (!p.dying) {
@@ -573,7 +638,7 @@ export function renderMap(container, topo, opts, width) {
       unsubFrame();
       unsubFrame = null;
     }
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, W, H);
   }
   function evalEngine() {
     if (motion.reduced) {
@@ -646,6 +711,11 @@ export function renderMap(container, topo, opts, width) {
     } else {
       morphing = true;
       const t0 = performance.now();
+      // F31: dasharray during a morph needs continuity, not geometric truth —
+      // lerp between the two measured lengths instead of forcing
+      // getTotalLength() per frame
+      const fromLen = traceLen;
+      const toLen = toSection ? sectionTraceLen : mapTraceLen;
       // F37: rides the shared ticker; morphRaf is now the unsubscribe fn
       morphRaf = onTick((now) => {
         const k = easeInOut(Math.min(1, (now - t0) / dur));
@@ -653,7 +723,7 @@ export function renderMap(container, topo, opts, width) {
         const d = toD(pts2);
         traceBase.setAttribute('d', d);
         traceFill.setAttribute('d', d);
-        traceLen = traceFill.getTotalLength();
+        traceLen = fromLen + (toLen - fromLen) * k;
         traceFill.style.strokeDasharray = `${traceLen}`;
         traceFill.style.strokeDashoffset = `${traceLen * (1 - traceProgress(currentYear))}`;
         placeTip(traceProgress(currentYear));

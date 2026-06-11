@@ -300,23 +300,25 @@ function buildLedger() {
   more.setAttribute('aria-hidden', 'true');
   more.textContent = `▼ ${ol.children.length - 1} MILESTONES · LIST SCROLLS · CLICK A ROW TO GLIDE`;
   wrap.appendChild(more);
+  // F35: play drives onYear every frame, but the ledger only changes when
+  // the FLOOR year crosses a boundary — bail early on same-year frames and
+  // touch rows in one pass (the wafer dial's "only what changed" pattern)
+  const rows = [...ol.children].filter((li) => li.dataset.year);
+  let lastLedgerY = null;
   onYear((year) => {
     const y = Math.floor(year + 1e-6);
+    if (y === lastLedgerY) return;
+    lastLedgerY = y;
     let current = null;
-    for (const li of ol.children) {
-      if (!li.dataset.year) continue; // the TODAY divider
-      const ly = Number(li.dataset.year);
-      li.classList.toggle('past', ly < y);
-      li.classList.toggle('current', false);
-      if (ly <= y) current = li;
+    for (const li of rows) {
+      if (Number(li.dataset.year) <= y) current = li;
     }
-    // highlight the latest milestone at/before the scrub year
-    for (const li of ol.children) {
-      if (!li.dataset.year) continue; // the TODAY divider
-      if (Number(li.dataset.year) === (current ? Number(current.dataset.year) : -1)) {
-        li.classList.add('current');
-        li.classList.remove('past');
-      }
+    const curYear = current ? Number(current.dataset.year) : -1;
+    for (const li of rows) {
+      const ly = Number(li.dataset.year);
+      const isCur = ly === curYear;
+      li.classList.toggle('current', isCur);
+      li.classList.toggle('past', ly < y && !isCur);
     }
     if (current && !state.playing) {
       // keep the highlighted row in view inside the ledger scroll area
@@ -973,9 +975,15 @@ async function boot() {
   } else if (introWillRun) setYear(YEAR_MIN, { updateHash: false });
   else setYear(todayYear, { updateHash: false });
 
-  // poster export — dynamically imported on use, never in the main bundle
-  document.getElementById('export-poster').addEventListener('click', async () => {
-    const { exportPoster } = await import('./poster.js');
+  // poster export — dynamically imported on use, never in the main bundle.
+  // F14: warm the chunk on intent so the click itself is instant.
+  const posterBtn = document.getElementById('export-poster');
+  let posterWarm = null;
+  const warmPoster = () => (posterWarm ||= import('./poster.js'));
+  posterBtn.addEventListener('mouseenter', warmPoster, { once: true });
+  posterBtn.addEventListener('focus', warmPoster, { once: true });
+  posterBtn.addEventListener('click', async () => {
+    const { exportPoster } = await warmPoster();
     exportPoster({ year: state.year });
   });
 

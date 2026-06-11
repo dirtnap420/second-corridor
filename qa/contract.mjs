@@ -68,7 +68,10 @@ async function loadPage({ routes = null, allowConsole = [] } = {}) {
 
 async function textSweep(page, label) {
   const bad = await page.evaluate(() => {
-    const text = document.body.innerText;
+    // textContent, not innerText: F33's content-visibility skips rendering of
+    // below-fold sections, and innerText only reflects rendered text — the
+    // sweep must see the whole document regardless of paint state
+    const text = document.body.textContent;
     const hits = [];
     for (const re of [/\bNaN\b/, /\bundefined\b/, /\bInfinity\b/, /\[object /, /Invalid Date/]) {
       const m = text.match(re);
@@ -159,12 +162,48 @@ function reportIssues(issues, label) {
   if (w6.copyLinks >= 14 && w6.archived >= 25 && w6.ages >= 8 && w6.next && w6.plateCsvLinks >= 8)
     ok(`wave-6 chrome present (${w6.copyLinks} copy-links, ${w6.archived} archived, ${w6.plateCsvLinks} CSV links, ${w6.rev})`);
 
+  /* Cite anchor jumps must land on the source row (D9/D11 scroll-margin
+     guard; F33's test, kept after F33 was dropped). The page scrolls
+     SMOOTHLY here (~10k px) — wait for arrival, not a fixed delay: a 400ms
+     wait passed locally and raced the slower CI runner mid-scroll. */
+  await page.click('.masthead a.cite');
+  await page
+    .waitForFunction(
+      () => {
+        const el = document.getElementById(location.hash.slice(1));
+        if (!el) return false;
+        const r = el.getBoundingClientRect();
+        return r.height > 0 && r.top >= 0 && r.top < window.innerHeight;
+      },
+      { timeout: 8000 }
+    )
+    .catch(() => {});
+  const anchor = await page.evaluate(() => {
+    const id = location.hash.slice(1);
+    const el = document.getElementById(id);
+    if (!el) return { ok: false, why: `no element for ${location.hash}` };
+    const r = el.getBoundingClientRect();
+    return {
+      ok: r.height > 0 && r.top >= 0 && r.top < window.innerHeight,
+      why: `${id} at top=${Math.round(r.top)} h=${Math.round(r.height)}`,
+    };
+  });
+  if (!anchor.ok) fail(`cite anchor jump did not land on the source row: ${anchor.why}`);
+  else ok(`cite anchor jump lands on the rendered source row (${anchor.why})`);
+
   await textSweep(page, 'real data');
   reportIssues(issues, 'real data');
 
-  /* ---- M4: axe-core gate ---- */
-  await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') });
-  const axe = await page.evaluate(async () => {
+  /* ---- M4: axe-core gate ----
+     On a bypassCSP page: F44's CSP (script-src 'self') rightly blocks the
+     harness's own inline axe injection. Every OTHER page in this test keeps
+     CSP enforced — its violations would land in the console-error checks. */
+  const axePage = await browser.newPage({ viewport: { width: 1280, height: 1400 }, bypassCSP: true });
+  await axePage.goto(`${BASE}/?nointro#y=2030`, { waitUntil: 'networkidle' });
+  await axePage.evaluate(() => document.fonts.ready);
+  await axePage.waitForTimeout(600);
+  await axePage.addScriptTag({ path: require.resolve('axe-core/axe.min.js') });
+  const axe = await axePage.evaluate(async () => {
     const r = await window.axe.run(document, { resultTypes: ['violations'] });
     return r.violations.map((v) => ({
       id: v.id,
@@ -174,6 +213,7 @@ function reportIssues(issues, label) {
       sample: v.nodes[0]?.target?.join(' '),
     }));
   });
+  await axePage.close();
   const seriousPlus = axe.filter((v) => v.impact === 'serious' || v.impact === 'critical');
   const blocked = seriousPlus.filter((v) => !(v.id in AXE_ALLOWLIST));
   const allowed = seriousPlus.filter((v) => v.id in AXE_ALLOWLIST);
@@ -196,8 +236,8 @@ function reportIssues(issues, label) {
   });
   const state = await page.evaluate(() => ({
     qcewVisible: !document.getElementById('qcew-plate').hidden,
-    suppressedLabels: document.body.innerText.match(/suppressed \(BLS confidentiality\)/g)?.length || 0,
-    compSuppressed: document.body.innerText.includes('ALL MONTHS SUPPRESSED'),
+    suppressedLabels: document.body.textContent.match(/suppressed \(BLS confidentiality\)/g)?.length || 0,
+    compSuppressed: document.body.textContent.includes('ALL MONTHS SUPPRESSED'),
     zeros: [...document.querySelectorAll('#qcew-panel rect[fill="var(--copper)"]')].length,
   }));
   if (!state.qcewVisible) fail('qcew plate hidden under all-suppressed fixture');
@@ -303,9 +343,12 @@ function reportIssues(issues, label) {
     reportIssues(issues, sub);
 
     if (sub === 'methods') {
-      // the richest subpage carries the a11y gate for all three
-      await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') });
-      const axe = await page.evaluate(async () => {
+      // the richest subpage carries the a11y gate for all three — on a
+      // bypassCSP page (the harness's axe injection is inline script)
+      const axePage = await browser.newPage({ viewport: { width: 1280, height: 1400 }, bypassCSP: true });
+      await axePage.goto(`${BASE}/${sub}.html`, { waitUntil: 'networkidle' });
+      await axePage.addScriptTag({ path: require.resolve('axe-core/axe.min.js') });
+      const axe = await axePage.evaluate(async () => {
         const r = await window.axe.run(document, { resultTypes: ['violations'] });
         return r.violations
           .filter((v) => v.impact === 'serious' || v.impact === 'critical')
@@ -313,6 +356,7 @@ function reportIssues(issues, label) {
       });
       if (axe.length) fail(`methods axe: ${axe.join(', ')}`);
       else ok('methods: axe clean');
+      await axePage.close();
     }
     await page.close();
   }

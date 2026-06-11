@@ -287,3 +287,28 @@ Priority key: **P1** = fixes a measured/observable problem or sets a guardrail �
 Interactions: do item 37 (rAF conductor) **before** storytelling #40/41 (draw-on-
 scroll, count-ups) land; item 33 (`content-visibility`) must be tested against
 design #11 (scroll-margin anchors); item 8's decision gates reach #47 (analytics).
+
+---
+
+## Wave 7 exit — measured against the F7 baseline (2026-06-10)
+
+| Metric | F7 baseline (Wave 0) | Wave 6 exit | Wave 7 exit |
+|---|---|---|---|
+| main JS (raw) | 177,975 B | 202,403 B | **174,201 B** (gzip 60.7 KB) |
+| CSS total (raw) | 11,923 B | 23,980 B | 23,971 B (instrument sheet 20,568 + subpage sheet 3,403) |
+| poster chunk (lazy) | 8,680 B | 8,744 B | 8,763 B |
+| Lighthouse (mobile, median of 3) | 100/97/100 (deployed) | 0.99 / 1.0 / 1.0 | 0.99 / 1.0 / 1.0 |
+| LCP (lab) | — (budget 2400ms) | 1.81 s | 1.82 s |
+| CLS (lab) | 0.013 → 0.003 (post-F10) | 0.003 | 0.004 |
+| playback p95 / max (desktop) | 16.7 / 16.8 ms | 16.7 / 16.8 ms | 16.7 / 16.8 ms, 0 frames over |
+| playback p95 / max (6× throttle, DPR 2) | 16.7 / 33.3 ms | 16.7 / 33.4 ms | 16.7 / 33.3 ms, 0 frames over |
+
+Notes: the main bundle now carries two more waves of product (the Wave 4–5
+narrative layer and the Wave 6 reach surfaces) and still ends **below the
+Wave 0 baseline** — F9's scoped d3 imports recovered −28.8 KB in one item.
+Headroom: JS 85.1% / CSS 97.5% of budget. The remaining runtime wins were
+defensive (adaptive pool, offscreen gating) — playback was already at the
+frame ceiling on both traces, so the trace numbers hold rather than improve;
+the gains land on devices slower than the QA floor. F33/F34 (CSS containment)
+were implemented, measured, and dropped — rationale in the Wave 7 deviations
+log and in styles.css.

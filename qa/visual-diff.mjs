@@ -71,6 +71,17 @@ for (const width of WIDTHS) {
     await page.goto(`${BASE}/?nointro#y=${year}`, { waitUntil: 'networkidle' });
     await page.evaluate(() => document.fonts.ready);
     await page.waitForTimeout(500);
+    // F28 gates offscreen surfaces on IntersectionObserver — walk the page
+    // once (what a reader does) so every gated surface applies its year
+    // before the capture; fullPage capture alone never fires IO.
+    await page.evaluate(async () => {
+      for (let y = 0; y < document.body.scrollHeight; y += 800) {
+        window.scrollTo(0, y);
+        await new Promise((r) => setTimeout(r, 30));
+      }
+      window.scrollTo(0, 0);
+    });
+    await page.waitForTimeout(300);
     const name = `y${year}-w${width}.png`;
     await page.screenshot({ path: dir(`./shots/visual/${name}`), fullPage: true });
     names.push(name);

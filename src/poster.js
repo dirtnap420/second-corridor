@@ -3,7 +3,10 @@
 // series strip, sources footer, colophon. Fonts embedded as data URIs so the
 // file is portable. Dynamically imported when the EXPORT POSTER control is
 // used; never part of the main bundle.
-import { geoConicConformal, geoPath, line as d3line, curveCatmullRom, area as d3area, scaleLinear } from 'd3';
+// F9: scoped imports — no meta-package guesswork for the bundler
+import { geoConicConformal, geoPath } from 'd3-geo';
+import { line as d3line, curveCatmullRom, area as d3area } from 'd3-shape';
+import { scaleLinear } from 'd3-scale';
 import { feature, mesh, merge } from 'topojson-client';
 import {
   NODES,

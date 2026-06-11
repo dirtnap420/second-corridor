@@ -101,6 +101,21 @@ writeFileSync(fileURLToPath(new URL('changelog.html', root)), changelogHtml);
 /* ================= public/f/NN.html (R22) ================= */
 const sections = readSections();
 mkdirSync(fileURLToPath(new URL('public/f/', root)), { recursive: true });
+// F44: the redirect lives in one external script (CSP script-src 'self'
+// forbids inline) — the figure number comes from the path itself
+writeFileSync(
+  fileURLToPath(new URL('public/f/go.js', root)),
+  `// /f/NN share-shim redirect — carries any instrument-state hash through
+var m = location.pathname.match(/\\/f\\/(\\d{2})/);
+var num = m ? m[1] : '01';
+var h = location.hash;
+location.replace('/' + (h && h.length > 1 ? h + '&f=' + num : '#f=' + num));
+`
+);
+const CSP =
+  "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+  "img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; " +
+  "base-uri 'self'; form-action 'self'";
 for (const s of sections) {
   const title = escapeHtml(`Fig. ${s.num} — ${s.h2}`);
   const desc = escapeHtml(
@@ -110,6 +125,7 @@ for (const s of sections) {
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="${CSP}" />
     <title>${title} — The Second Corridor</title>
     <meta name="description" content="${desc}" />
     <link rel="canonical" href="${SITE}/" />
@@ -125,11 +141,7 @@ for (const s of sections) {
     <meta name="twitter:title" content="${title}" />
     <meta name="twitter:description" content="${desc}" />
     <meta name="twitter:image" content="${SITE}/og/f${s.num}.png" />
-    <script>
-      // carry any instrument state (#y=…&view=…&p=…) through the redirect
-      var h = location.hash;
-      location.replace('/' + (h && h.length > 1 ? h + '&f=${s.num}' : '#f=${s.num}'));
-    </script>
+    <script src="/f/go.js"></script>
     <noscript><meta http-equiv="refresh" content="0;url=/#${s.id}" /></noscript>
   </head>
   <body>

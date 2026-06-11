@@ -20,6 +20,15 @@ const checks = [
   ['fonts total', sum(fonts, /\.woff2$/), budget.fontTotalBytes],
 ];
 
+// F13: the poster chunk must stay lazy — a refactor that hoists it into the
+// initial graph would show up here as a modulepreload of poster-*.js
+const indexHtml = readFileSync(join(root, 'dist', 'index.html'), 'utf8');
+if (/<link[^>]*rel="modulepreload"[^>]*poster-/.test(indexHtml) || /<script[^>]*src="[^"]*poster-/.test(indexHtml)) {
+  console.error('SIZE GATE FAIL: poster chunk is referenced eagerly from index.html — it must stay dynamic-import only');
+  process.exit(1);
+}
+console.log('poster chunk ok: dynamic-import only (not in the initial graph)');
+
 let failed = false;
 for (const [label, actual, max] of checks) {
   const pct = ((actual / max) * 100).toFixed(1);

@@ -14,6 +14,16 @@ try {
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 const SITE = 'https://second-corridor.vercel.app';
 
+// F44 — the offline proof shows the site can satisfy a tight CSP; injected
+// as a meta tag AT BUILD (not just a Vercel header) so the local gates
+// exercise it — violations surface as console errors in the contract test.
+// 'unsafe-inline' styles only: the plates set style attributes via innerHTML.
+// frame-ancestors stays unset (meta can't carry it; embed mode is Wave 8).
+const CSP =
+  "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+  "img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; " +
+  "base-uri 'self'; form-action 'self'";
+
 // R16+R18 — machine-readable trust, injected at build so it always matches
 // the committed data: JSON-LD Article + one Dataset node per published file
 // (Dataset markup reaches Google Dataset Search), and freshness meta.
@@ -23,6 +33,14 @@ function headInjection() {
     transformIndexHtml: {
       order: 'pre',
       handler(html, ctx) {
+        // CSP on every built page; never in dev (vite's client injects
+        // inline machinery a strict CSP would block)
+        if (!ctx.server) {
+          html = html.replace(
+            '<meta charset="UTF-8" />',
+            `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`
+          );
+        }
         if (!/(^|[\\/])index\.html$/.test(ctx.filename)) return html;
         const datasets = [];
         let latest = '';
@@ -92,6 +110,9 @@ export default defineConfig({
   },
   plugins: [headInjection()],
   build: {
+    // F15: explicit target — the default is conservative; es2022 matches the
+    // browsers this site supports and ships fewer transpiled helpers
+    target: 'es2022',
     rollupOptions: {
       input: {
         index: here('index.html'),
