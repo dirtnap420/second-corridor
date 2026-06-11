@@ -458,6 +458,16 @@ Triage every remaining P3 explicitly — do, defer, or drop with a Deviations no
   accepted, no history rewrite.
 - M10 closed: test email to the colophon address confirmed working.
 - PR #7 merged (1adfe78); production auto-deployed via the Git integration.
+- **Post-deploy catch (S44 fix, 8b9c49e on main):** the health gate found a
+  console 404 on production — live.js fetches /data/changes.json, which
+  didn't exist until the first refresh change. Local gates missed it because
+  vite preview's SPA fallback answers missing paths with index.html (200)
+  while Vercel 404s. Fixed by committing an empty-state changes.json (no
+  changes since the launch baseline — machine-readable, overwritten by the
+  first real change run). **Gate-coverage note for future waves:** the
+  offline/contract harnesses run against vite preview, which cannot prove a
+  fetched path exists in production — the post-deploy health check is the
+  gate that catches that class.
 
 **Wave 6 progress (2026-06-10, branch `wave-6-reach`):**
 - All boxes landed except R3 (staged — see below). Notes and deviations:
