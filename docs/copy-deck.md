@@ -10,6 +10,10 @@ cite keys shown in brackets resolve to live footnote numbers at render.
 or `REJECTED`. Unmarked items block their wave (S23/S24 → Wave 5; the rest
 ship with their wave under batch review unless rejected here).
 
+> **APPROVED IN FULL — Alex, 2026-06-11** (one-pass approval; S30 ships
+> Option A per the deck's recommendation). Items below retain their original
+> drafts as the approved wording of record.
+
 Data values quoted below were verified against `public/data/*.json` as
 retrieved 2026-06-10.
 

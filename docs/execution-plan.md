@@ -480,6 +480,15 @@ Triage every remaining P3 explicitly — do, defer, or drop with a Deviations no
 **Dropped:** D43 (dark theme) · R4 (independence statement) · R6 (custom domain,
 deferred).
 
+**2026-06-11 — decisions revised by Alex:**
+- **Copy deck APPROVED in full** (docs/copy-deck.md, one pass): all nine items
+  including the five individually-flagged wordings S23/S24/S27/S30/S33.
+  S30 ships **Option A** (exact-number restatement), the deck's recommendation,
+  approval given on the pass without an explicit A/B choice.
+- **Autonomy extended through Wave 5** ("get wave 3,4,5 done") — supersedes
+  Q20's checkpoint-from-Wave-4: Waves 3–5 merge on green CI and deploy; Alex
+  reviews live. Checkpoints resume at Wave 6 (the repo-public wave).
+
 **2026-06-10 — execution machinery (10 proposals → Wave 1 prelude M1–M10):**
 M1 done by Alex (Vercel↔GitHub connected); M8 decided (repo stays in OneDrive);
 M10 owned by Alex; M2–M7, M9 fold into Wave 1, to be executed first. Wave-branch
