@@ -16,6 +16,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
 
 const BASE_URL = 'https://www2.census.gov/econ/bps/County';
 const USER_AGENT =
@@ -45,6 +46,11 @@ let madeNetworkRequest = false;
 const freshThisRun = new Set(); // files already (re)fetched live in this run
 async function fetchAnnual(year, { allow404 = false, fresh = false } = {}) {
   const cachePath = `${rawDir}co${year}a.txt`;
+  if (process.env.OFFLINE === '1') {
+    if (existsSync(cachePath)) return readFileSync(cachePath, 'utf8');
+    if (allow404) return null;
+    throw new Error(`OFFLINE: no cache for co${year}a.txt`);
+  }
   if (
     existsSync(cachePath) &&
     (freshThisRun.has(cachePath) || (!fresh && !process.env.NO_CACHE))
@@ -197,10 +203,11 @@ if (monroeMax < 1000 || monroeMax > 5000) {
 // ---------------------------------------------------------------------------
 const vintage = `annual ${FIRST_YEAR}-${latestYear}`;
 const out = {
+  schemaVersion: SCHEMA_VERSION,
   provenance: {
     source: 'U.S. Census Bureau, Building Permits Survey, annual county flat files',
     url: `${BASE_URL}/co{yyyy}a.txt`,
-    retrievedAt: new Date().toISOString().slice(0, 10),
+    retrievedAt: RETRIEVED_AT,
     vintage,
     notes:
       'units = total housing units authorized by building permits per county-year: sum of the Units ' +

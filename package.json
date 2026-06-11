@@ -6,7 +6,7 @@
   "description": "The Second Corridor — tracking New York's semiconductor buildout, 2022–2045, from public data.",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && npm run lint:design && npm run lint:size",
+    "build": "node scripts/build-sources.mjs && vite build && npm run lint:design && npm run lint:size",
     "preview": "vite preview",
     "lint:design": "node scripts/lint-design.mjs",
     "lint:size": "node scripts/lint-size.mjs",
@@ -25,6 +25,7 @@
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "adm-zip": "^0.5.17",
+    "ajv": "^8.20.0",
     "axe-core": "^4.12.1",
     "fflate": "^0.8.3",
     "lighthouse": "^13.4.0",

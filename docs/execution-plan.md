@@ -166,28 +166,28 @@ overlap; `npm run data -- --dry-run` (or equivalent) survives one fetcher failin
 
 Goal: the tracker refreshes, validates, archives, and alerts itself.
 
-- [ ] P42 — orchestrator finished (`--only`, `--dry-run`, `--offline`)
-- [ ] P2 — scheduled refresh workflow (cron + dispatch + deploy)
-- [ ] P16 — JSON Schemas per dataset
-- [ ] P17 — cross-field invariants
-- [ ] P18 — provenance completeness check
-- [ ] P8 — `data-archive/` snapshots
-- [ ] P9 — `changes.json` diff emission
-- [ ] P10 — `CHANGELOG-DATA.md`
-- [ ] P11 — `schemaVersion`
-- [ ] P13 — no-change short-circuit
-- [ ] P14 — new-period detection
-- [ ] P44 — deterministic JSON output
-- [ ] P45 — single run timestamp
-- [ ] P27 — Wayback-archive all source URLs
-- [ ] P32 — `sources.json` consolidated registry
-- [ ] P34 — release-calendar config
-- [ ] P36 — FAIN watcher with loud alert
-- [ ] P35 — refresh outcome notifications
-- [ ] P37 — daily cheap checks / weekly full refresh split
-- [ ] P39 — `status.json`
-- [ ] P4 — review mode per decision #5
-- [ ] P5 — post-deploy health check
+- [x] P42 — orchestrator finished (`--only`, `--dry-run`, `--offline`)
+- [x] P2 — scheduled refresh workflow (cron + dispatch + deploy)
+- [x] P16 — JSON Schemas per dataset
+- [x] P17 — cross-field invariants
+- [x] P18 — provenance completeness check
+- [x] P8 — `data-archive/` snapshots
+- [x] P9 — `changes.json` diff emission
+- [x] P10 — `CHANGELOG-DATA.md`
+- [x] P11 — `schemaVersion`
+- [x] P13 — no-change short-circuit
+- [x] P14 — new-period detection
+- [x] P44 — deterministic JSON output
+- [x] P45 — single run timestamp
+- [x] P27 — Wayback-archive all source URLs
+- [x] P32 — `sources.json` consolidated registry
+- [x] P34 — release-calendar config
+- [x] P36 — FAIN watcher with loud alert
+- [x] P35 — refresh outcome notifications
+- [x] P37 — daily cheap checks / weekly full refresh split
+- [x] P39 — `status.json`
+- [x] P4 — review mode per decision #5
+- [x] P5 — post-deploy health check
 
 **Exit:** one full scheduled run executes on GitHub end-to-end (allowed to no-op);
 a seeded schema violation fails the run; FAIN watcher confirmed querying.
@@ -593,6 +593,31 @@ scope on the GCM token before pushing `.github/workflows/`.
   PR head and again on the main merge commit (the no-op proof); production
   deployed and verified. GCM token confirmed to carry `workflow` scope
   (Wave 3's open check, answered early).
+
+**Wave 3 progress (2026-06-11, branch `wave-3-pipeline`):**
+- All 22 boxes landed. Architecture: `refresh.mjs` = snapshot → fetch
+  (fail-soft) → validate per-source with restore-on-fail → diff (timestamp
+  churn ignored) → archive/changes.json/changelog/status only on real change.
+- **Proofs run:** offline e2e (7 ok + ipeds fail-soft by design + checked-
+  unchanged + clean tree); seeded prior-value change produced the exact diff,
+  archive, changelog, status; seeded schema violation through the orchestrator
+  → INVALID, previous data restored, exit 1; health check green against live
+  production; Wayback availability API verified.
+- **Design notes / deviations:**
+  - PRs opened with the default GITHUB_TOKEN cannot trigger the `ci` workflow
+    (GitHub anti-recursion) — the refresh workflow runs the gates itself
+    against the refreshed data and labels the PR `gates-green`; the P4
+    auto-merge requires that label + `new-period-only` + >72h.
+  - status.json is written only on change runs, so daily no-op crons cause
+    zero repo churn; "lastChecked" semantics live in the Actions run history.
+  - ipeds has no offline mode (its latest-year probe must hit the network) —
+    fails soft under --offline by design.
+  - usaspending reads cache only under OFFLINE=1 (it is the FAIN watcher).
+  - archives.json population started locally; the weekly run retries any
+    URLs the Internet Archive timed out on (save endpoint is slow on some
+    press-release hosts; availability-API fallback added after first run).
+- Remaining for the dispatch proof: workflow_dispatch on main post-merge
+  (recorded below at exit).
 
 **Wave 2 progress (2026-06-10/11, branch `wave-2-defects`):**
 - All boxes above landed. Notes and deviations:

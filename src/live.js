@@ -2,6 +2,7 @@
 // public data with vintages printed from provenance, suppression carried
 // through, and a view-the-numbers table.
 import { registerSources, cite, COMPARATORS, PHYS_ANCHORS } from './data.js';
+import { LIVE_SOURCE_DEFS } from './live-sources.js';
 import { responsiveMount } from './responsive.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -702,81 +703,20 @@ export async function initLive() {
     fetchJson('/data/nyiso.json'),
   ]);
 
-  // register data sources into the numbered sources list (after the Phase 0 set)
-  const entries = [];
-  if (qcew)
-    entries.push({
-      keys: ['qcew-data'],
-      title: 'Quarterly Census of Employment and Wages — NAICS 3344, corridor counties',
-      publisher: 'U.S. Bureau of Labor Statistics',
-      url: 'https://www.bls.gov/cew/',
-      date: qcew.provenance.vintage,
-      retrieved: qcew.provenance.retrievedAt,
-    });
-  if (oews)
-    entries.push({
-      keys: ['oews-data'],
-      title: 'Occupational Employment and Wage Statistics — metro wage files',
-      publisher: 'U.S. Bureau of Labor Statistics',
-      url: 'https://www.bls.gov/oes/',
-      date: oews.provenance.vintage,
-      retrieved: oews.provenance.retrievedAt,
-    });
-  if (ipeds)
-    entries.push({
-      keys: ['ipeds-data'],
-      title: 'IPEDS completions by 6-digit CIP (via Urban Institute Education Data API)',
-      publisher: 'NCES / Urban Institute',
-      url: 'https://educationdata.urban.org/',
-      date: ipeds.provenance.vintage,
-      retrieved: ipeds.provenance.retrievedAt,
-    });
-  if (lodes)
-    entries.push({
-      keys: ['lodes-data'],
-      title: 'LEHD LODES8 origin–destination employment (NY main + aux, JT00)',
-      publisher: 'U.S. Census Bureau',
-      url: 'https://lehd.ces.census.gov/data/',
-      date: lodes.provenance.vintage,
-      retrieved: lodes.provenance.retrievedAt,
-    });
-  if (spending)
-    entries.push({
-      keys: ['usaspending-data'],
-      title: 'USAspending.gov award records (CHIPS Incentives CFDA 11.037; NSF assistance)',
-      publisher: 'U.S. Department of the Treasury',
-      url: 'https://www.usaspending.gov/',
-      date: spending.provenance.vintage,
-      retrieved: spending.provenance.retrievedAt,
-    });
-  if (permits)
-    entries.push({
-      keys: ['bps-data'],
-      title: 'Building Permits Survey, annual county files',
-      publisher: 'U.S. Census Bureau',
-      url: 'https://www.census.gov/construction/bps/',
-      date: permits.provenance.vintage,
-      retrieved: permits.provenance.retrievedAt,
-    });
-  if (acs)
-    entries.push({
-      keys: ['acs-data'],
-      title: 'American Community Survey 5-year estimates, table B15003 (educational attainment)',
-      publisher: 'U.S. Census Bureau',
-      url: 'https://www.census.gov/programs-surveys/acs',
-      date: acs.provenance.vintage,
-      retrieved: acs.provenance.retrievedAt,
-    });
-  if (nyiso)
-    entries.push({
-      keys: ['nyiso-data'],
-      title: 'NYISO integrated real-time actual load by zone (palIntegrated), Zone C',
-      publisher: 'New York Independent System Operator',
-      url: 'http://mis.nyiso.com/public/',
-      date: nyiso.provenance.vintage,
-      retrieved: nyiso.provenance.retrievedAt,
-    });
-  registerSources(entries);
+  // register data sources into the numbered sources list (after the Phase 0
+  // set). Metadata lives in live-sources.js, shared with the build-time
+  // registry export (P32); provenance supplies the vintage at join time.
+  const loaded = { qcew, oews, ipeds, lodes, spending, permits, acs, nyiso };
+  registerSources(
+    LIVE_SOURCE_DEFS.filter((d) => loaded[d.dataset]).map((d) => ({
+      keys: [d.key],
+      title: d.title,
+      publisher: d.publisher,
+      url: d.url,
+      date: loaded[d.dataset].provenance.vintage,
+      retrieved: loaded[d.dataset].provenance.retrievedAt,
+    }))
+  );
 
   if (qcew) renderQcew(qcew);
   if (oews) renderOews(oews);

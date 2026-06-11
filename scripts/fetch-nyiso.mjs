@@ -12,6 +12,7 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import AdmZip from 'adm-zip';
+import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
 
 const BASE = 'http://mis.nyiso.com/public/csv/palIntegrated';
 const USER_AGENT =
@@ -33,6 +34,11 @@ let madeNetworkRequest = false;
 async function fetchMonthZip(yyyymm, { allow404 = false } = {}) {
   const fileName = `${yyyymm}01palIntegrated_csv.zip`;
   const cachePath = `${rawDir}${fileName}`;
+  if (process.env.OFFLINE === '1') {
+    if (existsSync(cachePath)) return readFileSync(cachePath);
+    if (allow404) return null;
+    throw new Error(`OFFLINE: no cache for ${fileName}`);
+  }
   if (existsSync(cachePath) && !process.env.NO_CACHE) return readFileSync(cachePath);
 
   if (madeNetworkRequest) await sleep(DELAY_MS); // be polite between live requests
@@ -211,10 +217,11 @@ if (missingValues > 0) console.log(`  ${missingValues} rows had an empty Integra
 // ---------------------------------------------------------------------------
 const lastMonthLabel = `${latest.y}-${String(latest.m).padStart(2, '0')}`;
 const out = {
+  schemaVersion: SCHEMA_VERSION,
   provenance: {
     source: 'NYISO public MIS — Integrated Real-Time Actual Load (palIntegrated), hourly by zone',
     url: `${BASE}/{yyyymm}01palIntegrated_csv.zip`,
-    retrievedAt: new Date().toISOString().slice(0, 10),
+    retrievedAt: RETRIEVED_AT,
     vintage: `hourly integrated load 2021-01 through ${lastMonthLabel}`,
     notes:
       'avgMW = mean of hourly "Integrated Load" (MW) for zone CENTRL per calendar year; peakMW = max hourly value; ' +

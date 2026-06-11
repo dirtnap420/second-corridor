@@ -1,0 +1,33 @@
+{
+  "$id": "permits",
+  "type": "object",
+  "required": ["schemaVersion", "provenance", "counties"],
+  "properties": {
+    "schemaVersion": { "$ref": "defs#/definitions/schemaVersion" },
+    "provenance": { "$ref": "defs#/definitions/provenance" },
+    "counties": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["fips", "name", "series"],
+        "properties": {
+          "fips": { "$ref": "defs#/definitions/fips5" },
+          "name": { "type": "string" },
+          "series": {
+            "type": "array",
+            "minItems": 5,
+            "items": {
+              "type": "object",
+              "required": ["year", "units"],
+              "properties": {
+                "year": { "type": "integer", "minimum": 2010, "maximum": 2100 },
+                "units": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

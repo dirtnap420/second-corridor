@@ -22,6 +22,7 @@ import { mkdirSync, existsSync, readFileSync, writeFileSync, statSync, renameSyn
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Unzip, UnzipInflate, unzipSync, strFromU8 } from 'fflate';
+import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const RAW_DIR = join(ROOT, 'raw', 'oews');
@@ -472,11 +473,12 @@ async function main() {
   if (typeof ee.median !== 'number' || ee.median < 60_000) fail(`national 17-2071 median implausibly low: ${JSON.stringify(ee)}`);
 
   const out = {
+    schemaVersion: SCHEMA_VERSION,
     provenance: {
       source: 'U.S. Bureau of Labor Statistics, Occupational Employment and Wage Statistics (OEWS)',
       url: 'https://www.bls.gov/oes/tables.htm',
       files: [v.maUrl, v.natUrl],
-      retrievedAt: new Date().toISOString().slice(0, 10),
+      retrievedAt: RETRIEVED_AT,
       vintage: `OEWS May ${v.year}`,
       notes:
         `Annual median wage (A_MEDIAN) and employment (TOT_EMP) from ${maXlsxName} and ${natXlsxName}. ` +

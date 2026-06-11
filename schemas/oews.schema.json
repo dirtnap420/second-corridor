@@ -1,0 +1,59 @@
+{
+  "$id": "oews",
+  "type": "object",
+  "required": ["schemaVersion", "provenance", "areas", "occupations"],
+  "properties": {
+    "schemaVersion": { "$ref": "defs#/definitions/schemaVersion" },
+    "provenance": { "$ref": "defs#/definitions/provenance" },
+    "areas": {
+      "type": "object",
+      "required": ["syracuse", "rochester"],
+      "additionalProperties": {
+        "type": "object",
+        "required": ["code", "title"],
+        "properties": {
+          "code": { "type": "string", "pattern": "^\\d{5}$" },
+          "title": { "type": "string" }
+        }
+      }
+    },
+    "occupations": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["soc", "title", "national", "syracuse", "rochester"],
+        "properties": {
+          "soc": { "type": "string", "pattern": "^\\d{2}-\\d{4}$" },
+          "title": { "type": "string", "minLength": 5 },
+          "national": { "$ref": "oews#/definitions/wageCell" },
+          "syracuse": { "$ref": "oews#/definitions/wageCell" },
+          "rochester": { "$ref": "oews#/definitions/wageCell" }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "wageCell": {
+      "type": "object",
+      "anyOf": [
+        { "required": ["median"] },
+        { "required": ["suppressed"] },
+        { "required": ["topcoded"] },
+        { "required": ["absent"] }
+      ],
+      "properties": {
+        "median": { "type": "number", "minimum": 1 },
+        "emp": {
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "type": "object", "required": ["suppressed"] }
+          ]
+        },
+        "suppressed": { "const": true },
+        "topcoded": { "const": true },
+        "absent": { "const": true }
+      }
+    }
+  }
+}

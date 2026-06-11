@@ -1,0 +1,39 @@
+# P5 — post-deploy health check: after data lands on main, confirm production
+# actually serves it (colophon vintage matches, plates render, no errors).
+# Vercel deploys main via its Git integration; this polls until it's live.
+name: health
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/data/**'
+      - 'public/status.json'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Poll production until the new data is live
+        run: node qa/health.mjs
+      - name: Failure issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create health-failure --color D73A4A 2>/dev/null || true
+          gh issue create --title "Post-deploy health check failed — $(date -u +%F)" \
+            --label health-failure --assignee dirtnap420 \
+            --body "Production did not serve the refreshed data within the timeout, or served it broken. Logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

@@ -26,6 +26,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
 
 const API = 'https://api.usaspending.gov/api/v2';
 const DELAY_MS = 150;
@@ -266,8 +267,9 @@ if (upwardsMatches.length === 0) {
 if (awards.length === 0) throw new Error('No awards captured at all — refusing to emit an empty dataset.');
 if (!awards.some((a) => a.kind === 'nsf-emerge')) throw new Error('EMERGE-MICRO award missing from output.');
 
-const retrievedAt = new Date().toISOString().slice(0, 10);
+const retrievedAt = RETRIEVED_AT;
 const out = {
+  schemaVersion: SCHEMA_VERSION,
   provenance: {
     source: 'USAspending.gov API v2 (award profiles via /api/v2/awards/{generated_unique_award_id}/; discovery via /api/v2/search/spending_by_award/)',
     url: 'https://api.usaspending.gov/api/v2/',

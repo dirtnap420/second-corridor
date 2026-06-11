@@ -14,6 +14,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
 
 const API_BASE = 'https://data.bls.gov/cew/data/api';
 const USER_AGENT =
@@ -51,6 +52,11 @@ let madeNetworkRequest = false;
 const freshThisRun = new Set(); // files already (re)fetched live in this run
 async function fetchCsv(year, qtr, fips, { allow404 = false, fresh = false } = {}) {
   const cachePath = `${rawDir}${year}-${qtr}-${fips}.csv`;
+  if (process.env.OFFLINE === '1') {
+    if (existsSync(cachePath)) return readFileSync(cachePath, 'utf8');
+    if (allow404) return null;
+    throw new Error(`OFFLINE: no cache for ${year}/${qtr}/${fips}`);
+  }
   if (
     existsSync(cachePath) &&
     (freshThisRun.has(cachePath) || (!fresh && !process.env.NO_CACHE))
@@ -264,10 +270,11 @@ for (const c of corridor) {
 // ---------------------------------------------------------------------------
 const vintage = `QCEW annual ${FIRST_YEAR}-${latestYear}; quarterly ${FIRST_YEAR}Q1-${latestQ.y}Q${latestQ.q}`;
 const out = {
+  schemaVersion: SCHEMA_VERSION,
   provenance: {
     source: 'U.S. Bureau of Labor Statistics, Quarterly Census of Employment and Wages (QCEW), open data CSV API',
     url: `${API_BASE}/{year}/{qtr}/area/{fips}.csv`,
-    retrievedAt: new Date().toISOString().slice(0, 10),
+    retrievedAt: RETRIEVED_AT,
     vintage,
     notes:
       'semi = NAICS 3344 (semiconductor & other electronic component mfg), private ownership (own_code 5); ' +
