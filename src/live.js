@@ -75,7 +75,23 @@ function renderQcew(data) {
   const plotH = 78;
   const n = cite('qcew-data');
 
-  for (const c of data.corridor) {
+  // D30: published data first, measured zeros next, suppressed last — and
+  // suppressed counties render compressed so the data carries the plate
+  const rank = (c) => {
+    const latest = c.series[c.series.length - 1];
+    if (typeof latest.semi === 'number' && latest.semi > 0) return 0;
+    if (c.series.every((s) => s.semi === 0)) return 1;
+    return 2;
+  };
+  const ordered = [...data.corridor].sort((a, b) => rank(a) - rank(b));
+
+  for (const c of ordered) {
+    const allSuppressed = c.series.every((s) => isSupp(s.semi));
+    const allZero = c.series.every((s) => s.semi === 0);
+    // D30: suppressed panels compress to ~half height; the data carries
+    // the plate. D31: an all-zero county states its measured zero.
+    const ph = allSuppressed ? 36 : plotH;
+    const mh = allSuppressed ? 86 : MH;
     const years = c.series.map((s) => s.year);
     const vals = c.series.map((s) => (isSupp(s.semi) ? null : s.semi));
     const max = Math.max(40, ...vals.filter((v) => v !== null));
@@ -86,14 +102,18 @@ function renderQcew(data) {
     c.series.forEach((s, i) => {
       const x = 26 + i * (bw + 6);
       if (isSupp(s.semi)) {
-        bars += `<rect x="${x}" y="${20 + plotH - 26}" width="${bw}" height="26" fill="url(#hatch-s)" stroke="var(--muted)" stroke-width="0.5" opacity="0.7"></rect>
-        <text x="${x + bw / 2}" y="${20 + plotH - 32}" text-anchor="middle" class="chart-label">S</text>`;
+        const hh = allSuppressed ? 18 : 26;
+        bars += `<rect x="${x}" y="${20 + ph - hh}" width="${bw}" height="${hh}" fill="url(#hatch-s)" stroke="var(--muted)" stroke-width="0.5" opacity="0.7"></rect>
+        <text x="${x + bw / 2}" y="${20 + ph - hh - 4}" text-anchor="middle" class="chart-label">S</text>`;
       } else {
-        const h = Math.max(1.5, (s.semi / max) * plotH);
-        bars += `<rect x="${x}" y="${20 + plotH - h}" width="${bw}" height="${h}" fill="var(--copper)"></rect>`;
+        const h = Math.max(1.5, (s.semi / max) * ph);
+        bars += `<rect x="${x}" y="${20 + ph - h}" width="${bw}" height="${h}" fill="var(--copper)"></rect>`;
       }
-      bars += `<text x="${x + bw / 2}" y="${20 + plotH + 12}" text-anchor="middle" class="chart-label">${String(s.year).slice(2)}</text>`;
+      bars += `<text x="${x + bw / 2}" y="${20 + ph + 12}" text-anchor="middle" class="chart-label">${String(s.year).slice(2)}</text>`;
     });
+    if (allZero) {
+      bars += `<text x="${26 + (MW - 30) / 2}" y="${20 + ph / 2}" text-anchor="middle" class="chart-label" style="fill:var(--muted)">MEASURED ZERO</text>`;
+    }
 
     const latestLabel = isSupp(latest.semi)
       ? 'suppressed (BLS confidentiality)'
@@ -104,15 +124,14 @@ function renderQcew(data) {
     const fig = document.createElement('figure');
     fig.style.cssText = 'margin:0';
     fig.innerHTML = `
-      <svg width="${MW}" height="${MH}" viewBox="0 0 ${MW} ${MH}" role="img" aria-label="NAICS 3344 employment, ${c.name} County">
+      <svg width="${MW}" height="${mh}" viewBox="0 0 ${MW} ${mh}" role="img" aria-label="NAICS 3344 employment, ${c.name} County">
         <title>${c.name} County semiconductor employment</title>
         <defs><pattern id="hatch-s" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="4" stroke="var(--muted)" stroke-width="1"></line></pattern></defs>
         <text x="0" y="11" class="chart-label" style="fill:var(--ink);font-weight:500">${c.name.toUpperCase()} (${c.fips})</text>
-        <text x="0" y="${20 + plotH - 2}" class="chart-label" transform="rotate(-90 10 ${20 + plotH - 2})" ></text>
         <text x="22" y="${20 + 8}" text-anchor="end" class="chart-label">${max >= 1000 ? (max / 1000).toFixed(1) + 'K' : max}</text>
-        <line x1="26" y1="${20 + plotH}" x2="${MW - 4}" y2="${20 + plotH}" stroke="var(--hairline)"></line>
+        <line x1="26" y1="${20 + ph}" x2="${MW - 4}" y2="${20 + ph}" stroke="var(--hairline)"></line>
         ${bars}
-        <text x="0" y="${MH - 2}" class="chart-label">${latestLabel}</text>
+        <text x="0" y="${mh - 2}" class="chart-label">${latestLabel}</text>
       </svg>`;
     grid.appendChild(fig);
   }
@@ -181,19 +200,27 @@ function renderOews(data) {
     return `<td>${fmtUSD(d.median)}</td>`;
   };
 
+  // S32: the delta IS the story — readers shouldn't do the arithmetic
+  const delta = (d, nat) => {
+    if (!d || d.absent || !nat || typeof d.median !== 'number' || typeof nat.median !== 'number')
+      return '<td>—</td>';
+    const dv = d.median - nat.median;
+    const cls = dv >= 0 ? 'style="color:var(--green)"' : 'style="color:var(--copper-text)"';
+    return `<td ${cls}>${dv >= 0 ? '+' : '−'}${fmtUSD(Math.abs(dv)).slice(1)}</td>`;
+  };
   const table = document.createElement('table');
   table.className = 'mono';
   table.style.cssText = 'width:100%;border-collapse:collapse;font-size:12px';
   table.innerHTML = `
     <thead><tr>
       <th style="text-align:left">SOC · occupation</th>
-      <th>Rochester median</th><th>Syracuse median</th><th>National median</th>
+      <th>Rochester median</th><th>Δ vs national</th><th>Syracuse median</th><th>Δ vs national</th><th>National median</th>
     </tr></thead>
     <tbody>${data.occupations
       .map(
         (o) => `<tr>
         <td style="text-align:left">${o.soc} · ${o.title}</td>
-        ${cell(o.rochester)}${cell(o.syracuse)}${cell(o.national)}
+        ${cell(o.rochester)}${delta(o.rochester, o.national)}${cell(o.syracuse)}${delta(o.syracuse, o.national)}${cell(o.national)}
       </tr>`
       )
       .join('')}</tbody>`;
@@ -236,6 +263,22 @@ function renderIpeds(data) {
     if (total > 0) {
       watching.completions = `${fmt(total)} in AY ${last - 1}–${String(last).slice(2)}`;
       updateWatching();
+      /* S30 (approved, Option A): exact-number restatement, recomputed every
+         refresh — the line self-corrects if a later year beats the peak */
+      const totals = yrs.map((y) => ({
+        y,
+        t: data.series
+          .filter((s) => s.year === y)
+          .reduce((a, r) => a + (r.cert || 0) + (r.assoc || 0) + (r.bach || 0) + (r.grad || 0), 0),
+      }));
+      const peak = totals.reduce((a, b) => (b.t > a.t ? b : a), totals[0]);
+      const ay = (y) => `AY ${y - 1}–${String(y).slice(2)}`;
+      addTakeaway(
+        'ipeds-panel',
+        peak.y === last
+          ? `CORRIDOR COMPLETIONS: ${fmt(total)} IN ${ay(last)} — A SERIES HIGH. <a class="cite" href="#src-${n}">[${n}]</a>`
+          : `CORRIDOR COMPLETIONS: ${fmt(total)} IN ${ay(last)}, DOWN FROM THE ${ay(peak.y)} PEAK OF ${fmt(peak.t)}. <a class="cite" href="#src-${n}">[${n}]</a>`
+      );
     }
   }
 
@@ -270,7 +313,8 @@ function renderIpeds(data) {
       ...years.map((y) => INSTS.reduce((a, i) => a + byYear[y][i.short], 0))
     );
     const yMax = Math.ceil(maxTotal / 50) * 50;
-    const bw = Math.min(64, ((W - M.l - M.r) / years.length) * 0.62);
+    // D32: wider bars — five slim sticks floated in whitespace at 1100px
+    const bw = Math.min(88, ((W - M.l - M.r) / years.length) * 0.78);
 
     const svg = document.createElementNS(SVG_NS, 'svg');
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
@@ -293,6 +337,9 @@ function renderIpeds(data) {
           html += `<rect x="${cx - bw / 2}" y="${y0 - h}" width="${bw}" height="${h}" fill="${inst.color}" opacity="${inst.short === 'MCC' ? 0.65 : inst.short === 'OCC' ? 0.78 : 0.9}"></rect>`;
         y0 -= h;
       }
+      // D32: each year's total printed above its stack
+      const total = INSTS.reduce((a, inst) => a + byYear[yr][inst.short], 0);
+      html += `<text x="${cx}" y="${y0 - 6}" text-anchor="middle" class="chart-label" style="font-weight:500">${total}</text>`;
       html += `<text x="${cx}" y="${H - M.b + 14}" text-anchor="middle" class="chart-label">${yr}</text>`;
     });
     // key
@@ -342,10 +389,16 @@ function renderLodes(data) {
   let html = '';
   rows.forEach((o, i) => {
     const isMonroe = o.fips === '36055';
+    // D33: the self-commute row is a reference, not catchment — hollow bar
+    // so the out-of-county story sets the visual scale
+    const isSelf = o.fips === data.workCounty;
     const w = Math.max(0.5, (o.jobs / max) * 100);
+    const barStyle = isSelf
+      ? `display:block;height:13px;width:${w}%;background:none;border:1px solid var(--ink);opacity:0.55;box-sizing:border-box`
+      : `display:block;height:13px;width:${w}%;background:${isMonroe ? 'var(--copper)' : 'var(--ink)'};opacity:${isMonroe ? 1 : 0.78}`;
     html += `<div style="display:grid;grid-template-columns:minmax(110px,150px) 1fr 130px;gap:10px;align-items:center;padding:4px 0;border-top:1px dotted var(--hairline)">
-      <span style="${isMonroe ? 'color:var(--copper);font-weight:500' : ''}">${i + 1}. ${o.name}, ${o.state}</span>
-      <span aria-hidden="true" style="display:block;height:13px;width:${w}%;background:${isMonroe ? 'var(--copper)' : 'var(--ink)'};opacity:${isMonroe ? 1 : 0.78}"></span>
+      <span style="${isMonroe ? 'color:var(--copper);font-weight:500' : ''}">${i + 1}. ${o.name}, ${o.state}${isSelf ? ' · SELF' : ''}</span>
+      <span aria-hidden="true" style="${barStyle}"></span>
       <span style="text-align:right;color:var(--muted)">${fmt(o.jobs)} · ${(o.share * 100).toFixed(1)}%</span>
     </div>`;
   });
@@ -536,6 +589,10 @@ function renderComparators(qcew) {
         html += `<path d="${d}" fill="none" stroke="${c.hero ? 'var(--copper)' : 'var(--ink)'}" stroke-width="${c.hero ? 2 : 1.25}"></path>`;
         const last = known[known.length - 1];
         html += `<text x="${W - M.r + 6}" y="${y(last) + 3}" class="chart-label" style="fill:${c.hero ? 'var(--copper)' : 'var(--ink)'}">${fmt(last)}</text>`;
+        // D34: mark where the data ends — "stops" is not "suppressed" or "zero"
+        const li = Math.min(months.length - 1, MAXM);
+        html += `<line x1="${x(li)}" y1="14" x2="${x(li)}" y2="${SH - 18}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2 3"></line>
+          <text x="${x(li)}" y="${SH - 22}" text-anchor="middle" class="chart-label" style="fill:var(--muted)">M${li}</text>`;
       }
       html += `<text x="0" y="11" class="chart-label" style="fill:${c.hero ? 'var(--copper)' : 'var(--ink)'};font-weight:500">${c.project.toUpperCase()} · ${c.name.toUpperCase()} · ANN. ${c.announced} [${nA}]</text>`;
       svg.innerHTML = `<defs><pattern id="hatch-s9" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="4" stroke="var(--muted)" stroke-width="1"></line></pattern></defs>` + html;
@@ -727,6 +784,29 @@ function renderPhys(nyiso) {
   wrap.style.cssText = 'font-size:12px';
   let html = '';
 
+  // D36: one legend instead of per-row "planned" labels
+  html += `<p class="method-note" style="margin:0 0 8px">INK: MEASURED · INK-FADED: APPLIED-FOR · COPPER: PLANNED</p>`;
+
+  /* S28 (approved): two derived stakes, both divisions of cited figures —
+     two bars become a stake the region can feel. Recomputed at render. */
+  {
+    const stakes = [];
+    if (waterOk) {
+      const W = PHYS_ANCHORS.water;
+      const full = W.demand[W.demand.length - 1];
+      stakes.push(
+        `FULL-BUILDOUT WATER DEMAND = ${Math.round((full.mgd / W.permitted.from) * 100)}% OF CURRENT PERMITTED WITHDRAWAL [${nW}]`
+      );
+    }
+    if (powerOk && latestFull) {
+      const fabs12 = PHYS_ANCHORS.power.reduce((a, p) => a + p.mw, 0);
+      stakes.push(
+        `FABS 1–2 = ${Math.round((fabs12 / latestFull.avgMW) * 100)}% OF ZONE C'S MEASURED AVERAGE LOAD [${nG}][${nN}]`
+      );
+    }
+    if (stakes.length) addTakeaway('phys-panel', stakes.join('<br>'));
+  }
+
   if (powerOk && latestFull) {
     const maxMW = Math.max(latestFull.peakMW, 1000);
     html += `<p class="method-note" style="margin:4px 0 6px">ELECTRIC · MW</p>`;
@@ -746,7 +826,9 @@ function renderPhys(nyiso) {
       true
     );
     for (const p of PHYS_ANCHORS.power) {
-      html += row(`${p.label.toUpperCase()} [${nG}]`, p.mw, maxMW, 'var(--copper)', `${p.mw} MW · planned`);
+      // S31: internal ratios — fractions of something the plate already showed
+      const pct = Math.round((p.mw / latestFull.peakMW) * 100);
+      html += row(`${p.label.toUpperCase()} [${nG}]`, p.mw, maxMW, 'var(--copper)', `${p.mw} MW · ${pct}% OF MEASURED PEAK`);
     }
     html += `<p class="method-note" style="margin:6px 0 14px">${PHYS_ANCHORS.powerNote} [${nG}]</p>`;
   }
@@ -754,7 +836,7 @@ function renderPhys(nyiso) {
   if (waterOk) {
     const W = PHYS_ANCHORS.water;
     const maxMGD = W.permitted.to;
-    html += `<p class="method-note" style="margin:14px 0 6px">WATER · MGD</p>`;
+    html += `<p class="method-note" style="margin:14px 0 6px;border-top:1px solid var(--hairline);padding-top:10px">WATER · MGD</p>`;
     html += row(
       `OCWA PERMITTED WITHDRAWAL, CURRENT [${nW}]`,
       W.permitted.from,
@@ -771,12 +853,14 @@ function renderPhys(nyiso) {
       true
     );
     for (const d of W.demand) {
+      // S31: same internal-ratio treatment
+      const pct = Math.round((d.mgd / W.permitted.from) * 100);
       html += row(
         `MICRON AVG DEMAND ${d.year} · ${d.label.toUpperCase()} [${nW}]`,
         d.mgd,
         maxMGD,
         'var(--copper)',
-        `${d.mgd} MGD · planned`
+        `${d.mgd} MGD · ${pct}% OF PERMITTED`
       );
     }
     html += `<p class="method-note" style="margin-top:6px">${W.note} [${nW}]</p>`;

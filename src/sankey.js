@@ -272,10 +272,11 @@ export function renderTalentSankey(container, width) {
 
   let html = '';
   for (const l of graph.links) {
+    const mid = (l.source.depth === 1 ? l.source : l.target).id;
     html += `<path d="${sankeyLinkHorizontal()(l)}" fill="none" stroke="var(--ink)" stroke-width="${Math.max(
       l.width,
       1
-    )}" opacity="0.14"></path>`;
+    )}" opacity="0.14" data-mid="${mid}" style="pointer-events:stroke"></path>`;
   }
   const wrapN = narrow ? 13 : 22;
   for (const n of graph.nodes) {
@@ -298,6 +299,28 @@ export function renderTalentSankey(container, width) {
   const g = document.createElementNS(SVG_NS, 'g');
   g.innerHTML = html;
   svg.appendChild(g);
+
+  /* S38: progressive disclosure — hovering a ribbon reveals the cited
+     program fact; skimmers stay uncluttered */
+  const FACTS = {
+    coops: () => `RIT: 48 REQUIRED CO-OP WEEKS, FOUR BLOCKS${mark('rit-coop-48')}`,
+    cleanroom: () => `OCC: $15M MICRON CLEANROOM SIMULATION LAB — $5M EACH FROM MICRON, ONONDAGA COUNTY, NYS/SUNY${mark('occ-micron')}`,
+    certs: () => `EMERGE-MICRO: NSF AWARD TO RIT + MCC + FLCC${mark('emerge-micro-2024')}`,
+    apprent: () => `EMERGE-MICRO PATHWAYS: APPRENTICESHIPS & RETRAINING${mark('emerge-micro-2024')}`,
+  };
+  const IDLE = 'HOVER A RIBBON FOR ITS CITED PROGRAM FACT';
+  const detail = document.createElement('p');
+  detail.className = 'method-note ribbon-detail';
+  detail.textContent = IDLE;
+  container.appendChild(detail);
+  svg.addEventListener('pointerover', (e) => {
+    const t = e.target.closest ? e.target.closest('[data-mid]') : null;
+    const f = t && FACTS[t.dataset.mid];
+    if (f) detail.textContent = f();
+  });
+  svg.addEventListener('pointerleave', () => {
+    detail.textContent = IDLE;
+  });
   return {};
 }
 

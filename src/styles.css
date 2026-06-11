@@ -310,6 +310,90 @@ details.numbers,
   display: inline-flex;
   border: 1px solid var(--ink);
 }
+/* S35: the ~50,000's arithmetic as chips */
+.sum-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: var(--ls-micro);
+  text-transform: uppercase;
+}
+.sum-chip {
+  border: 1px solid var(--hairline);
+  background: var(--paper);
+  padding: 4px 8px;
+}
+.sum-op {
+  color: var(--copper-text);
+  font-weight: 500;
+}
+/* S38: the ribbon-detail line under the talent lattice */
+.ribbon-detail {
+  padding: 8px 0 0;
+  min-height: 2.6em;
+}
+/* D38: eyebrow rules — technical-drawing section rhythm */
+section .eyebrow,
+.part-pivot .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+section .eyebrow::after,
+.part-pivot .eyebrow::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--hairline);
+}
+/* D39: brand selection color */
+::selection {
+  background: var(--copper);
+  color: var(--paper);
+}
+/* D40: instrument scrollbars, quiet */
+.ledger ol,
+details.numbers,
+#oews-panel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted) var(--paper);
+}
+/* D41: tabular numerals wherever values tick */
+.dial-value,
+.scrubber-year,
+.era-readout,
+details.numbers td,
+.verdicts,
+.watch-list {
+  font-variant-numeric: tabular-nums;
+}
+/* D44: registration marks on the main plate — plotter-sheet corners */
+.plate--main {
+  position: relative;
+}
+.plate--main::before,
+.plate--main::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+.plate--main::before {
+  top: -8px;
+  left: -8px;
+  border-top: 1px solid var(--ink);
+  border-left: 1px solid var(--ink);
+}
+.plate--main::after {
+  bottom: -8px;
+  right: -8px;
+  border-bottom: 1px solid var(--ink);
+  border-right: 1px solid var(--ink);
+}
 /* S29: the wafer metaphor, taught once */
 .dial-note {
   font-family: var(--font-mono);

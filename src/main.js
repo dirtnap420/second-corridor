@@ -826,6 +826,13 @@ async function boot() {
   // ?nointro, reduced motion, or any input. S4: on natural completion the
   // final beat glides 2022 → today (deep links and interrupts skip it).
   markStage('boot:intro-start');
+  // S42: name the disclosure and its size — open rates follow
+  document.querySelectorAll('details.numbers').forEach((d) => {
+    const rows = d.querySelectorAll('tbody tr').length;
+    const summary = d.querySelector('summary');
+    if (rows && summary) summary.textContent = `Open the data table · ${rows} rows`;
+  });
+
   // S6: one-shot scrubber invitation after the opening settles — the most
   // important interaction on the page finally gets an invitation
   if (!localStorage.getItem('sc:nudged') && !motion.reduced) {
