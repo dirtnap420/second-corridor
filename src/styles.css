@@ -12,13 +12,8 @@
   font-display: swap;
   src: url('/fonts/archivo-v25-latin-regular.woff2') format('woff2');
 }
-@font-face {
-  font-family: 'Archivo';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/archivo-v25-latin-500.woff2') format('woff2');
-}
+/* Archivo 500 deleted in the F10 audit — every font-weight:500 usage on the
+   site resolves to Plex Mono 500 (verified Wave 2); body text is 400/700/900 */
 @font-face {
   font-family: 'Archivo';
   font-style: normal;
