@@ -30,6 +30,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
 
 const API_BASE = 'https://api.census.gov/data';
 const SF_BASE = 'https://www2.census.gov/programs-surveys/acs/summary_file';
@@ -455,10 +456,11 @@ if (typeof monroe.pop25 !== 'number' || monroe.pop25 < 250_000 || monroe.pop25 >
 // Emit.
 // ---------------------------------------------------------------------------
 const out = {
+  schemaVersion: SCHEMA_VERSION,
   provenance: {
     source: loaded.provenance.source,
     url: loaded.provenance.url,
-    retrievedAt: new Date().toISOString().slice(0, 10),
+    retrievedAt: RETRIEVED_AT,
     vintage: `ACS 5-year ${year - 4}-${year}`,
     notes:
       'Table B15003, educational attainment, population 25+. Counts, not percentages. ' +

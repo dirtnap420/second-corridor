@@ -14,6 +14,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
 
 const API_BASE = 'https://data.bls.gov/cew/data/api';
 const USER_AGENT =
@@ -264,10 +265,11 @@ for (const c of corridor) {
 // ---------------------------------------------------------------------------
 const vintage = `QCEW annual ${FIRST_YEAR}-${latestYear}; quarterly ${FIRST_YEAR}Q1-${latestQ.y}Q${latestQ.q}`;
 const out = {
+  schemaVersion: SCHEMA_VERSION,
   provenance: {
     source: 'U.S. Bureau of Labor Statistics, Quarterly Census of Employment and Wages (QCEW), open data CSV API',
     url: `${API_BASE}/{year}/{qtr}/area/{fips}.csv`,
-    retrievedAt: new Date().toISOString().slice(0, 10),
+    retrievedAt: RETRIEVED_AT,
     vintage,
     notes:
       'semi = NAICS 3344 (semiconductor & other electronic component mfg), private ownership (own_code 5); ' +

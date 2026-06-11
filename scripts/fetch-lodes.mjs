@@ -23,6 +23,7 @@ import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
+import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
 
 const LODES_BASE = 'https://lehd.ces.census.gov/data/lodes/LODES8/ny/od';
 const COUNTY_CODES_URL = 'https://www2.census.gov/geo/docs/reference/codes2020/national_county2020.txt';
@@ -251,10 +252,11 @@ if (corridorShare <= origins[0].share || corridorShare > 1) {
 }
 
 const out = {
+  schemaVersion: SCHEMA_VERSION,
   provenance: {
     source: 'U.S. Census Bureau, LEHD Origin-Destination Employment Statistics (LODES8), OD main + aux, JT00 all jobs',
     url: `${LODES_BASE}/{ny_od_main_JT00_${year}.csv.gz, ny_od_aux_JT00_${year}.csv.gz}`,
-    retrievedAt: new Date().toISOString().slice(0, 10),
+    retrievedAt: RETRIEVED_AT,
     vintage: `LODES8 OD reference year ${year}`,
     notes:
       `Jobs at workplace blocks in Onondaga County NY (w_geocode prefix ${WORK_COUNTY}), S000 total jobs, ` +

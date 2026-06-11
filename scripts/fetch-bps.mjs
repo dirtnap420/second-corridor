@@ -16,6 +16,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
 
 const BASE_URL = 'https://www2.census.gov/econ/bps/County';
 const USER_AGENT =
@@ -197,10 +198,11 @@ if (monroeMax < 1000 || monroeMax > 5000) {
 // ---------------------------------------------------------------------------
 const vintage = `annual ${FIRST_YEAR}-${latestYear}`;
 const out = {
+  schemaVersion: SCHEMA_VERSION,
   provenance: {
     source: 'U.S. Census Bureau, Building Permits Survey, annual county flat files',
     url: `${BASE_URL}/co{yyyy}a.txt`,
-    retrievedAt: new Date().toISOString().slice(0, 10),
+    retrievedAt: RETRIEVED_AT,
     vintage,
     notes:
       'units = total housing units authorized by building permits per county-year: sum of the Units ' +

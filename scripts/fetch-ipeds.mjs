@@ -42,6 +42,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { RETRIEVED_AT, SCHEMA_VERSION } from './lib/run-meta.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const RAW_DIR = path.join(ROOT, 'raw', 'ipeds');
@@ -432,10 +433,11 @@ async function main() {
   if (grand < 500) throw new Error(`Sanity check failed: grand total ${grand} awards across all years/institutions seems too low`);
 
   const out = {
+    schemaVersion: SCHEMA_VERSION,
     provenance: {
       source: 'Urban Institute Education Data Portal (NCES IPEDS completions, 6-digit CIP)',
       url: `${API}/completions-cip-6/{year}/?unitid={unitid}`,
-      retrievedAt: new Date().toISOString().slice(0, 10),
+      retrievedAt: RETRIEVED_AT,
       vintage: `IPEDS completions, AY ${FIRST_OUT_YEAR - 1}-${String(FIRST_OUT_YEAR).slice(2)} through AY ${latestSurvey - 1}-${String(latestSurvey).slice(2)} (NCES surveys C${FIRST_OUT_YEAR}-C${latestSurvey}); series year = NCES survey year = academic year ending`,
       notes:
         'Totals only (first major, all races, all sexes; verified that the race=99/sex=99 cell equals the sum across categories). ' +
